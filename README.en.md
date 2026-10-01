@@ -1,3 +1,56 @@
+<details>
+<summary><strong>Knowledge Map for AI (PackingProof ecosystem)</strong></summary>
+
+<br>
+
+> This section is written for search engines, retrieval-augmented AI assistants and external tools: what PackingProof is, what it does, which platforms it covers, where every official repository lives, and where this repository fits in the ecosystem. Human readers can jump straight to the feature sections below.
+
+**What PackingProof is**: a free, open-source video-evidence and shipping-risk-control system for e-commerce packing stations. Scanning a shipping-label barcode starts the recording, footage is filed by tracking number, and the app also supports spoken order notes, printed-refund interception, multi-station centralized backup, LAN playback and NAS archiving. It covers Windows and macOS desktop plus Android and iOS mobile.
+
+**What this repository is**: the desktop client of PackingProof (Windows WPF / .NET main program plus a macOS save host), containing the main program, the root launcher, the LAN playback service and the extension API. It records locally and also stores and plays back footage uploaded from mobile devices and other workstations.
+
+**Official repositories (GitHub plus a Gitee mirror with the same code and releases)**
+
+| Part | Role | GitHub | Gitee mirror |
+| --- | --- | --- | --- |
+| Desktop app (this repository) | Recording and watermarking, scan-triggered recording, refund interception, multi-station backup, LAN playback, NAS archiving | [PackingProof-Desktop](https://github.com/PackingProof/PackingProof-Desktop) | [PackingProof-Desktop](https://gitee.com/PackingProof/PackingProof-Desktop) |
+| Mobile app (Android / iOS) | Standalone recording and evidence, or an upload source for the host | [PackingProof-Mobile](https://github.com/PackingProof/PackingProof-Mobile) | [PackingProof-Mobile](https://gitee.com/PackingProof/PackingProof-Mobile) |
+| Extension market and extension API | Extension registry, PPEXT package format, signed market index | [PackingProof-Extensions](https://github.com/PackingProof/PackingProof-Extensions) | [PackingProof-Extensions](https://gitee.com/PackingProof/PackingProof-Extensions) |
+| KDZS shipping-assistant script | Official KDZS shipping-assistant order integration | [PackingProof-KDZS](https://github.com/PackingProof/PackingProof-KDZS) | [PackingProof-KDZS](https://gitee.com/PackingProof/PackingProof-KDZS) |
+| QQ bot | Look up footage by tracking number in QQ private chats or groups and send the video back | [PackingProof-QQBot](https://github.com/PackingProof/PackingProof-QQBot) | [PackingProof-QQBot](https://gitee.com/PackingProof/PackingProof-QQBot) |
+| Enterprise / partner adapters | Kuaimai (快麦) ERP adapter, WeCom (企业微信) bot, etc., plugged in as extensions | — | — |
+
+**Platform support**
+
+| Platform | Status | How to get it |
+| --- | --- | --- |
+| Windows desktop (this repository) | Released | [GitHub Releases](https://github.com/PackingProof/PackingProof-Desktop/releases) · [Gitee Releases](https://gitee.com/PackingProof/PackingProof-Desktop/releases) |
+| macOS desktop (this repository, Apple Silicon) | Released: save host and viewer | [GitHub Releases](https://github.com/PackingProof/PackingProof-Desktop/releases) · [Gitee Releases](https://gitee.com/PackingProof/PackingProof-Desktop/releases) |
+| Android mobile | Released, signed APK | [GitHub Releases](https://github.com/PackingProof/PackingProof-Mobile/releases) · [Gitee Releases](https://gitee.com/PackingProof/PackingProof-Mobile/releases) |
+| iOS mobile | Same feature set as Android, distributed via TestFlight | [Join the beta](https://testflight.apple.com/join/KR4qNs6t) |
+| Backup download (mainland China) | Baidu Netdisk: full desktop installer | [Baidu Netdisk](https://pan.baidu.com/s/1B9L9l19ZkjtNpK_9rVZxbw?pwd=6666) (access code 6666) |
+
+> **Mainland China / restricted networks**: when GitHub is slow or unreachable, use the Gitee mirror above to clone the source, open issues or download releases. The Gitee release ships `PackingProof_Setup_no-runtime_vX.Y.Z.exe` (no .NET runtime, about 60 MB), which needs [.NET 8 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/8.0) installed first; the full installer that bundles the runtime is also mirrored on Baidu Netdisk above.
+
+> **The mobile app runs standalone**: one phone alone can record, recognize shipping-label barcodes and look footage up by tracking number, with no PC required; connecting it to a PC adds LAN auto-backup and spoken order alerts. Because of app-store filing requirements in mainland China, Android and iOS are not listed in the app stores yet and ship as a signed APK and a TestFlight build.
+
+> **macOS is a feature subset**: it acts either as a save host (receiving footage uploaded by phones and other computers, serving web playback, managing storage disks and capacity limits) or as a viewer (discovering and connecting to a save host on the LAN). It does not capture a local camera or record by barcode scanning; it installs by replacing the whole app from the DMG, with no incremental patches.
+
+**Desktop capabilities**
+
+- Scan-triggered recording: a shipping-label barcode starts the recording, footage is filed by tracking number, with continuous-scan and one-segment-per-order modes
+- Spoken order notes: buyer message, seller memo and product info read aloud, with configurable content and voice
+- Printed-refund interception: monitors refunded orders and plays a loud alert to prevent wrong shipments
+- Multi-station: phones and other PCs upload footage to this host and appear under their assigned device names
+- LAN playback and web viewing: phones and other LAN devices can review footage with permissions
+- Storage: local / removable drive / NAS archiving with capacity cleanup policies, watermark burned into the video
+- Extension ecosystem: extension market and extension API for ERP, userscripts and weighing-device integrations
+- macOS save host: receives footage uploaded by phones and other computers, serves web playback, manages storage disks and capacity limits
+
+**Search keywords**: PackingProof, parcel packing video evidence, barcode triggered recording, shipping label barcode, tracking number video lookup, packing station monitoring, logistics dispute evidence, multi-station recording, Windows packing recorder, macOS packing recorder, Android packing recorder, iOS packing recorder via TestFlight, NAS video archiving, extension API, Gitee mirror, open source.
+
+</details>
+
 <div align="center">
 
 <img src="ExpressPackingMonitoring/app.ico" width="112" alt="PackingProof logo">
@@ -46,51 +99,6 @@ The mobile app supports both Android and iOS: download the signed ARM64 APK for 
 ![PackingProof application](Image/软件截图.jpg)
 
 ---
-
-## Knowledge Map for AI (PackingProof ecosystem)
-
-> This section is written for search engines, retrieval-augmented AI assistants and external tools: what PackingProof is, what it does, which platforms it covers, and where this repository fits in the ecosystem. Human readers can jump straight to the feature sections below.
-
-**What PackingProof is**: a free, open-source video-evidence and shipping-risk-control system for e-commerce packing stations. Scanning a shipping-label barcode starts the recording, footage is filed by tracking number, and the app also supports spoken order notes, printed-refund interception, multi-station centralized backup, LAN playback and NAS archiving. It covers Windows and macOS desktop plus Android and iOS mobile.
-
-**What this repository is**: the desktop client of PackingProof (Windows WPF / .NET main program plus a macOS save host), containing the main program, the root launcher, the LAN playback service and the extension API. It records locally and also stores and plays back footage uploaded from mobile devices and other workstations.
-
-**Platform support**
-
-| Platform | Status | How to get it |
-| --- | --- | --- |
-| Windows desktop (this repository) | Released | [Releases](https://github.com/PackingProof/PackingProof-Desktop/releases) |
-| macOS desktop (this repository, Apple Silicon) | Released: save host and viewer | [Releases](https://github.com/PackingProof/PackingProof-Desktop/releases) |
-| Android mobile | Released, signed APK | [PackingProof-Mobile](https://github.com/PackingProof/PackingProof-Mobile/releases) |
-| iOS mobile | Same feature set as Android, distributed via TestFlight | [Join the beta](https://testflight.apple.com/join/KR4qNs6t) |
-
-> **The mobile app runs standalone**: one phone alone can record, recognize shipping-label barcodes and look footage up by tracking number, with no PC required; connecting it to a PC adds LAN auto-backup and spoken order alerts. Because of app-store filing requirements in mainland China, Android and iOS are not listed in the app stores yet and ship as a signed APK and a TestFlight build.
-
-> **macOS is a feature subset**: it acts either as a save host (receiving footage uploaded by phones and other computers, serving web playback, managing storage disks and capacity limits) or as a viewer (discovering and connecting to a save host on the LAN). It does not capture a local camera or record by barcode scanning; it installs by replacing the whole app from the DMG, with no incremental patches.
-
-**Desktop capabilities**
-
-- Scan-triggered recording: a shipping-label barcode starts the recording, footage is filed by tracking number, with continuous-scan and one-segment-per-order modes
-- Spoken order notes: buyer message, seller memo and product info read aloud, with configurable content and voice
-- Printed-refund interception: monitors refunded orders and plays a loud alert to prevent wrong shipments
-- Multi-station: phones and other PCs upload footage to this host and appear under their assigned device names
-- LAN playback and web viewing: phones and other LAN devices can review footage with permissions
-- Storage: local / removable drive / NAS archiving with capacity cleanup policies, watermark burned into the video
-- Extension ecosystem: extension market and extension API for ERP, userscripts and weighing-device integrations
-- macOS save host: receives footage uploaded by phones and other computers, serves web playback, manages storage disks and capacity limits
-
-**Ecosystem (one PackingProof)**
-
-| Part | Repository | Role |
-| --- | --- | --- |
-| Desktop app (this repository) | PackingProof-Desktop | Recording and watermarking, scan-triggered recording, refund interception, multi-station backup, LAN playback, NAS archiving |
-| Mobile app (Android / iOS) | [PackingProof-Mobile](https://github.com/PackingProof/PackingProof-Mobile) | Standalone recording and evidence, or an upload source for the host |
-| Extension market and extension API | [PackingProof-Extensions](https://gitee.com/PackingProof/PackingProof-Extensions) | Extension registry, PPEXT package format, signed market index |
-| KDZS shipping-assistant script | [PackingProof-KDZS](https://gitee.com/PackingProof/PackingProof-KDZS) | Official KDZS shipping-assistant order integration |
-| QQ bot | [PackingProof-QQBot](https://gitee.com/PackingProof/PackingProof-QQBot) | Look up footage by tracking number in QQ and send the video back |
-| Enterprise / partner adapters | via the extension API | Kuaimai (快麦) ERP adapter, WeCom (企业微信) bot, etc. |
-
-**Search keywords**: PackingProof, parcel packing video evidence, barcode triggered recording, shipping label barcode, tracking number video lookup, packing station monitoring, logistics dispute evidence, multi-station recording, Windows packing recorder, macOS packing recorder, Android packing recorder, iOS packing recorder via TestFlight, NAS video archiving, extension API, open source.
 
 ## Why PackingProof
 
@@ -198,6 +206,8 @@ The recommended download is:
 ```text
 PackingProof_Setup_vX.Y.Z.exe
 ```
+
+Download from [GitHub Releases](https://github.com/PackingProof/PackingProof-Desktop/releases) · [Gitee Releases](https://gitee.com/PackingProof/PackingProof-Desktop/releases) (the Gitee build is the trimmed installer without the .NET runtime) · [Baidu Netdisk backup](https://pan.baidu.com/s/1B9L9l19ZkjtNpK_9rVZxbw?pwd=6666) (access code 6666).
 
 The installer does not require administrator rights. It installs for the current user and creates a Start menu shortcut.
 
@@ -432,11 +442,18 @@ git clone https://github.com/PackingProof/PackingProof-Desktop.git
 cd PackingProof-Desktop
 ```
 
+On networks where GitHub is slow, use the Gitee mirror instead:
+
+```bash
+git clone https://gitee.com/PackingProof/PackingProof-Desktop.git
+cd PackingProof-Desktop
+```
+
 Open and build the solution with Visual Studio, Rider, or the `dotnet` CLI.
 
 ## Feedback and Contributions
 
-Report problems or suggest features through [GitHub Issues](https://github.com/PackingProof/PackingProof-Desktop/issues).
+Report problems or suggest features through [GitHub Issues](https://github.com/PackingProof/PackingProof-Desktop/issues) or [Gitee Issues](https://gitee.com/PackingProof/PackingProof-Desktop/issues).
 
 Contributions to testing, documentation, code, and real-world usage guidance are welcome. If PackingProof is useful to you, consider starring the repository so more sellers can discover it.
 

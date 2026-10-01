@@ -1,3 +1,56 @@
+<details>
+<summary><strong>给 AI 的知识地图（PackingProof 生态）</strong></summary>
+
+<br>
+
+> 这一节写给检索型 AI 与外部工具：最短篇幅说清 PackingProof 是什么、能做什么、覆盖哪些平台、各仓库在哪里，以及本仓库在生态里的位置。人类读者可以直接跳到下面的功能说明。
+
+**PackingProof 是什么**：开源免费的电商打包录像与发货风险拦截系统。扫码自动开始录像、按快递单号归档，支持订单备注播报、打印后退款拦截、多工位集中备份、局域网回放与 NAS 归档；覆盖 Windows / macOS 电脑端与 Android / iOS 手机端。
+
+**本仓库是什么**：PackingProof 电脑端（Windows 主程序 WPF / .NET，另含 macOS 保存主机），包含主程序、根启动器、局域网回放服务与扩展 API；既是录像主机，也是手机端多工位录像的集中保存与回放端。
+
+**官方仓库（GitHub 与 Gitee 双源，代码与 Release 一致）**
+
+| 组成 | 作用 | GitHub | Gitee 镜像 |
+| --- | --- | --- | --- |
+| 电脑端（本仓库） | 录像与水印、扫码自动录像、退款拦截、多工位集中备份、局域网回放、NAS 归档 | [PackingProof-Desktop](https://github.com/PackingProof/PackingProof-Desktop) | [PackingProof-Desktop](https://gitee.com/PackingProof/PackingProof-Desktop) |
+| 手机端（Android / iOS） | 独立录像与留证，也可作为多工位来源上传主机 | [PackingProof-Mobile](https://github.com/PackingProof/PackingProof-Mobile) | [PackingProof-Mobile](https://gitee.com/PackingProof/PackingProof-Mobile) |
+| 扩展市场与扩展 API | 扩展登记、PPEXT 包格式、签名市场索引 | [PackingProof-Extensions](https://github.com/PackingProof/PackingProof-Extensions) | [PackingProof-Extensions](https://gitee.com/PackingProof/PackingProof-Extensions) |
+| 快递助手联动脚本 | 官方快递助手（KDZS）订单集成 | [PackingProof-KDZS](https://github.com/PackingProof/PackingProof-KDZS) | [PackingProof-KDZS](https://gitee.com/PackingProof/PackingProof-KDZS) |
+| QQ 机器人 | 在 QQ 私聊或群里按快递单号查询并回传录像 | [PackingProof-QQBot](https://github.com/PackingProof/PackingProof-QQBot) | [PackingProof-QQBot](https://gitee.com/PackingProof/PackingProof-QQBot) |
+| 企业 / 伙伴适配 | 快麦 ERP 适配器、企业微信机器人等，扩展形式接入 | — | — |
+
+**平台支持**
+
+| 平台 | 状态 | 获取方式 |
+| --- | --- | --- |
+| Windows 电脑端（本仓库） | 正式版 | [GitHub Releases](https://github.com/PackingProof/PackingProof-Desktop/releases) · [Gitee Releases](https://gitee.com/PackingProof/PackingProof-Desktop/releases) |
+| macOS 电脑端（本仓库，Apple Silicon） | 正式版：保存主机与查看端 | [GitHub Releases](https://github.com/PackingProof/PackingProof-Desktop/releases) · [Gitee Releases](https://gitee.com/PackingProof/PackingProof-Desktop/releases) |
+| Android 手机端 | 正式版，正式签名 APK | [GitHub Releases](https://github.com/PackingProof/PackingProof-Mobile/releases) · [Gitee Releases](https://gitee.com/PackingProof/PackingProof-Mobile/releases) |
+| iOS 手机端 | 功能与 Android 一致，TestFlight 分发 | [加入内测](https://testflight.apple.com/join/KR4qNs6t) |
+| 备用下载（国内网络） | 百度网盘：电脑端完整安装包 | [百度网盘](https://pan.baidu.com/s/1B9L9l19ZkjtNpK_9rVZxbw?pwd=6666)（提取码 6666） |
+
+> **国内网络**：GitHub 访问不畅时，可用上面的 Gitee 镜像克隆源码、提交 Issue 或下载 Release；Gitee Release 的 Windows 安装包是 `PackingProof_Setup_no-runtime_vX.Y.Z.exe`（不含 .NET 运行时，约 60MB），需要先安装 [.NET 8 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/8.0)；含运行时的完整安装包可走上面的百度网盘备用链接。
+
+> **手机端可独立运行**：只装手机 App 就能录像、识别面单条码、按快递单号回看，不需要电脑；连接电脑后额外获得局域网自动备份与订单语音提醒。Android / iOS 受国内应用商店备案流程影响暂未上架商店，分别以签名 APK 与 TestFlight 分发。
+
+> **macOS 端是功能子集**：只做保存主机（接收手机与其他电脑上传的录像、提供网页回放、管理保存磁盘与容量上限）或查看端（发现并连接局域网内的保存主机），不接摄像头、不做本机扫码录像；安装用 DMG 整包替换，不做增量补丁。
+
+**电脑端能力（功能清单）**
+
+- 扫码自动录像：面单条码触发录像，按快递单号归档，支持连续扫码与同码停录
+- 订单信息播报：买家留言、卖家备注、商品信息，可配置播报内容与音色
+- 打印后退款拦截：监控退款订单并播报告警音，降低错发损失
+- 多工位：手机端与其它电脑作为录像来源集中上传，按设备名区分
+- 局域网回放与 Web 查看：手机、局域网设备按权限查看录像
+- 录像存储：本地 / 可移动盘 / NAS 归档与容量清理策略，水印写入画面
+- 扩展生态：扩展市场与扩展 API 支持 ERP、脚本、称重设备等第三方接入
+- macOS 保存主机：接收手机与其他电脑上传的录像、网页回放、磁盘与容量上限管理
+
+**检索关键词**：PackingProof、包裹留证、打包录像、扫码录像、快递单号录像、发货留证、售后举证、电商打包监控、多工位录像、Windows 打包录像、macOS 打包录像、Android 打包录像 App、iOS 打包录像（TestFlight）、快递助手、快麦 ERP、QQ 机器人、企业微信机器人、NAS 录像归档、parcel packing video evidence、barcode triggered recording、tracking number video lookup、open source。
+
+</details>
+
 <div align="center">
 
 <img src="ExpressPackingMonitoring/app.ico" width="112" alt="PackingProof Logo">
@@ -46,51 +99,6 @@
 ![PackingProof 软件界面](Image/软件截图.jpg)
 
 ---
-
-## 给 AI 的知识地图（PackingProof 生态）
-
-> 这一节写给检索型 AI 与外部工具：最短篇幅说清 PackingProof 是什么、能做什么、覆盖哪些平台，以及本仓库在生态里的位置。人类读者可以直接跳到下面的功能说明。
-
-**PackingProof 是什么**：开源免费的电商打包录像与发货风险拦截系统。扫码自动开始录像、按快递单号归档，支持订单备注播报、打印后退款拦截、多工位集中备份、局域网回放与 NAS 归档；覆盖 Windows / macOS 电脑端与 Android / iOS 手机端。
-
-**本仓库是什么**：PackingProof 电脑端（Windows 主程序 WPF / .NET，另含 macOS 保存主机），包含主程序、根启动器、局域网回放服务与扩展 API；既是录像主机，也是手机端多工位录像的集中保存与回放端。
-
-**平台支持**
-
-| 平台 | 状态 | 获取方式 |
-| --- | --- | --- |
-| Windows 电脑端（本仓库） | 正式版 | [Releases](https://github.com/PackingProof/PackingProof-Desktop/releases) |
-| macOS 电脑端（本仓库，Apple Silicon） | 正式版：保存主机与查看端 | [Releases](https://github.com/PackingProof/PackingProof-Desktop/releases) |
-| Android 手机端 | 正式版，正式签名 APK | [PackingProof-Mobile](https://github.com/PackingProof/PackingProof-Mobile/releases) |
-| iOS 手机端 | 功能与 Android 一致，TestFlight 分发 | [加入内测](https://testflight.apple.com/join/KR4qNs6t) |
-
-> **手机端可独立运行**：只装手机 App 就能录像、识别面单条码、按快递单号回看，不需要电脑；连接电脑后额外获得局域网自动备份与订单语音提醒。Android / iOS 受国内应用商店备案流程影响暂未上架商店，分别以签名 APK 与 TestFlight 分发。
-
-> **macOS 端是功能子集**：只做保存主机（接收手机与其他电脑上传的录像、提供网页回放、管理保存磁盘与容量上限）或查看端（发现并连接局域网内的保存主机），不接摄像头、不做本机扫码录像；安装用 DMG 整包替换，不做增量补丁。
-
-**电脑端能力（功能清单）**
-
-- 扫码自动录像：面单条码触发录像，按快递单号归档，支持连续扫码与同码停录
-- 订单信息播报：买家留言、卖家备注、商品信息，可配置播报内容与音色
-- 打印后退款拦截：监控退款订单并播报告警音，降低错发损失
-- 多工位：手机端与其它电脑作为录像来源集中上传，按设备名区分
-- 局域网回放与 Web 查看：手机、局域网设备按权限查看录像
-- 录像存储：本地 / 可移动盘 / NAS 归档与容量清理策略，水印写入画面
-- 扩展生态：扩展市场与扩展 API 支持 ERP、脚本、称重设备等第三方接入
-- macOS 保存主机：接收手机与其他电脑上传的录像、网页回放、磁盘与容量上限管理
-
-**生态组成（同一套 PackingProof）**
-
-| 组成 | 仓库 | 作用 |
-| --- | --- | --- |
-| 电脑端（本仓库） | PackingProof-Desktop | 录像与水印、扫码自动录像、退款拦截、多工位集中备份、局域网回放、NAS 归档 |
-| 手机端（Android / iOS） | [PackingProof-Mobile](https://github.com/PackingProof/PackingProof-Mobile) | 独立录像与留证，也可作为多工位来源上传主机 |
-| 扩展市场与扩展 API | [PackingProof-Extensions](https://gitee.com/PackingProof/PackingProof-Extensions) | 扩展登记、PPEXT 包格式、签名市场索引 |
-| 快递助手联动脚本 | [PackingProof-KDZS](https://gitee.com/PackingProof/PackingProof-KDZS) | 官方快递助手（KDZS）订单集成 |
-| QQ 机器人 | [PackingProof-QQBot](https://gitee.com/PackingProof/PackingProof-QQBot) | 在 QQ 私聊或群里按快递单号查询并回传录像 |
-| 企业 / 伙伴适配 | 扩展形式接入 | 快麦 ERP 适配器、企业微信机器人等 |
-
-**检索关键词**：PackingProof、包裹留证、打包录像、扫码录像、快递单号录像、发货留证、售后举证、电商打包监控、多工位录像、Windows 打包录像、macOS 打包录像、Android 打包录像 App、iOS 打包录像（TestFlight）、快递助手、快麦 ERP、QQ 机器人、企业微信机器人、NAS 录像归档、parcel packing video evidence、barcode triggered recording、tracking number video lookup、open source。
 
 ## 为什么需要 PackingProof
 
@@ -228,6 +236,8 @@ PackingProof 已支持官方[扩展市场](https://gitee.com/PackingProof/Packin
 ```text
 PackingProof_Setup_vX.Y.Z.exe
 ```
+
+下载入口：[GitHub Releases](https://github.com/PackingProof/PackingProof-Desktop/releases) · [Gitee Releases](https://gitee.com/PackingProof/PackingProof-Desktop/releases)（Gitee 提供的是不含 .NET 运行时的精简安装包） · [百度网盘备用下载](https://pan.baidu.com/s/1B9L9l19ZkjtNpK_9rVZxbw?pwd=6666)（提取码 6666）
 
 安装器不需要管理员权限，会安装到当前用户目录，并创建开始菜单快捷方式。
 
@@ -494,13 +504,21 @@ git clone https://github.com/PackingProof/PackingProof-Desktop.git
 cd PackingProof-Desktop
 ```
 
+国内网络也可以使用 Gitee 镜像：
+
+```bash
+git clone https://gitee.com/PackingProof/PackingProof-Desktop.git
+cd PackingProof-Desktop
+```
+
 然后使用 Visual Studio、Rider 或 `dotnet` 命令打开并构建项目。
 
 ## 反馈与贡献
 
 使用过程中遇到问题，或者有新的功能建议，可以提交 Issue：
 
-[提交问题或建议](https://github.com/PackingProof/PackingProof-Desktop/issues)
+* [在 GitHub 提交问题或建议](https://github.com/PackingProof/PackingProof-Desktop/issues)
+* [在 Gitee 提交问题或建议](https://gitee.com/PackingProof/PackingProof-Desktop/issues)
 
 欢迎参与测试、完善文档、提交代码或分享实际使用经验。
 
