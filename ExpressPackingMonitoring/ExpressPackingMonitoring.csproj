@@ -28,7 +28,7 @@
     <!-- 开发构建使用与发布一致的 FFmpeg 基线（Tools/ffmpeg-baseline.json），避免开发/发布能力漂移。 -->
     <FFmpegBaselineVersion>4.4.1</FFmpegBaselineVersion>
     <FFmpegBaselineExecutable>..\package\dependency-cache\ffmpeg\$(FFmpegBaselineVersion)\ffmpeg.exe</FFmpegBaselineExecutable>
-    <SatelliteResourceLanguages>en-US;zh-Hans</SatelliteResourceLanguages>
+    <SatelliteResourceLanguages>en-US;zh-Hans;ja-JP</SatelliteResourceLanguages>
     <ApplicationIcon>app.ico</ApplicationIcon>
     <!-- 发布版本默认值：每次发布前手动改为新版本号，发布脚本会用 -p:InformationalVersion 覆盖。 -->
     <Version>0.0.73</Version>
@@ -176,6 +176,7 @@
     <Compile Include="ViewModels\MainViewModel.Conversion.cs" />
     <Compile Include="ViewModels\MainViewModel.Transfer.cs" />
     <Compile Include="UI\AppDialog.cs" />
+    <Compile Include="UI\EdgeVoiceCatalog.cs" />
     <Compile Include="UI\BackupDeviceEnrollmentApprovalPrompt.cs" />
     <Compile Include="UI\BackupDeviceEnrollmentApprovalWindow.xaml.cs" />
     <Compile Include="UI\FloatingPreviewController.cs" />

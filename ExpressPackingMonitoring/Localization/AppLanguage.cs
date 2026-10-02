@@ -9,12 +9,14 @@ public static class AppLanguage
     public const string Auto = "Auto";
     public const string Chinese = "zh-Hans";
     public const string English = "en-US";
+    public const string Japanese = "ja-JP";
 
     private static readonly ResourceManager Resources =
         new("ExpressPackingMonitoring.Resources.Strings", typeof(AppLanguage).Assembly);
 
     public static string Current { get; private set; } = Chinese;
     public static bool IsChinese => Current == Chinese;
+    public static bool IsJapanese => Current == Japanese;
     public static string StartRecordingText => Get("开始录制");
     public static string StopRecordingText => Get("停止录制");
     /// <summary>识别框锁住时锁图标的提示</summary>
@@ -26,6 +28,7 @@ public static class AppLanguage
     {
         Chinese => Chinese,
         English => English,
+        Japanese => Japanese,
         Auto => Auto,
         _ => Auto
     };
@@ -35,7 +38,9 @@ public static class AppLanguage
         string normalized = NormalizePreference(preference);
         if (normalized != Auto) return normalized;
         string language = (systemCulture ?? CultureInfo.InstalledUICulture).TwoLetterISOLanguageName;
-        return string.Equals(language, "zh", StringComparison.OrdinalIgnoreCase) ? Chinese : English;
+        if (string.Equals(language, "zh", StringComparison.OrdinalIgnoreCase)) return Chinese;
+        if (string.Equals(language, "ja", StringComparison.OrdinalIgnoreCase)) return Japanese;
+        return English;
     }
 
     public static void Initialize(string? preference)

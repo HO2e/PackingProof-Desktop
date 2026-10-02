@@ -327,6 +327,28 @@ namespace ExpressPackingMonitoring.Config
         public string EdgeTtsWarningVoiceZhHans { get; set; } = "";
         public string EdgeTtsVoiceEnUs { get; set; } = "en-US-JennyNeural";
         public string EdgeTtsWarningVoiceEnUs { get; set; } = "en-US-GuyNeural";
+        public string EdgeTtsVoiceJaJp { get; set; } = "";
+        public string EdgeTtsWarningVoiceJaJp { get; set; } = "";
+
+        /// <summary>把界面上选中的在线音色写回当前界面语言对应的存档字段。</summary>
+        public void StoreSelectedEdgeVoices()
+        {
+            switch (AppLanguage.Resolve(Language))
+            {
+                case AppLanguage.Japanese:
+                    EdgeTtsVoiceJaJp = EdgeTtsVoice;
+                    EdgeTtsWarningVoiceJaJp = EdgeTtsWarningVoice;
+                    break;
+                case AppLanguage.Chinese:
+                    EdgeTtsVoiceZhHans = EdgeTtsVoice;
+                    EdgeTtsWarningVoiceZhHans = EdgeTtsWarningVoice;
+                    break;
+                default:
+                    EdgeTtsVoiceEnUs = EdgeTtsVoice;
+                    EdgeTtsWarningVoiceEnUs = EdgeTtsWarningVoice;
+                    break;
+            }
+        }
 
         // 订单备注播报（快递助手插件）
         public bool EnableOrderInfoAnnounce { get; set; } = true;
@@ -652,10 +674,24 @@ namespace ExpressPackingMonitoring.Config
                 config.EdgeTtsWarningVoiceEnUs = "en-US-GuyNeural";
                 changed = true;
             }
+            if (string.IsNullOrWhiteSpace(config.EdgeTtsVoiceJaJp))
+            {
+                config.EdgeTtsVoiceJaJp = "ja-JP-NanamiNeural";
+                changed = true;
+            }
+            if (string.IsNullOrWhiteSpace(config.EdgeTtsWarningVoiceJaJp))
+            {
+                config.EdgeTtsWarningVoiceJaJp = "ja-JP-KeitaNeural";
+                changed = true;
+            }
 
             string effectiveLanguage = AppLanguage.Resolve(config.Language);
-            string effectiveVoice = effectiveLanguage == AppLanguage.Chinese ? config.EdgeTtsVoiceZhHans : config.EdgeTtsVoiceEnUs;
-            string effectiveWarningVoice = effectiveLanguage == AppLanguage.Chinese ? config.EdgeTtsWarningVoiceZhHans : config.EdgeTtsWarningVoiceEnUs;
+            (string effectiveVoice, string effectiveWarningVoice) = effectiveLanguage switch
+            {
+                AppLanguage.Chinese => (config.EdgeTtsVoiceZhHans, config.EdgeTtsWarningVoiceZhHans),
+                AppLanguage.Japanese => (config.EdgeTtsVoiceJaJp, config.EdgeTtsWarningVoiceJaJp),
+                _ => (config.EdgeTtsVoiceEnUs, config.EdgeTtsWarningVoiceEnUs)
+            };
             if (config.EdgeTtsVoice != effectiveVoice) { config.EdgeTtsVoice = effectiveVoice; changed = true; }
             if (config.EdgeTtsWarningVoice != effectiveWarningVoice) { config.EdgeTtsWarningVoice = effectiveWarningVoice; changed = true; }
 

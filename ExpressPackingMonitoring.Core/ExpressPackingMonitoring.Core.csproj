@@ -52,6 +52,8 @@
                       LogicalName="ExpressPackingMonitoring.Resources.Strings.resources" />
     <EmbeddedResource Include="..\ExpressPackingMonitoring\Resources\Strings.zh-Hans.resx"
                       LogicalName="ExpressPackingMonitoring.Resources.Strings.zh-Hans.resources" />
+    <EmbeddedResource Include="..\ExpressPackingMonitoring\Resources\Strings.ja-JP.resx"
+                      LogicalName="ExpressPackingMonitoring.Resources.Strings.ja-JP.resources" />
   </ItemGroup>
 
   <ItemGroup>

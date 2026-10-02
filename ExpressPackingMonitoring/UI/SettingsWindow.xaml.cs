@@ -37,7 +37,6 @@ namespace ExpressPackingMonitoring.UI
         public override string ToString() => Name;
     }
     public class FpsOption { public int Fps { get; set; } public string Label { get; set; } public override string ToString() => Label; }
-    public class EdgeVoiceOption { public string ShortName { get; set; } public string DisplayName { get; set; } public override string ToString() => DisplayName; }
 
     public sealed class CqpToQualitySliderConverter : IValueConverter
     {
@@ -134,25 +133,7 @@ namespace ExpressPackingMonitoring.UI
         public string AppCommitText { get; } = GetAppCommitText();
         public string AppCommitToolTip { get; } = GetAppCommitToolTip();
         public ImageSource AppIconImage { get; } = GetLargestAppIconImage();
-        public List<EdgeVoiceOption> EdgeVoiceOptions { get; } = new()
-        {
-            new EdgeVoiceOption { ShortName = "zh-CN-XiaoxiaoNeural", DisplayName = "晓晓 - 女声" },
-            new EdgeVoiceOption { ShortName = "zh-CN-XiaoyiNeural", DisplayName = "晓伊 - 女声" },
-            new EdgeVoiceOption { ShortName = "zh-CN-YunjianNeural", DisplayName = "云健 - 男声" },
-            new EdgeVoiceOption { ShortName = "zh-CN-YunxiNeural", DisplayName = "云希 - 男声" },
-            new EdgeVoiceOption { ShortName = "zh-CN-YunxiaNeural", DisplayName = "云夏 - 男声" },
-            new EdgeVoiceOption { ShortName = "zh-CN-YunyangNeural", DisplayName = "云扬 - 男声" },
-            new EdgeVoiceOption { ShortName = "zh-CN-liaoning-XiaobeiNeural", DisplayName = "辽宁晓北 - 女声" },
-            new EdgeVoiceOption { ShortName = "zh-CN-shaanxi-XiaoniNeural", DisplayName = "陕西晓妮 - 女声" },
-            new EdgeVoiceOption { ShortName = "zh-HK-HiuGaaiNeural", DisplayName = "粤语 HiuGaai - 女声" },
-            new EdgeVoiceOption { ShortName = "zh-HK-WanLungNeural", DisplayName = "粤语 WanLung - 男声" },
-            new EdgeVoiceOption { ShortName = "zh-TW-HsiaoChenNeural", DisplayName = "台湾晓臻 - 女声" },
-            new EdgeVoiceOption { ShortName = "zh-TW-YunJheNeural", DisplayName = "台湾云哲 - 男声" },
-            new EdgeVoiceOption { ShortName = "en-US-JennyNeural", DisplayName = "Jenny - Female (US)" },
-            new EdgeVoiceOption { ShortName = "en-US-AriaNeural", DisplayName = "Aria - Female (US)" },
-            new EdgeVoiceOption { ShortName = "en-US-GuyNeural", DisplayName = "Guy - Male (US)" },
-            new EdgeVoiceOption { ShortName = "en-US-DavisNeural", DisplayName = "Davis - Male (US)" }
-        };
+        public List<EdgeVoiceOption> EdgeVoiceOptions { get; } = EdgeVoiceCatalog.All;
 
         private string _originalTheme;
         private string _originalLanguage;
@@ -1920,16 +1901,9 @@ namespace ExpressPackingMonitoring.UI
             }
 
             // 3. 校验并保存
-            if (Capabilities.IsRecordingDevice &&
-                AppLanguage.Resolve(Config.Language) == AppLanguage.Chinese)
+            if (Capabilities.IsRecordingDevice)
             {
-                Config.EdgeTtsVoiceZhHans = Config.EdgeTtsVoice;
-                Config.EdgeTtsWarningVoiceZhHans = Config.EdgeTtsWarningVoice;
-            }
-            else if (Capabilities.IsRecordingDevice)
-            {
-                Config.EdgeTtsVoiceEnUs = Config.EdgeTtsVoice;
-                Config.EdgeTtsWarningVoiceEnUs = Config.EdgeTtsWarningVoice;
+                Config.StoreSelectedEdgeVoices();
             }
             ApplyDeploymentPurposeBeforeSave(
                 Config,

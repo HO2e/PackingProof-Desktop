@@ -13,11 +13,26 @@ public sealed class LocalizationTests
     [Theory]
     [InlineData("zh-CN", AppLanguage.Chinese)]
     [InlineData("zh-TW", AppLanguage.Chinese)]
+    [InlineData("ja-JP", AppLanguage.Japanese)]
     [InlineData("en-US", AppLanguage.English)]
     [InlineData("fr-FR", AppLanguage.English)]
     public void Resolve_AutoUsesChineseFamilyAndFallsBackToEnglish(string culture, string expected)
     {
         Assert.Equal(expected, AppLanguage.Resolve(AppLanguage.Auto, CultureInfo.GetCultureInfo(culture)));
+    }
+
+    [Fact]
+    public void NormalizeAfterLoad_SelectsJapaneseVoicesForJapaneseLanguage()
+    {
+        var config = new AppConfig { Language = AppLanguage.Japanese };
+
+        AppConfig.NormalizeAfterLoad(config);
+
+        Assert.Equal("ja-JP-NanamiNeural", config.EdgeTtsVoiceJaJp);
+        Assert.Equal("ja-JP-KeitaNeural", config.EdgeTtsWarningVoiceJaJp);
+        Assert.Equal(config.EdgeTtsVoiceJaJp, config.EdgeTtsVoice);
+        Assert.Equal(config.EdgeTtsWarningVoiceJaJp, config.EdgeTtsWarningVoice);
+        Assert.DoesNotContain("zh-CN", config.EdgeTtsVoice, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -44,8 +59,10 @@ public sealed class LocalizationTests
     {
         Assert.Equal("Settings", AppLanguage.Get("设置", CultureInfo.GetCultureInfo("en-US")));
         Assert.Equal("设置", AppLanguage.Get("设置", CultureInfo.GetCultureInfo("zh-Hans")));
+        Assert.Equal("設定", AppLanguage.Get("设置", CultureInfo.GetCultureInfo("ja-JP")));
         Assert.Equal("Recording started", AppLanguage.Get("Speech.StartRecording", CultureInfo.GetCultureInfo("en-US")));
         Assert.Equal("开始录制", AppLanguage.Get("Speech.StartRecording", CultureInfo.GetCultureInfo("zh-Hans")));
+        Assert.Equal("録画を開始しました", AppLanguage.Get("Speech.StartRecording", CultureInfo.GetCultureInfo("ja-JP")));
     }
 
     /// <summary>
@@ -59,17 +76,28 @@ public sealed class LocalizationTests
         string defaultPath = Path.Combine(projectPath, "Resources", "Strings.resx");
         string chinesePath = Path.Combine(projectPath, "Resources", "Strings.zh-Hans.resx");
 
-        static string[] ReadKeys(string path) =>
-            Regex.Matches(File.ReadAllText(path), "<data name=\"([^\"]+)\"")
-                .Select(match => match.Groups[1].Value)
-                .Distinct(StringComparer.Ordinal)
-                .ToArray();
-
         string[] missing = ReadKeys(defaultPath)
             .Except(ReadKeys(chinesePath), StringComparer.Ordinal)
             .ToArray();
 
         Assert.True(missing.Length == 0, "Missing zh-Hans resources: " + string.Join(" | ", missing));
+    }
+
+    /// <summary>
+    /// 日语同样依赖卫星资源：缺词条时会回退到中性的英文资源。
+    /// </summary>
+    [Fact]
+    public void Resources_EveryDefaultKeyHasJapaneseEntry()
+    {
+        string projectPath = Path.Combine(FindRepositoryRoot(), "ExpressPackingMonitoring");
+        string defaultPath = Path.Combine(projectPath, "Resources", "Strings.resx");
+        string japanesePath = Path.Combine(projectPath, "Resources", "Strings.ja-JP.resx");
+
+        string[] missing = ReadKeys(defaultPath)
+            .Except(ReadKeys(japanesePath), StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.True(missing.Length == 0, "Missing ja-JP resources: " + string.Join(" | ", missing));
     }
 
     [Fact]
@@ -159,6 +187,12 @@ public sealed class LocalizationTests
 
         throw new DirectoryNotFoundException("ExpressPackingMonitoring repository root was not found.");
     }
+
+    private static string[] ReadKeys(string path) =>
+        Regex.Matches(File.ReadAllText(path), "<data name=\"([^\"]+)\"")
+            .Select(match => match.Groups[1].Value)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
 
     [Fact]
     public void TextBlockLocalization_DistinguishesTextPropertyFromExplicitInlines()

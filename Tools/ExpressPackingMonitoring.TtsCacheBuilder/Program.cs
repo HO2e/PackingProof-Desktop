@@ -26,6 +26,12 @@ var languageProfiles = new[]
         Language = AppLanguage.English,
         Voice = config.EdgeTtsVoiceEnUs,
         WarningVoice = config.EdgeTtsWarningVoiceEnUs
+    },
+    new
+    {
+        Language = AppLanguage.Japanese,
+        Voice = config.EdgeTtsVoiceJaJp,
+        WarningVoice = config.EdgeTtsWarningVoiceJaJp
     }
 };
 
