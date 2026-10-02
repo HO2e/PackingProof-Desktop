@@ -63,11 +63,31 @@ public static class AppLanguage
     public static string Translate(string value)
     {
         if (string.IsNullOrWhiteSpace(value)) return value;
-        string? exact = Resources.GetString(value, CultureInfo.CurrentUICulture);
+        CultureInfo culture = CultureInfo.CurrentUICulture;
+        string? exact = Resources.GetString(value, culture);
         if (exact != null) return exact;
-        if (IsChinese) return value;
+        // 中文界面下原文就是中文，直接返回；这里按当前文化判断，避免受全局语言状态影响。
+        if (string.Equals(culture.TwoLetterISOLanguageName, "zh", StringComparison.OrdinalIgnoreCase))
+            return value;
 
-        string translated = value;
+        PhraseTable table = GetPhraseTable(culture);
+
+        // “已连接 主机名”“找到 3 台主机”这类带占位符的完整句式，直接按模板整句替换。
+        foreach ((System.Text.RegularExpressions.Regex pattern, string template) in table.Templates)
+        {
+            System.Text.RegularExpressions.Match match = pattern.Match(value);
+            if (!match.Success) continue;
+            var arguments = new object[match.Groups.Count - 1];
+            for (int index = 1; index < match.Groups.Count; index++)
+                arguments[index - 1] = match.Groups[index].Value;
+            return string.Format(culture, template, arguments);
+        }
+
+        // “快递单号：SF001”这类“标签＋冒号＋内容”的拼接串，只翻标签，内容保持原样。
+        string translated = TranslateLabel(value, table, culture);
+        if (!ReferenceEquals(translated, value)) return translated;
+
+        translated = value;
         translated = System.Text.RegularExpressions.Regex.Replace(translated, @"(?<=\d)\s*分钟$", Get("分钟"));
         translated = System.Text.RegularExpressions.Regex.Replace(translated, @"(?<=\d)\s*秒$", Get("秒"));
         translated = System.Text.RegularExpressions.Regex.Replace(translated, @"(?<=\d)\s*倍$", Get("倍"));
@@ -75,6 +95,134 @@ public static class AppLanguage
         if (translated.StartsWith("版本 ", StringComparison.Ordinal))
             translated = Get("版本") + translated[2..];
         return translated;
+    }
+
+    private sealed record PhraseTable(
+        IReadOnlyDictionary<string, string> Labels,
+        IReadOnlyList<(System.Text.RegularExpressions.Regex Pattern, string Template)> Templates);
+
+    private static readonly Dictionary<string, PhraseTable> PhraseTables = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly object PhraseTableLock = new();
+
+    private static PhraseTable GetPhraseTable(CultureInfo culture)
+    {
+        lock (PhraseTableLock)
+        {
+            if (PhraseTables.TryGetValue(culture.Name, out PhraseTable? cached)) return cached;
+            PhraseTable built = BuildPhraseTable(culture);
+            PhraseTables[culture.Name] = built;
+            return built;
+        }
+    }
+
+    /// <summary>
+    /// 从当前语言的资源里取出“中文原文 → 译文”的映射，用于翻译代码里拼出来的中文。
+    /// 只收中文词条，模板词条单独编译成正则。
+    /// </summary>
+    private static PhraseTable BuildPhraseTable(CultureInfo culture)
+    {
+        var labels = new Dictionary<string, string>(StringComparer.Ordinal);
+        var templateKeys = new List<KeyValuePair<string, string>>();
+
+        System.Collections.IDictionaryEnumerator? enumerator =
+            Resources.GetResourceSet(culture, true, false)?.GetEnumerator();
+        if (enumerator == null) return new PhraseTable(labels, Array.Empty<(System.Text.RegularExpressions.Regex, string)>());
+
+        while (enumerator.MoveNext())
+        {
+            if (enumerator.Key is not string key || enumerator.Value is not string value) continue;
+            if (key.Length < 2 || !ContainsCjk(key) || string.Equals(key, value, StringComparison.Ordinal)) continue;
+            if (key.Contains('{'))
+            {
+                if (TryBuildTemplateRegex(key) != null)
+                    templateKeys.Add(new KeyValuePair<string, string>(key, value));
+                continue;
+            }
+            labels[key] = value;
+        }
+
+        var templates = new List<(System.Text.RegularExpressions.Regex, string)>();
+        foreach (KeyValuePair<string, string> pair in templateKeys.OrderByDescending(item => item.Key.Length))
+        {
+            System.Text.RegularExpressions.Regex pattern = TryBuildTemplateRegex(pair.Key)!;
+            templates.Add((pattern, pair.Value));
+        }
+
+        return new PhraseTable(labels, templates);
+    }
+
+    private static System.Text.RegularExpressions.Regex? TryBuildTemplateRegex(string key)
+    {
+        // 只有形如“已连接 {0}”的完整句式才做模板匹配，避免误伤普通词条。
+        if (!key.Contains("{0}", StringComparison.Ordinal)) return null;
+        if (key.Length < 4) return null;
+
+        var builder = new System.Text.StringBuilder("^");
+        int index = 0;
+        foreach (System.Text.RegularExpressions.Match match in
+                 System.Text.RegularExpressions.Regex.Matches(key, @"\{(\d)\}"))
+        {
+            builder.Append(System.Text.RegularExpressions.Regex.Escape(key[index..match.Index]));
+            builder.Append("(.+?)");
+            index = match.Index + match.Length;
+        }
+        if (index == 0) return null;
+        builder.Append(System.Text.RegularExpressions.Regex.Escape(key[index..]));
+        builder.Append('$');
+        return new System.Text.RegularExpressions.Regex(
+            builder.ToString(),
+            System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+    }
+
+    private static string TranslateLabel(string value, PhraseTable table, CultureInfo culture)
+    {
+        if (value.IndexOf('\n') < 0) return TranslateSingleLabel(value, table, culture);
+
+        // 悬浮提示是多行“标签：内容”，逐行翻译标签。
+        string[] lines = value.Replace("\r\n", "\n").Split('\n');
+        bool changed = false;
+        for (int index = 0; index < lines.Length; index++)
+        {
+            string translatedLine = TranslateSingleLabel(lines[index], table, culture);
+            if (ReferenceEquals(translatedLine, lines[index])) continue;
+            lines[index] = translatedLine;
+            changed = true;
+        }
+        return changed ? string.Join(Environment.NewLine, lines) : value;
+    }
+
+    private static string TranslateSingleLabel(string value, PhraseTable table, CultureInfo culture)
+    {
+        int separator = value.IndexOf('：');
+        int separatorLength = 1;
+        if (separator < 0)
+        {
+            separator = value.IndexOf(": ", StringComparison.Ordinal);
+            separatorLength = 2;
+        }
+        if (separator <= 0) return value;
+
+        string label = value[..separator].Trim();
+        if (!table.Labels.TryGetValue(label, out string? translatedLabel)) return value;
+
+        string content = value[(separator + separatorLength)..].TrimStart();
+        // 内容本身也是词条时（例如发/退货、状态词）一起翻掉，否则保留原始数据。
+        string trimmedContent = content.TrimEnd();
+        if (trimmedContent.Length > 0)
+        {
+            string? translatedContent = Resources.GetString(trimmedContent, culture);
+            if (translatedContent != null) content = translatedContent + content[trimmedContent.Length..];
+        }
+        return translatedLabel + ": " + content;
+    }
+
+    private static bool ContainsCjk(string value)
+    {
+        foreach (char character in value)
+        {
+            if (character is >= '\u4e00' and <= '\u9fff') return true;
+        }
+        return false;
     }
 
 }

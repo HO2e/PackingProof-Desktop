@@ -1136,4 +1136,47 @@
   <data name="发退货" xml:space="preserve"><value>出荷 / 返品</value></data>
   <data name="清除全部筛选" xml:space="preserve"><value>すべての絞り込みを解除</value></data>
   <data name="全部设备" xml:space="preserve"><value>すべてのデバイス</value></data>
+  <data name="快递单号" xml:space="preserve"><value>追跡番号</value></data>
+  <data name="订单号" xml:space="preserve"><value>注文番号</value></data>
+  <data name="原始订单号" xml:space="preserve"><value>元の注文番号</value></data>
+  <data name="商品信息" xml:space="preserve"><value>商品情報</value></data>
+  <data name="买家留言" xml:space="preserve"><value>購入者メッセージ</value></data>
+  <data name="卖家备注" xml:space="preserve"><value>販売者メモ</value></data>
+  <data name="订单信息推送时间" xml:space="preserve"><value>注文情報の送信時刻</value></data>
+  <data name="录制时间" xml:space="preserve"><value>録画日時</value></data>
+  <data name="编码" xml:space="preserve"><value>エンコード</value></data>
+  <data name="来源" xml:space="preserve"><value>ソース</value></data>
+  <data name="结束原因" xml:space="preserve"><value>停止理由</value></data>
+  <data name="状态" xml:space="preserve"><value>ステータス</value></data>
+  <data name="文件位置" xml:space="preserve"><value>ファイルの場所</value></data>
+  <data name="已清理" xml:space="preserve"><value>削除済み</value></data>
+  <data name="已保存到主机" xml:space="preserve"><value>ホストに保存済み</value></data>
+  <data name="文件已丢失，未在记录的位置找到录像" xml:space="preserve"><value>ファイルが見つかりません。記録された場所に録画がありません</value></data>
+  <data name="正在查找同一局域网中可用的保存主机" xml:space="preserve"><value>LAN 上で利用可能な保存ホストを検索中</value></data>
+  <data name="没有找到主机，请检查两台电脑是否连接同一网络" xml:space="preserve"><value>ホストが見つかりません。2 台のパソコンが同じネットワークに接続されているか確認してください</value></data>
+  <data name="找到了主机，但没有可接收录像的保存主机" xml:space="preserve"><value>ホストは見つかりましたが、録画を受信できる保存ホストではありません</value></data>
+  <data name="找到了保存主机，但版本过旧，请更新保存主机电脑" xml:space="preserve"><value>保存ホストが見つかりましたが、バージョンが古いため、保存ホストのパソコンを更新してください</value></data>
+  <data name="找到 1 台主机，确认后即可连接" xml:space="preserve"><value>ホストが 1 台見つかりました。確認すると接続できます</value></data>
+  <data name="搜索已取消" xml:space="preserve"><value>検索をキャンセルしました</value></data>
+  <data name="正在查找其他可用主机" xml:space="preserve"><value>他の利用可能なホストを検索中</value></data>
+  <data name="正在请求保存主机允许连接" xml:space="preserve"><value>保存ホストに接続の許可を要求中</value></data>
+  <data name="需要主机允许连接" xml:space="preserve"><value>ホストの接続許可が必要です</value></data>
+  <data name="已允许访问" xml:space="preserve"><value>アクセスを許可しました</value></data>
+  <data name="未取得网页访问权限" xml:space="preserve"><value>Web アクセス権が未取得です</value></data>
+  <data name="主机离线或身份已变化" xml:space="preserve"><value>ホストがオフラインか、識別情報が変更されています</value></data>
+  <data name="尚未绑定主机" xml:space="preserve"><value>ホストが未接続です</value></data>
+  <data name="暂时离线，稍后会自动重试" xml:space="preserve"><value>一時的にオフラインです。後で自動的に再試行します</value></data>
+  <data name="找到 {0} 台主机，请选择要连接的主机" xml:space="preserve"><value>ホストが {0} 台見つかりました。接続するホストを選択してください</value></data>
+  <data name="搜索主机失败：{0}" xml:space="preserve"><value>ホストの検索に失敗しました: {0}</value></data>
+  <data name="已找到“{0}”，等待保存主机允许连接" xml:space="preserve"><value>「{0}」が見つかりました。保存ホストの接続許可を待っています</value></data>
+  <data name="正在连接“{0}”" xml:space="preserve"><value>「{0}」に接続中</value></data>
+  <data name="已连接 {0}" xml:space="preserve"><value>{0} に接続しました</value></data>
+  <data name="存储错误" xml:space="preserve"><value>ストレージ エラー</value></data>
+  <data name="回放错误" xml:space="preserve"><value>再生エラー</value></data>
+  <data name="定位失败" xml:space="preserve"><value>ファイルを特定できません</value></data>
+  <data name="提示" xml:space="preserve"><value>お知らせ</value></data>
+  <data name="警告" xml:space="preserve"><value>警告</value></data>
+  <data name="播放错误" xml:space="preserve"><value>再生エラー</value></data>
+  <data name="未连接" xml:space="preserve"><value>未接続</value></data>
+  <data name="已复制" xml:space="preserve"><value>コピーしました</value></data>
 </root>

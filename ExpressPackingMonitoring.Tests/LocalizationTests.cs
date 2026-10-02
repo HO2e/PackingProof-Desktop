@@ -66,6 +66,37 @@ public sealed class LocalizationTests
     }
 
     /// <summary>
+    /// 代码里拼出来的中文（标签＋冒号、带参数的整句）也要能翻译，
+    /// 否则回放悬浮提示和查看端状态在英文/日文界面会整段显示中文。
+    /// </summary>
+    [Fact]
+    public void Translate_LocalizesComposedLabelsAndTemplates()
+    {
+        CultureInfo original = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("en-US");
+            Assert.Equal("Tracking number: SF001", AppLanguage.Translate("快递单号：SF001"));
+            Assert.Equal("Found 3 hosts. Select one to connect", AppLanguage.Translate("找到 3 台主机，请选择要连接的主机"));
+            Assert.Equal("Connected to PC-A", AppLanguage.Translate("已连接 PC-A"));
+            Assert.Equal("未知文本", AppLanguage.Translate("未知文本"));
+            Assert.Equal(
+                "Shipping / Return: Shipping" + Environment.NewLine
+                + "Tracking number: SF001" + Environment.NewLine
+                + "Buyer message: 尽快发货",
+                AppLanguage.Translate("发退货：发货\n快递单号：SF001\n买家留言：尽快发货"));
+
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("ja-JP");
+            Assert.Equal("追跡番号: SF001", AppLanguage.Translate("快递单号：SF001"));
+            Assert.Equal("PC-A に接続しました", AppLanguage.Translate("已连接 PC-A"));
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = original;
+        }
+    }
+
+    /// <summary>
     /// 默认资源（英文）里每一把键都必须在 zh-Hans 卫星资源里有对应条目。
     /// 只加英文不加中文时，中文界面会回退到中性资源，也就是直接显示英文。
     /// </summary>
