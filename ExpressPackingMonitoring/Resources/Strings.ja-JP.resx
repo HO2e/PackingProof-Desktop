@@ -1179,4 +1179,35 @@
   <data name="播放错误" xml:space="preserve"><value>再生エラー</value></data>
   <data name="未连接" xml:space="preserve"><value>未接続</value></data>
   <data name="已复制" xml:space="preserve"><value>コピーしました</value></data>
+  <data name="无法创建或写入目录" xml:space="preserve"><value>フォルダーを作成または書き込みできません</value></data>
+  <data name="复制网址失败" xml:space="preserve"><value>URL のコピーに失敗しました</value></data>
+  <data name="无法打开链接" xml:space="preserve"><value>リンクを開けません</value></data>
+  <data name="同一个磁盘已经添加过" xml:space="preserve"><value>同じディスクがすでに追加されています</value></data>
+  <data name="导出单号失败" xml:space="preserve"><value>送り状番号のエクスポートに失敗しました</value></data>
+  <data name="无法打开文件管理器" xml:space="preserve"><value>ファイル マネージャーを開けません</value></data>
+  <data name="用途保存失败" xml:space="preserve"><value>用途の保存に失敗しました</value></data>
+  <data name="安装扩展失败" xml:space="preserve"><value>拡張のインストールに失敗しました</value></data>
+  <data name="当前配置" xml:space="preserve"><value>現在の設定</value></data>
+  <data name="关闭行为保存失败，下次仍会询问" xml:space="preserve"><value>終了時の動作を保存できませんでした。次回も確認します</value></data>
+  <data name="删除扩展失败" xml:space="preserve"><value>拡張の削除に失敗しました</value></data>
+  <data name="打开网页失败" xml:space="preserve"><value>ページを開けませんでした</value></data>
+  <data name="安装本地扩展失败" xml:space="preserve"><value>ローカル拡張のインストールに失敗しました</value></data>
+  <data name="导入脚本失败" xml:space="preserve"><value>スクリプトのインポートに失敗しました</value></data>
+  <data name="播放器初始化失败" xml:space="preserve"><value>プレーヤーの初期化に失敗しました</value></data>
+  <data name="无法使用这个缓存位置" xml:space="preserve"><value>このキャッシュの場所は使用できません</value></data>
+  <data name="启动扩展失败" xml:space="preserve"><value>拡張の起動に失敗しました</value></data>
+  <data name="配置保存失败" xml:space="preserve"><value>設定の保存に失敗しました</value></data>
+  <data name="无法访问存储路径" xml:space="preserve"><value>保存先にアクセスできません</value></data>
+  <data name="该位置与已添加的网络位置属于同一磁盘/共享" xml:space="preserve"><value>この場所は、追加済みのネットワークの場所と同じディスクまたは共有です</value></data>
+  <data name="加载回放列表失败" xml:space="preserve"><value>再生一覧の読み込みに失敗しました</value></data>
+  <data name="数据库初始化失败，部分功能将不可用" xml:space="preserve"><value>データベースの初期化に失敗しました。一部の機能は利用できません</value></data>
+  <data name="无法打开录像文件夹" xml:space="preserve"><value>録画フォルダーを開けません</value></data>
+  <data name="脚本存在以下维护或安全提示" xml:space="preserve"><value>スクリプトに次のメンテナンスまたはセキュリティの注意があります</value></data>
+  <data name="打开回放窗口失败" xml:space="preserve"><value>再生ウィンドウを開けませんでした</value></data>
+  <data name="读取扩展详情失败" xml:space="preserve"><value>拡張の詳細を読み込めませんでした</value></data>
+  <data name="打包失败" xml:space="preserve"><value>梱包に失敗しました</value></data>
+  <data name="无法终止正在运行的扩展程序" xml:space="preserve"><value>実行中の拡張プログラムを終了できません</value></data>
+  <data name="加载统计数据失败" xml:space="preserve"><value>統計データの読み込みに失敗しました</value></data>
+  <data name="原因" xml:space="preserve"><value>原因</value></data>
+  <data name="注意" xml:space="preserve"><value>注意</value></data>
 </root>

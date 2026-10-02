@@ -80,6 +80,7 @@ public sealed class LocalizationTests
             Assert.Equal("Found 3 hosts. Select one to connect", AppLanguage.Translate("找到 3 台主机，请选择要连接的主机"));
             Assert.Equal("Connected to PC-A", AppLanguage.Translate("已连接 PC-A"));
             Assert.Equal("未知文本", AppLanguage.Translate("未知文本"));
+            Assert.Equal("Cannot access the storage path: D:\\videos", AppLanguage.Translate("无法访问存储路径：D:\\videos"));
             Assert.Equal(
                 "Shipping / Return: Shipping" + Environment.NewLine
                 + "Tracking number: SF001" + Environment.NewLine
@@ -89,6 +90,7 @@ public sealed class LocalizationTests
             CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("ja-JP");
             Assert.Equal("追跡番号: SF001", AppLanguage.Translate("快递单号：SF001"));
             Assert.Equal("PC-A に接続しました", AppLanguage.Translate("已连接 PC-A"));
+            Assert.Equal("保存先にアクセスできません: D:\\videos", AppLanguage.Translate("无法访问存储路径：D:\\videos"));
         }
         finally
         {

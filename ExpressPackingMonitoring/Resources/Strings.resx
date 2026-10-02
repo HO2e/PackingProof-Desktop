@@ -1179,4 +1179,35 @@
   <data name="播放错误" xml:space="preserve"><value>Playback error</value></data>
   <data name="未连接" xml:space="preserve"><value>Not connected</value></data>
   <data name="已复制" xml:space="preserve"><value>Copied</value></data>
+  <data name="无法创建或写入目录" xml:space="preserve"><value>Cannot create or write the folder</value></data>
+  <data name="复制网址失败" xml:space="preserve"><value>Failed to copy the URL</value></data>
+  <data name="无法打开链接" xml:space="preserve"><value>Cannot open the link</value></data>
+  <data name="同一个磁盘已经添加过" xml:space="preserve"><value>This disk has already been added</value></data>
+  <data name="导出单号失败" xml:space="preserve"><value>Failed to export tracking numbers</value></data>
+  <data name="无法打开文件管理器" xml:space="preserve"><value>Cannot open the file manager</value></data>
+  <data name="用途保存失败" xml:space="preserve"><value>Failed to save the purpose</value></data>
+  <data name="安装扩展失败" xml:space="preserve"><value>Failed to install the extension</value></data>
+  <data name="当前配置" xml:space="preserve"><value>Current settings</value></data>
+  <data name="关闭行为保存失败，下次仍会询问" xml:space="preserve"><value>Failed to save the close behavior; you will be asked again next time</value></data>
+  <data name="删除扩展失败" xml:space="preserve"><value>Failed to remove the extension</value></data>
+  <data name="打开网页失败" xml:space="preserve"><value>Failed to open the page</value></data>
+  <data name="安装本地扩展失败" xml:space="preserve"><value>Failed to install the local extension</value></data>
+  <data name="导入脚本失败" xml:space="preserve"><value>Failed to import the script</value></data>
+  <data name="播放器初始化失败" xml:space="preserve"><value>Failed to initialize the player</value></data>
+  <data name="无法使用这个缓存位置" xml:space="preserve"><value>This cache location cannot be used</value></data>
+  <data name="启动扩展失败" xml:space="preserve"><value>Failed to start the extension</value></data>
+  <data name="配置保存失败" xml:space="preserve"><value>Failed to save settings</value></data>
+  <data name="无法访问存储路径" xml:space="preserve"><value>Cannot access the storage path</value></data>
+  <data name="该位置与已添加的网络位置属于同一磁盘/共享" xml:space="preserve"><value>This location is the same disk or share as an existing network location</value></data>
+  <data name="加载回放列表失败" xml:space="preserve"><value>Failed to load the playback list</value></data>
+  <data name="数据库初始化失败，部分功能将不可用" xml:space="preserve"><value>Database initialization failed; some features will be unavailable</value></data>
+  <data name="无法打开录像文件夹" xml:space="preserve"><value>Cannot open the recording folder</value></data>
+  <data name="脚本存在以下维护或安全提示" xml:space="preserve"><value>The script reports the following maintenance or security notes</value></data>
+  <data name="打开回放窗口失败" xml:space="preserve"><value>Failed to open the playback window</value></data>
+  <data name="读取扩展详情失败" xml:space="preserve"><value>Failed to read the extension details</value></data>
+  <data name="打包失败" xml:space="preserve"><value>Packing failed</value></data>
+  <data name="无法终止正在运行的扩展程序" xml:space="preserve"><value>Cannot stop the running extension process</value></data>
+  <data name="加载统计数据失败" xml:space="preserve"><value>Failed to load statistics</value></data>
+  <data name="原因" xml:space="preserve"><value>Reason</value></data>
+  <data name="注意" xml:space="preserve"><value>Note</value></data>
 </root>
