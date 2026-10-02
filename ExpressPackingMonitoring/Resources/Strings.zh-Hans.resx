@@ -1110,4 +1110,31 @@
   <data name="发退货" xml:space="preserve"><value>发退货</value></data>
   <data name="清除全部筛选" xml:space="preserve"><value>清除全部筛选</value></data>
   <data name="全部设备" xml:space="preserve"><value>全部设备</value></data>
+  <data name="设置预留空间" xml:space="preserve"><value>设置预留空间</value></data>
+  <data name="设置预留空间…" xml:space="preserve"><value>设置预留空间…</value></data>
+  <data name="为整块磁盘保留的安全空间，单位 GB" xml:space="preserve"><value>为整块磁盘保留的安全空间，单位 GB</value></data>
+  <data name="预留空间是留给整块磁盘的安全空间，整个磁盘共享，其他软件占用也算在内，不是本软件最多占用多少；留得太小磁盘容易写满，调整后立即生效" xml:space="preserve"><value>预留空间是留给整块磁盘的安全空间，整个磁盘共享，其他软件占用也算在内，不是本软件最多占用多少；留得太小磁盘容易写满，调整后立即生效</value></data>
+  <data name="请输入大于 0 的数字（单位 GB）" xml:space="preserve"><value>请输入大于 0 的数字（单位 GB）</value></data>
+  <data name="启动" xml:space="preserve"><value>启动</value></data>
+  <data name="录像按列表顺序保存，当前磁盘空间不足时自动换到下一个。系统会为每块磁盘保留安全空间，按整块磁盘计算，其他软件占用后可用容量可能减少；需要调整时右键磁盘" xml:space="preserve"><value>录像按列表顺序保存，当前磁盘空间不足时自动换到下一个。系统会为每块磁盘保留安全空间，按整块磁盘计算，其他软件占用后可用容量可能减少；需要调整时右键磁盘</value></data>
+  <data name="备份按顺序切换可用位置，当前位置空间不足时自动跳到下一个。系统会为每个备份位置保留安全空间，按整个位置计算；需要调整时右键该位置；校验通过后才会清理旧本地副本；程序不会删除 NAS 上的文件" xml:space="preserve"><value>备份按顺序切换可用位置，当前位置空间不足时自动跳到下一个。系统会为每个备份位置保留安全空间，按整个位置计算；需要调整时右键该位置；校验通过后才会清理旧本地副本；程序不会删除 NAS 上的文件</value></data>
+  <data name="启用扩展 API" xml:space="preserve"><value>启用扩展 API</value></data>
+  <data name="允许经过授权的 ERP、称重设备和其他扩展连接" xml:space="preserve"><value>允许经过授权的 ERP、称重设备和其他扩展连接</value></data>
+  <data name="扩展 API 授权" xml:space="preserve"><value>扩展 API 授权</value></data>
+  <data name="管理 ERP、称重设备等 API 客户端的访问权限；导入的订单脚本在上方单独管理" xml:space="preserve"><value>管理 ERP、称重设备等 API 客户端的访问权限；导入的订单脚本在上方单独管理</value></data>
+  <data name="扩展" xml:space="preserve"><value>扩展</value></data>
+  <data name="权限与绑定" xml:space="preserve"><value>权限与绑定</value></data>
+  <data name="轮换凭据" xml:space="preserve"><value>轮换凭据</value></data>
+  <data name="撤销" xml:space="preserve"><value>撤销</value></data>
+  <data name="订单联动设备" xml:space="preserve"><value>订单联动设备</value></data>
+  <data name="显示可接收联动数据的录像设备；绿点表示当前在线" xml:space="preserve"><value>显示可接收联动数据的录像设备；绿点表示当前在线</value></data>
+  <data name="设备" xml:space="preserve"><value>设备</value></data>
+  <data name="最近活动" xml:space="preserve"><value>最近活动</value></data>
+  <data name="已导入脚本（" xml:space="preserve"><value>已导入脚本（</value></data>
+  <data name="已导入脚本" xml:space="preserve"><value>已导入脚本</value></data>
+  <data name="管理" xml:space="preserve"><value>管理</value></data>
+  <data name="开发第三方脚本时，可参考官方开发手册或 API 扩展文档" xml:space="preserve"><value>开发第三方脚本时，可参考官方开发手册或 API 扩展文档</value></data>
+  <data name="可以删除不再使用的第三方脚本" xml:space="preserve"><value>可以删除不再使用的第三方脚本</value></data>
+  <data name="版本 " xml:space="preserve"><value>版本 </value></data>
+  <data name="删除" xml:space="preserve"><value>删除</value></data>
 </root>

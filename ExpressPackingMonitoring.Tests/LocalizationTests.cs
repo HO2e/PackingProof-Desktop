@@ -48,6 +48,30 @@ public sealed class LocalizationTests
         Assert.Equal("开始录制", AppLanguage.Get("Speech.StartRecording", CultureInfo.GetCultureInfo("zh-Hans")));
     }
 
+    /// <summary>
+    /// 默认资源（英文）里每一把键都必须在 zh-Hans 卫星资源里有对应条目。
+    /// 只加英文不加中文时，中文界面会回退到中性资源，也就是直接显示英文。
+    /// </summary>
+    [Fact]
+    public void Resources_EveryDefaultKeyHasChineseEntry()
+    {
+        string projectPath = Path.Combine(FindRepositoryRoot(), "ExpressPackingMonitoring");
+        string defaultPath = Path.Combine(projectPath, "Resources", "Strings.resx");
+        string chinesePath = Path.Combine(projectPath, "Resources", "Strings.zh-Hans.resx");
+
+        static string[] ReadKeys(string path) =>
+            Regex.Matches(File.ReadAllText(path), "<data name=\"([^\"]+)\"")
+                .Select(match => match.Groups[1].Value)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+
+        string[] missing = ReadKeys(defaultPath)
+            .Except(ReadKeys(chinesePath), StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.True(missing.Length == 0, "Missing zh-Hans resources: " + string.Join(" | ", missing));
+    }
+
     [Fact]
     public void WpfViews_AllStaticChineseTextHasEnglishResource()
     {
