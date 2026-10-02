@@ -318,8 +318,19 @@ namespace ExpressPackingMonitoring.Config
         // AI 语音合成
         public bool EnableAiTts { get; set; } = true;
         public string AiTtsEngine { get; set; } = "Edge"; // "Kokoro" or "Edge"
+        // 语音引擎同样按语言分别保存；日语默认走联网语音，因为随包发布的离线模型只有中英文词典。
+        public string AiTtsEngineZhHans { get; set; } = "";
+        public string AiTtsEngineEnUs { get; set; } = "";
+        public string AiTtsEngineJaJp { get; set; } = "";
         public int AiTtsSpeakerId { get; set; } = 51;        // 普通播报声线
         public int AiTtsWarningSpeakerId { get; set; } = 50;  // 警告播报声线
+        // Kokoro 声线编号同样按语言分别保存；0 表示未设置，由规范化填入该语言的默认值。
+        public int AiTtsSpeakerIdZhHans { get; set; }
+        public int AiTtsWarningSpeakerIdZhHans { get; set; }
+        public int AiTtsSpeakerIdEnUs { get; set; }
+        public int AiTtsWarningSpeakerIdEnUs { get; set; }
+        public int AiTtsSpeakerIdJaJp { get; set; }
+        public int AiTtsWarningSpeakerIdJaJp { get; set; }
         public float AiTtsSpeed { get; set; } = 1.0f;
         public string EdgeTtsVoice { get; set; } = "zh-CN-XiaoxiaoNeural";
         public string EdgeTtsWarningVoice { get; set; } = "zh-CN-YunjianNeural";
@@ -330,22 +341,35 @@ namespace ExpressPackingMonitoring.Config
         public string EdgeTtsVoiceJaJp { get; set; } = "";
         public string EdgeTtsWarningVoiceJaJp { get; set; } = "";
 
-        /// <summary>把界面上选中的在线音色写回当前界面语言对应的存档字段。</summary>
-        public void StoreSelectedEdgeVoices()
+        // Kokoro 使用同一个多语言模型，声线编号由模型决定，各语言默认值目前相同。
+        public const int DefaultKokoroSpeakerId = 51;
+        public const int DefaultKokoroWarningSpeakerId = 50;
+
+        /// <summary>把界面上选中的在线音色与离线声线写回当前界面语言对应的存档字段。</summary>
+        public void StoreSelectedSpeechVoices()
         {
             switch (AppLanguage.Resolve(Language))
             {
                 case AppLanguage.Japanese:
+                    AiTtsEngineJaJp = AiTtsEngine;
                     EdgeTtsVoiceJaJp = EdgeTtsVoice;
                     EdgeTtsWarningVoiceJaJp = EdgeTtsWarningVoice;
+                    AiTtsSpeakerIdJaJp = AiTtsSpeakerId;
+                    AiTtsWarningSpeakerIdJaJp = AiTtsWarningSpeakerId;
                     break;
                 case AppLanguage.Chinese:
+                    AiTtsEngineZhHans = AiTtsEngine;
                     EdgeTtsVoiceZhHans = EdgeTtsVoice;
                     EdgeTtsWarningVoiceZhHans = EdgeTtsWarningVoice;
+                    AiTtsSpeakerIdZhHans = AiTtsSpeakerId;
+                    AiTtsWarningSpeakerIdZhHans = AiTtsWarningSpeakerId;
                     break;
                 default:
+                    AiTtsEngineEnUs = AiTtsEngine;
                     EdgeTtsVoiceEnUs = EdgeTtsVoice;
                     EdgeTtsWarningVoiceEnUs = EdgeTtsWarningVoice;
+                    AiTtsSpeakerIdEnUs = AiTtsSpeakerId;
+                    AiTtsWarningSpeakerIdEnUs = AiTtsWarningSpeakerId;
                     break;
             }
         }
@@ -686,6 +710,26 @@ namespace ExpressPackingMonitoring.Config
             }
 
             string effectiveLanguage = AppLanguage.Resolve(config.Language);
+
+            // 引擎也按语言保存：历史单一值迁到中文/英文槽位，日语默认联网语音。
+            string legacyEngine = config.AiTtsEngine;
+            if (string.IsNullOrWhiteSpace(config.AiTtsEngineZhHans)) { config.AiTtsEngineZhHans = legacyEngine; changed = true; }
+            if (string.IsNullOrWhiteSpace(config.AiTtsEngineEnUs)) { config.AiTtsEngineEnUs = legacyEngine; changed = true; }
+            if (string.IsNullOrWhiteSpace(config.AiTtsEngineJaJp)) { config.AiTtsEngineJaJp = "Edge"; changed = true; }
+            string normalizedZhEngine = NormalizeAiTtsEngine(config.AiTtsEngineZhHans);
+            if (config.AiTtsEngineZhHans != normalizedZhEngine) { config.AiTtsEngineZhHans = normalizedZhEngine; changed = true; }
+            string normalizedEnEngine = NormalizeAiTtsEngine(config.AiTtsEngineEnUs);
+            if (config.AiTtsEngineEnUs != normalizedEnEngine) { config.AiTtsEngineEnUs = normalizedEnEngine; changed = true; }
+            string normalizedJaEngine = NormalizeAiTtsEngine(config.AiTtsEngineJaJp);
+            if (config.AiTtsEngineJaJp != normalizedJaEngine) { config.AiTtsEngineJaJp = normalizedJaEngine; changed = true; }
+            string effectiveEngine = effectiveLanguage switch
+            {
+                AppLanguage.Chinese => config.AiTtsEngineZhHans,
+                AppLanguage.Japanese => config.AiTtsEngineJaJp,
+                _ => config.AiTtsEngineEnUs
+            };
+            if (config.AiTtsEngine != effectiveEngine) { config.AiTtsEngine = effectiveEngine; changed = true; }
+
             (string effectiveVoice, string effectiveWarningVoice) = effectiveLanguage switch
             {
                 AppLanguage.Chinese => (config.EdgeTtsVoiceZhHans, config.EdgeTtsWarningVoiceZhHans),
@@ -694,6 +738,27 @@ namespace ExpressPackingMonitoring.Config
             };
             if (config.EdgeTtsVoice != effectiveVoice) { config.EdgeTtsVoice = effectiveVoice; changed = true; }
             if (config.EdgeTtsWarningVoice != effectiveWarningVoice) { config.EdgeTtsWarningVoice = effectiveWarningVoice; changed = true; }
+
+            // Kokoro 声线：先把历史单一值迁到中文槽位，再为每种语言补上各自的默认值。
+            int legacySpeakerId = config.AiTtsSpeakerId > 0 ? config.AiTtsSpeakerId : DefaultKokoroSpeakerId;
+            int legacyWarningSpeakerId = config.AiTtsWarningSpeakerId > 0
+                ? config.AiTtsWarningSpeakerId
+                : DefaultKokoroWarningSpeakerId;
+            if (config.AiTtsSpeakerIdZhHans <= 0) { config.AiTtsSpeakerIdZhHans = legacySpeakerId; changed = true; }
+            if (config.AiTtsWarningSpeakerIdZhHans <= 0) { config.AiTtsWarningSpeakerIdZhHans = legacyWarningSpeakerId; changed = true; }
+            if (config.AiTtsSpeakerIdEnUs <= 0) { config.AiTtsSpeakerIdEnUs = DefaultKokoroSpeakerId; changed = true; }
+            if (config.AiTtsWarningSpeakerIdEnUs <= 0) { config.AiTtsWarningSpeakerIdEnUs = DefaultKokoroWarningSpeakerId; changed = true; }
+            if (config.AiTtsSpeakerIdJaJp <= 0) { config.AiTtsSpeakerIdJaJp = DefaultKokoroSpeakerId; changed = true; }
+            if (config.AiTtsWarningSpeakerIdJaJp <= 0) { config.AiTtsWarningSpeakerIdJaJp = DefaultKokoroWarningSpeakerId; changed = true; }
+
+            (int effectiveSpeakerId, int effectiveWarningSpeakerId) = effectiveLanguage switch
+            {
+                AppLanguage.Chinese => (config.AiTtsSpeakerIdZhHans, config.AiTtsWarningSpeakerIdZhHans),
+                AppLanguage.Japanese => (config.AiTtsSpeakerIdJaJp, config.AiTtsWarningSpeakerIdJaJp),
+                _ => (config.AiTtsSpeakerIdEnUs, config.AiTtsWarningSpeakerIdEnUs)
+            };
+            if (config.AiTtsSpeakerId != effectiveSpeakerId) { config.AiTtsSpeakerId = effectiveSpeakerId; changed = true; }
+            if (config.AiTtsWarningSpeakerId != effectiveWarningSpeakerId) { config.AiTtsWarningSpeakerId = effectiveWarningSpeakerId; changed = true; }
 
             if (config.VoiceSettingsVersion < CurrentVoiceSettingsVersion)
             {

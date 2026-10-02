@@ -18,20 +18,29 @@ var languageProfiles = new[]
     new
     {
         Language = AppLanguage.Chinese,
+        Engine = config.AiTtsEngineZhHans,
         Voice = config.EdgeTtsVoiceZhHans,
-        WarningVoice = config.EdgeTtsWarningVoiceZhHans
+        WarningVoice = config.EdgeTtsWarningVoiceZhHans,
+        SpeakerId = config.AiTtsSpeakerIdZhHans,
+        WarningSpeakerId = config.AiTtsWarningSpeakerIdZhHans
     },
     new
     {
         Language = AppLanguage.English,
+        Engine = config.AiTtsEngineEnUs,
         Voice = config.EdgeTtsVoiceEnUs,
-        WarningVoice = config.EdgeTtsWarningVoiceEnUs
+        WarningVoice = config.EdgeTtsWarningVoiceEnUs,
+        SpeakerId = config.AiTtsSpeakerIdEnUs,
+        WarningSpeakerId = config.AiTtsWarningSpeakerIdEnUs
     },
     new
     {
         Language = AppLanguage.Japanese,
+        Engine = config.AiTtsEngineJaJp,
         Voice = config.EdgeTtsVoiceJaJp,
-        WarningVoice = config.EdgeTtsWarningVoiceJaJp
+        WarningVoice = config.EdgeTtsWarningVoiceJaJp,
+        SpeakerId = config.AiTtsSpeakerIdJaJp,
+        WarningSpeakerId = config.AiTtsWarningSpeakerIdJaJp
     }
 };
 
@@ -48,9 +57,9 @@ foreach (var profile in languageProfiles)
     {
         EnableSoundPrompt = true,
         EnableAiTts = true,
-        AiTtsEngine = config.AiTtsEngine,
-        AiTtsSpeakerId = config.AiTtsSpeakerId,
-        AiTtsWarningSpeakerId = config.AiTtsWarningSpeakerId,
+        AiTtsEngine = profile.Engine,
+        AiTtsSpeakerId = profile.SpeakerId,
+        AiTtsWarningSpeakerId = profile.WarningSpeakerId,
         AiTtsSpeed = config.AiTtsSpeed,
         EdgeTtsVoice = profile.Voice,
         EdgeTtsWarningVoice = profile.WarningVoice,

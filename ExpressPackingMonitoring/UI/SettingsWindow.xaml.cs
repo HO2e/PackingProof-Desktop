@@ -1903,7 +1903,7 @@ namespace ExpressPackingMonitoring.UI
             // 3. 校验并保存
             if (Capabilities.IsRecordingDevice)
             {
-                Config.StoreSelectedEdgeVoices();
+                Config.StoreSelectedSpeechVoices();
             }
             ApplyDeploymentPurposeBeforeSave(
                 Config,
