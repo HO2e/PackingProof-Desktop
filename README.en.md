@@ -82,7 +82,7 @@ Announce order notes, catch post-print refunds, and back up recordings from mult
 
 <br><br>
 
-[简体中文](README.md) · English
+[简体中文](README.md) · English · [日本語](README.ja.md)
 
 <br>
 
