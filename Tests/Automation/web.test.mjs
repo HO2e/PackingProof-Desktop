@@ -27,6 +27,9 @@ test('isolated Web server supports search, playback and clip editor entry', { sk
   try {
     const context = await browser.newContext({ locale: 'zh-CN' });
     const page = await context.newPage();
+    // 页面脚本未捕获异常必须直接失败：初始化中途抛错时，后面的列表/搜索都不会执行
+    const pageErrors = [];
+    page.on('pageerror', error => pageErrors.push(String(error)));
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
     await assert.doesNotReject(() => page.getByRole('heading', { name: '快递打包录像回放' }).waitFor());
     await page.waitForFunction(() => /^第 \d+ \/ \d+ 页$/.test(
@@ -285,6 +288,7 @@ test('isolated Web server supports search, playback and clip editor entry', { sk
     });
     await page.locator('#clipCloseBtn').click();
     assert.equal(await page.locator('body').evaluate(element => element.classList.contains('clip-open')), false);
+    assert.deepEqual(pageErrors, [], '页面不应有未捕获的脚本异常');
   } finally {
     await browser.close();
   }
@@ -297,6 +301,8 @@ test('Web UI follows browser language and persists an explicit override', { skip
   try {
     const context = await browser.newContext({ locale: 'en-US' });
     const page = await context.newPage();
+    const pageErrors = [];
+    page.on('pageerror', error => pageErrors.push(String(error)));
     await page.addInitScript(() => {
       if (!localStorage.getItem('expressWebLanguage')) localStorage.setItem('expressWebLanguage', 'en-US');
     });
@@ -355,6 +361,50 @@ test('Web UI follows browser language and persists an explicit override', { skip
     ]);
     await assert.doesNotReject(() => page.getByRole('heading', { name: '快递打包录像回放' }).waitFor());
     assert.equal(await page.evaluate(() => localStorage.getItem('expressWebLanguage')), 'zh-Hans');
+    assert.deepEqual(pageErrors, [], '页面不应有未捕获的脚本异常');
+  } finally {
+    await browser.close();
+  }
+});
+
+// 日语界面必须真的把录像列表加载出来（不能只翻文案）：列表停在加载中就是网页脚本初始化失败。
+test('Web UI loads the recording list in Japanese', { skip: !baseUrl }, async () => {
+  const executablePath = process.env.EPM_BROWSER_EXECUTABLE;
+  assert.ok(executablePath, 'EPM_BROWSER_EXECUTABLE is required');
+  const browser = await chromium.launch({ executablePath, headless: true });
+  try {
+    const context = await browser.newContext({ locale: 'ja-JP' });
+    const page = await context.newPage();
+    const pageErrors = [];
+    page.on('pageerror', error => pageErrors.push(String(error)));
+    await page.addInitScript(() => {
+      if (!localStorage.getItem('expressWebLanguage')) localStorage.setItem('expressWebLanguage', 'ja-JP');
+    });
+    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await assert.doesNotReject(() => page.getByRole('heading', { name: '梱包モニターの録画再生' }).waitFor());
+    assert.equal(await page.locator('html').getAttribute('lang'), 'ja');
+
+    const search = page.getByPlaceholder('注文番号またはファイル名で検索');
+    await search.fill('AUTO_WEB_001');
+    const searchResponse = page.waitForResponse(response => {
+      const url = new URL(response.url());
+      return url.pathname === '/api/videos'
+        && url.searchParams.get('keyword') === 'AUTO_WEB_001'
+        && response.ok();
+    });
+    await search.press('Enter');
+    await searchResponse;
+    await page.waitForFunction(() => /^\d+ ページ中 \d+ ページ$/.test(
+      document.querySelector('#resultsInfo')?.textContent?.trim() || ''));
+
+    const article = page.locator('article').filter({ hasText: 'AUTO_WEB_001' });
+    await assert.doesNotReject(() => article.waitFor());
+    await assert.doesNotReject(() => article.getByRole('button', { name: '再生', exact: true }).waitFor());
+    await assert.doesNotReject(() => article.getByRole('button', { name: 'ダウンロード' }).waitFor());
+    assert.equal(await page.locator('#filterButton').getAttribute('title'), '絞り込み');
+    // 简体中文独有的字（货/删/录）不应残留在日语界面里
+    assert.doesNotMatch(await page.locator('.toolbar').innerText(), /货|删|录/);
+    assert.deepEqual(pageErrors, [], '页面不应有未捕获的脚本异常');
   } finally {
     await browser.close();
   }
