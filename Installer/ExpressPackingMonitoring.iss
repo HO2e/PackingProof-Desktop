@@ -60,9 +60,10 @@ SignedUninstaller=no
 [Languages]
 Name: "chinesesimplified"; MessagesFile: "Languages\ChineseSimplified.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: "附加快捷方式："
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -70,11 +71,11 @@ Source: "..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreve
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; IconFilename: "{app}\{#MyAppExeName}"; AppUserModelID: "{#MyAppUserModelId}"
-Name: "{group}\卸载 {#MyAppName}"; Filename: "{uninstallexe}"; Parameters: "/SILENT /EPMUNINSTALLOPTIONS"
+Name: "{group}\{cm:UninstallShortcutName,{#MyAppName}}"; Filename: "{uninstallexe}"; Parameters: "/SILENT /EPMUNINSTALLOPTIONS"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; IconFilename: "{app}\{#MyAppExeName}"; AppUserModelID: "{#MyAppUserModelId}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Description: "立即启动 {#MyAppName}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Description: "{cm:LaunchApp,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
 
 [CustomMessages]
 chinesesimplified.UninstallOptionsTitle=卸载快递打包监控
@@ -107,6 +108,33 @@ chinesesimplified.OldVersionRunningAtPrepare=快递打包监控仍在运行，�
 english.OldVersionRunningAtPrepare=PackingProof is still running, so the previous version cannot be removed.%nPlease close PackingProof and run the installer again.%n%nOld version location: %1
 chinesesimplified.OldVersionRemovalFailed=删除旧版本失败，本次安装已中止。%n请关闭正在运行的快递打包监控（如有），然后重新运行安装程序。%n%n旧版本位置：%1
 english.OldVersionRemovalFailed=Removing the previous version failed, so this installation has been cancelled.%nPlease close PackingProof if it is running, and run the installer again.%n%nOld version location: %1
+chinesesimplified.CreateDesktopIcon=创建桌面快捷方式
+english.CreateDesktopIcon=Create a desktop shortcut
+japanese.CreateDesktopIcon=デスクトップにショートカットを作成
+chinesesimplified.AdditionalIcons=附加快捷方式：
+english.AdditionalIcons=Additional shortcuts:
+japanese.AdditionalIcons=追加のショートカット:
+chinesesimplified.UninstallShortcutName=卸载 %1
+english.UninstallShortcutName=Uninstall %1
+japanese.UninstallShortcutName=%1 のアンインストール
+chinesesimplified.LaunchApp=立即启动 %1
+english.LaunchApp=Launch %1 now
+japanese.LaunchApp=%1 を今すぐ起動
+japanese.UninstallOptionsTitle=PackingProof のアンインストール
+japanese.UninstallOptionsHeading=アンインストール前に残す内容を選択してください
+japanese.UninstallOptionsDescription=既定では何も選択されません。再インストールすると元の設定と録画をそのまま利用できます
+japanese.UninstallDeleteSettings=設定と一時ファイルを削除
+japanese.UninstallDeleteSettingsHelp=設定、ログ、キャッシュを削除します。録画、録画履歴、復元用バックアップは削除しません
+japanese.UninstallDeleteRecordings=録画と録画履歴を削除
+japanese.UninstallDeleteRecordingsHelp=プログラムが管理する録画を先に削除し、すべて成功した後に録画データベースを削除します。削除後は復元できません
+japanese.UninstallStart=アンインストールを開始
+japanese.UninstallCancel=キャンセル
+japanese.UninstallCleanupFailed=選択した内容の一部を安全に削除できなかったため、その他のデータは保持しました%n詳細: %1
+japanese.DirRequiresAdmin=選択したフォルダーにはインストールできません。Program Files、Windows、ProgramData、ドライブのルートなどのシステム フォルダーは避け、通常のユーザーが書き込めるフォルダー（例: D:\PackingProof や「ドキュメント」）を選んでください。インストール先は現在のユーザーが書き込める必要があります。書き込めないと自動更新に失敗します。
+japanese.UpgradeDirPrompt=既存のインストールが見つかりました。%n%n再インストールする前に、旧バージョンのプログラム ファイルとランチャーを削除しますか？%n設定、データベース、録画はユーザー フォルダーに保存されているため保持されます。%n%n「はい」を選ぶと旧バージョンをアンインストールしてから続行します。「いいえ」を選ぶと上書きインストールします（古いフォルダーに不要なファイルが残る場合があります）。
+japanese.AppRunningBeforeRemove=PackingProof が実行中です。PackingProof を終了してからインストールを続けてください。
+japanese.OldVersionRunningAtPrepare=PackingProof が実行中のため、旧バージョンを削除できません。%nPackingProof を終了してから、インストーラーを再実行してください。%n%n旧バージョンの場所: %1
+japanese.OldVersionRemovalFailed=旧バージョンの削除に失敗したため、インストールを中止しました。%nPackingProof が実行中の場合は終了してから、インストーラーを再実行してください。%n%n旧バージョンの場所: %1
 
 [Code]
 var
