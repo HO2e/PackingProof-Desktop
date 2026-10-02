@@ -1212,4 +1212,244 @@
   <data name="加载统计数据失败" xml:space="preserve"><value>加载统计数据失败</value></data>
   <data name="原因" xml:space="preserve"><value>原因</value></data>
   <data name="注意" xml:space="preserve"><value>注意</value></data>
+  <data name="(读取失败)" xml:space="preserve"><value>(读取失败)</value></data>
+  <data name="[0] 未检测到摄像头" xml:space="preserve"><value>[0] 未检测到摄像头</value></data>
+  <data name="{configuredPath}：磁盘未接入或无法确认存储位置类型" xml:space="preserve"><value>{configuredPath}：磁盘未接入或无法确认存储位置类型</value></data>
+  <data name="{displaySeconds} 秒内未处理，本次申请将自动取消" xml:space="preserve"><value>{displaySeconds} 秒内未处理，本次申请将自动取消</value></data>
+  <data name="{name}（{location}）申请连接这台保存主机。{permission}" xml:space="preserve"><value>{name}（{location}）申请连接这台保存主机。{permission}</value></data>
+  <data name="{running.ProcessName}（PID {running.ProcessId}）身份已变化" xml:space="preserve"><value>{running.ProcessName}（PID {running.ProcessId}）身份已变化</value></data>
+  <data name="{running.ProcessName}（PID {running.ProcessId}）未在限定时间内退出" xml:space="preserve"><value>{running.ProcessName}（PID {running.ProcessId}）未在限定时间内退出</value></data>
+  <data name="30 天以前" xml:space="preserve"><value>30 天以前</value></data>
+  <data name="7 天以前" xml:space="preserve"><value>7 天以前</value></data>
+  <data name="90 天以前" xml:space="preserve"><value>90 天以前</value></data>
+  <data name="安装快递助手联动失败" xml:space="preserve"><value>安装快递助手联动失败</value></data>
+  <data name="安装失败" xml:space="preserve"><value>安装失败</value></data>
+  <data name="按空间释放本地录像" xml:space="preserve"><value>按空间释放本地录像</value></data>
+  <data name="按时间清理本地录像" xml:space="preserve"><value>按时间清理本地录像</value></data>
+  <data name="保存主机返回的网页访问链接无效，请更新保存主机后重试" xml:space="preserve"><value>保存主机返回的网页访问链接无效，请更新保存主机后重试</value></data>
+  <data name="保存主机未返回网页访问链接，请更新保存主机后重试" xml:space="preserve"><value>保存主机未返回网页访问链接，请更新保存主机后重试</value></data>
+  <data name="本地缓存不可用：{error}" xml:space="preserve"><value>本地缓存不可用：{error}</value></data>
+  <data name="本地缓存会在接近上限时自动清理" xml:space="preserve"><value>本地缓存会在接近上限时自动清理</value></data>
+  <data name="本地缓存位置不可用" xml:space="preserve"><value>本地缓存位置不可用</value></data>
+  <data name="编码器 {EncodingHelper.GetEncoderLabel(encoder)}" xml:space="preserve"><value>编码器 {EncodingHelper.GetEncoderLabel(encoder)}</value></data>
+  <data name="编码器不可用" xml:space="preserve"><value>编码器不可用</value></data>
+  <data name="播放器解码失败，请确认视频文件完整" xml:space="preserve"><value>播放器解码失败，请确认视频文件完整</value></data>
+  <data name="参数无效" xml:space="preserve"><value>参数无效</value></data>
+  <data name="程序会自动使用所选磁盘下的“快递打包视频”目录" xml:space="preserve"><value>程序会自动使用所选磁盘下的“快递打包视频”目录</value></data>
+  <data name="此地址仅用于接收订单联动，不提供本机录像浏览或备份主机服务" xml:space="preserve"><value>此地址仅用于接收订单联动，不提供本机录像浏览或备份主机服务</value></data>
+  <data name="存储初始化失败: {ex.Message}" xml:space="preserve"><value>存储初始化失败: {ex.Message}</value></data>
+  <data name="存储路径不可写，请检查磁盘" xml:space="preserve"><value>存储路径不可写，请检查磁盘</value></data>
+  <data name="存储位置无效" xml:space="preserve"><value>存储位置无效</value></data>
+  <data name="打开本机回放失败：{error}" xml:space="preserve"><value>打开本机回放失败：{error}</value></data>
+  <data name="打开订单联动安装向导失败：{error}" xml:space="preserve"><value>打开订单联动安装向导失败：{error}</value></data>
+  <data name="打开快递助手联动安装向导失败：{error}" xml:space="preserve"><value>打开快递助手联动安装向导失败：{error}</value></data>
+  <data name="打开链接失败" xml:space="preserve"><value>打开链接失败</value></data>
+  <data name="打开失败" xml:space="preserve"><value>打开失败</value></data>
+  <data name="打开完整更新页面" xml:space="preserve"><value>打开完整更新页面</value></data>
+  <data name="打开主机录像失败" xml:space="preserve"><value>打开主机录像失败</value></data>
+  <data name="单号不一致：{upperResult}" xml:space="preserve"><value>单号不一致：{upperResult}</value></data>
+  <data name="当前 PackingProof 版本过低" xml:space="preserve"><value>当前 PackingProof 版本过低</value></data>
+  <data name="当前日期范围内没有可导出的单号" xml:space="preserve"><value>当前日期范围内没有可导出的单号</value></data>
+  <data name="当前识别：{status.Code}" xml:space="preserve"><value>当前识别：{status.Code}</value></data>
+  <data name="当前选择未通过编码器检测" xml:space="preserve"><value>当前选择未通过编码器检测</value></data>
+  <data name="当前选择未通过编码器检测，请重新检测或选择列表中的可用编码器" xml:space="preserve"><value>当前选择未通过编码器检测，请重新检测或选择列表中的可用编码器</value></data>
+  <data name="当前选择未通过编码器检测，请重新检测或选择设置列表中的可用编码器" xml:space="preserve"><value>当前选择未通过编码器检测，请重新检测或选择设置列表中的可用编码器</value></data>
+  <data name="当前已打开：{WorkstationRoles.GetDisplayName(runningRole)}" xml:space="preserve"><value>当前已打开：{WorkstationRoles.GetDisplayName(runningRole)}</value></data>
+  <data name="当前已经是{DeploymentPresets.GetDisplayName(Config.DeploymentPreset)}" xml:space="preserve"><value>当前已经是{DeploymentPresets.GetDisplayName(Config.DeploymentPreset)}</value></data>
+  <data name="当前已经是连接已有主机用途" xml:space="preserve"><value>当前已经是连接已有主机用途</value></data>
+  <data name="导出失败" xml:space="preserve"><value>导出失败</value></data>
+  <data name="导出文件不存在或路径无效" xml:space="preserve"><value>导出文件不存在或路径无效</value></data>
+  <data name="导入成功" xml:space="preserve"><value>导入成功</value></data>
+  <data name="导入失败" xml:space="preserve"><value>导入失败</value></data>
+  <data name="导入视频失败" xml:space="preserve"><value>导入视频失败</value></data>
+  <data name="地址无效：{error}" xml:space="preserve"><value>地址无效：{error}</value></data>
+  <data name="等待备份完成" xml:space="preserve"><value>等待备份完成</value></data>
+  <data name="订单联动接收 · {verifiedAddress}" xml:space="preserve"><value>订单联动接收 · {verifiedAddress}</value></data>
+  <data name="读取失败" xml:space="preserve"><value>读取失败</value></data>
+  <data name="断句: {processed}" xml:space="preserve"><value>断句: {processed}</value></data>
+  <data name="复制和打开都失败: {openError}" xml:space="preserve"><value>复制和打开都失败: {openError}</value></data>
+  <data name="复制连接地址失败：{ex.Message}" xml:space="preserve"><value>复制连接地址失败：{ex.Message}</value></data>
+  <data name="该路径已在列表中" xml:space="preserve"><value>该路径已在列表中</value></data>
+  <data name="该路径已在列表中。" xml:space="preserve"><value>该路径已在列表中</value></data>
+  <data name="合并出错：{ex.Message}" xml:space="preserve"><value>合并出错：{ex.Message}</value></data>
+  <data name="合并已取消" xml:space="preserve"><value>合并已取消</value></data>
+  <data name="检测完成，当前录制规格已是推荐配置" xml:space="preserve"><value>检测完成，当前录制规格已是推荐配置</value></data>
+  <data name="检测完成，已生成录制规格建议" xml:space="preserve"><value>检测完成，已生成录制规格建议</value></data>
+  <data name="检查失败" xml:space="preserve"><value>检查失败</value></data>
+  <data name="检查中" xml:space="preserve"><value>检查中</value></data>
+  <data name="脚本包含需要人工确认的高风险文本" xml:space="preserve"><value>脚本包含需要人工确认的高风险文本</value></data>
+  <data name="脚本已导入，可在安装订单联动中选择" xml:space="preserve"><value>脚本已导入，可在安装订单联动中选择</value></data>
+  <data name="局域网服务尚未就绪，请先修复后再安装订单联动" xml:space="preserve"><value>局域网服务尚未就绪，请先修复后再安装订单联动</value></data>
+  <data name="开启局域网查看后，可点击手机/电脑连接查看二维码或复制网址" xml:space="preserve"><value>开启局域网查看后，可点击手机/电脑连接查看二维码或复制网址</value></data>
+  <data name="开启局域网查看后可显示在线设备" xml:space="preserve"><value>开启局域网查看后可显示在线设备</value></data>
+  <data name="开始录像" xml:space="preserve"><value>开始录像</value></data>
+  <data name="可选扫码枪测试条码：{_testBarcodeValue}，也可以扫描任意真实面单条码" xml:space="preserve"><value>可选扫码枪测试条码：{_testBarcodeValue}，也可以扫描任意真实面单条码</value></data>
+  <data name="扩展市场不可用" xml:space="preserve"><value>扩展市场不可用</value></data>
+  <data name="扩展授权已撤销" xml:space="preserve"><value>扩展授权已撤销</value></data>
+  <data name="扩展已安装，但无法定位本地文件，请尝试重新安装" xml:space="preserve"><value>扩展已安装，但无法定位本地文件，请尝试重新安装</value></data>
+  <data name="离线" xml:space="preserve"><value>离线</value></data>
+  <data name="浏览…" xml:space="preserve"><value>浏览…</value></data>
+  <data name="录像过短({recordDuration:F1}s)，已丢弃" xml:space="preserve"><value>录像过短({recordDuration:F1}s)，已丢弃</value></data>
+  <data name="录像进行中，停止录像后才能切换用途" xml:space="preserve"><value>录像进行中，停止录像后才能切换用途</value></data>
+  <data name="录像未生成兼容 MP4，原始录像已保留" xml:space="preserve"><value>录像未生成兼容 MP4，原始录像已保留</value></data>
+  <data name="录像文件不存在或路径无效" xml:space="preserve"><value>录像文件不存在或路径无效</value></data>
+  <data name="录像文件已不存在：{normalizedPath}" xml:space="preserve"><value>录像文件已不存在：{normalizedPath}</value></data>
+  <data name="录像文件在确认后发生变化，已保留：{normalizedPath}" xml:space="preserve"><value>录像文件在确认后发生变化，已保留：{normalizedPath}</value></data>
+  <data name="录制启动失败" xml:space="preserve"><value>录制启动失败</value></data>
+  <data name="录制性能检测失败，已保留当前配置" xml:space="preserve"><value>录制性能检测失败，已保留当前配置</value></data>
+  <data name="录制中不可检测，停止录制后再重试" xml:space="preserve"><value>录制中不可检测，停止录制后再重试</value></data>
+  <data name="录制中不可修改，停止录制后再更改" xml:space="preserve"><value>录制中不可修改，停止录制后再更改</value></data>
+  <data name="录制主机必须先选择可用摄像头" xml:space="preserve"><value>录制主机必须先选择可用摄像头</value></data>
+  <data name="路径无效" xml:space="preserve"><value>路径无效</value></data>
+  <data name="麦克风不可用，本次仅录视频" xml:space="preserve"><value>麦克风不可用，本次仅录视频</value></data>
+  <data name="麦克风启动失败：{ex.Message}" xml:space="preserve"><value>麦克风启动失败：{ex.Message}</value></data>
+  <data name="没有符合条件的本地录像需要清理" xml:space="preserve"><value>没有符合条件的本地录像需要清理</value></data>
+  <data name="目标摄像头未连接，等待重新插入" xml:space="preserve"><value>目标摄像头未连接，等待重新插入</value></data>
+  <data name="你想怎么做？" xml:space="preserve"><value>你想怎么做？</value></data>
+  <data name="配置保存失败，请检查磁盘空间或权限: {error}" xml:space="preserve"><value>配置保存失败，请检查磁盘空间或权限: {error}</value></data>
+  <data name="配置向导错误: {ex.Message}" xml:space="preserve"><value>配置向导错误: {ex.Message}</value></data>
+  <data name="配置已保存，局域网服务已应用" xml:space="preserve"><value>配置已保存，局域网服务已应用</value></data>
+  <data name="配置已保存，摄像头配置将在录制结束后生效" xml:space="preserve"><value>配置已保存，摄像头配置将在录制结束后生效</value></data>
+  <data name="配置已保存，重启相机" xml:space="preserve"><value>配置已保存，重启相机</value></data>
+  <data name="其他设备暂时无法连接这台电脑" xml:space="preserve"><value>其他设备暂时无法连接这台电脑</value></data>
+  <data name="启动警告" xml:space="preserve"><value>启动警告</value></data>
+  <data name="启动失败" xml:space="preserve"><value>启动失败</value></data>
+  <data name="切换用途失败" xml:space="preserve"><value>切换用途失败</value></data>
+  <data name="清单包含重复路径：{normalizedPath}" xml:space="preserve"><value>清单包含重复路径：{normalizedPath}</value></data>
+  <data name="清理：已从多盘回收 {count} 个旧视频" xml:space="preserve"><value>清理：已从多盘回收 {count} 个旧视频</value></data>
+  <data name="清理结束时间早于所选天数的本地录像（例如 7 天以前）" xml:space="preserve"><value>清理结束时间早于所选天数的本地录像（例如 7 天以前）</value></data>
+  <data name="清理旧反馈包失败：{ex.Message}" xml:space="preserve"><value>清理旧反馈包失败：{ex.Message}</value></data>
+  <data name="清理旧反馈包失败：{old.Name}（{ex.Message}）" xml:space="preserve"><value>清理旧反馈包失败：{old.Name}（{ex.Message}）</value></data>
+  <data name="清理失败" xml:space="preserve"><value>清理失败</value></data>
+  <data name="请对着麦克风说话，观察音量条" xml:space="preserve"><value>请对着麦克风说话，观察音量条</value></data>
+  <data name="请返回上一步检查地址后重试" xml:space="preserve"><value>请返回上一步检查地址后重试</value></data>
+  <data name="请输入 1 到 3650 之间的天数" xml:space="preserve"><value>请输入 1 到 3650 之间的天数</value></data>
+  <data name="请输入大于 0 的 GB 数值" xml:space="preserve"><value>请输入大于 0 的 GB 数值</value></data>
+  <data name="请输入网络摄像头地址，然后点击测试连接" xml:space="preserve"><value>请输入网络摄像头地址，然后点击测试连接</value></data>
+  <data name="请输入预览文本" xml:space="preserve"><value>请输入预览文本</value></data>
+  <data name="请先搜索并绑定 PackingProof 主机" xml:space="preserve"><value>请先搜索并绑定 PackingProof 主机</value></data>
+  <data name="请先搜索并连接一台主机" xml:space="preserve"><value>请先搜索并连接一台主机</value></data>
+  <data name="请先填写网络摄像头地址" xml:space="preserve"><value>请先填写网络摄像头地址</value></data>
+  <data name="请先选择可用摄像头" xml:space="preserve"><value>请先选择可用摄像头</value></data>
+  <data name="请先选择一个可用视频" xml:space="preserve"><value>请先选择一个可用视频</value></data>
+  <data name="请先在列表中选中要移除的行" xml:space="preserve"><value>请先在列表中选中要移除的行</value></data>
+  <data name="取消导入" xml:space="preserve"><value>取消导入</value></data>
+  <data name="取消合并" xml:space="preserve"><value>取消合并</value></data>
+  <data name="缺少录像设备注入占位符" xml:space="preserve"><value>缺少录像设备注入占位符</value></data>
+  <data name="缺少自动更新地址占位符" xml:space="preserve"><value>缺少自动更新地址占位符</value></data>
+  <data name="日志文件读取失败已跳过：{Path.GetFileName(sourcePath)}" xml:space="preserve"><value>日志文件读取失败已跳过：{Path.GetFileName(sourcePath)}</value></data>
+  <data name="扫码框已清除" xml:space="preserve"><value>扫码框已清除</value></data>
+  <data name="删除扩展" xml:space="preserve"><value>删除扩展</value></data>
+  <data name="删除失败：{normalizedPath}，{ex.Message}" xml:space="preserve"><value>删除失败：{normalizedPath}，{ex.Message}</value></data>
+  <data name="上传启动失败，录像保留在本机" xml:space="preserve"><value>上传启动失败，录像保留在本机</value></data>
+  <data name="上传失败" xml:space="preserve"><value>上传失败</value></data>
+  <data name="设置错误: {ex.Message}" xml:space="preserve"><value>设置错误: {ex.Message}</value></data>
+  <data name="摄像头唤醒后没有画面，未开始录制" xml:space="preserve"><value>摄像头唤醒后没有画面，未开始录制</value></data>
+  <data name="摄像头连接发生错误，尝试重连..." xml:space="preserve"><value>摄像头连接发生错误，尝试重连...</value></data>
+  <data name="摄像头连接中断，正在重连..." xml:space="preserve"><value>摄像头连接中断，正在重连...</value></data>
+  <data name="摄像头连续 {MaxConsecutiveRestartFailures} 次启动失败，已停止自动重连。请更换摄像头或重新插拔后在设置中重启" xml:space="preserve"><value>摄像头连续 {MaxConsecutiveRestartFailures} 次启动失败，已停止自动重连。请更换摄像头或重新插拔后在设置中重启</value></data>
+  <data name="摄像头连续 {MaxConsecutiveRestartFailures} 次重连失败，录制已停止。请重新插拔后在设置中手动重启" xml:space="preserve"><value>摄像头连续 {MaxConsecutiveRestartFailures} 次重连失败，录制已停止。请重新插拔后在设置中手动重启</value></data>
+  <data name="摄像头连续 {MaxConsecutiveRestartFailures} 次重连失败，已停止自动重连。请重新插拔后在设置中手动重启" xml:space="preserve"><value>摄像头连续 {MaxConsecutiveRestartFailures} 次重连失败，已停止自动重连。请重新插拔后在设置中手动重启</value></data>
+  <data name="摄像头尚未配置" xml:space="preserve"><value>摄像头尚未配置</value></data>
+  <data name="摄像头未就绪，请检查连接" xml:space="preserve"><value>摄像头未就绪，请检查连接</value></data>
+  <data name="摄像头信号丢失，尝试重连..." xml:space="preserve"><value>摄像头信号丢失，尝试重连...</value></data>
+  <data name="摄像头已断开，等待重新连接..." xml:space="preserve"><value>摄像头已断开，等待重新连接...</value></data>
+  <data name="识别中，请保持稳定" xml:space="preserve"><value>识别中，请保持稳定</value></data>
+  <data name="视频文件太小，已删除" xml:space="preserve"><value>视频文件太小，已删除</value></data>
+  <data name="试听失败：{message}" xml:space="preserve"><value>试听失败：{message}</value></data>
+  <data name="数据库快照失败：{ex.Message}" xml:space="preserve"><value>数据库快照失败：{ex.Message}</value></data>
+  <data name="数据库未登记该文件：{normalizedPath}" xml:space="preserve"><value>数据库未登记该文件：{normalizedPath}</value></data>
+  <data name="天" xml:space="preserve"><value>天</value></data>
+  <data name="统计错误" xml:space="preserve"><value>统计错误</value></data>
+  <data name="退出已取消" xml:space="preserve"><value>退出已取消</value></data>
+  <data name="外部适配器未包含 README.md" xml:space="preserve"><value>外部适配器未包含 README.md</value></data>
+  <data name="网络备份位置不可用，录像保留在本地，恢复后自动重试" xml:space="preserve"><value>网络备份位置不可用，录像保留在本地，恢复后自动重试</value></data>
+  <data name="网络备份位置已恢复，继续备份录像" xml:space="preserve"><value>网络备份位置已恢复，继续备份录像</value></data>
+  <data name="网络摄像头地址无效：{error}" xml:space="preserve"><value>网络摄像头地址无效：{error}</value></data>
+  <data name="网络摄像头地址无效：{networkError}" xml:space="preserve"><value>网络摄像头地址无效：{networkError}</value></data>
+  <data name="网络摄像头连接失败" xml:space="preserve"><value>网络摄像头连接失败</value></data>
+  <data name="网络摄像头连接失败：{source.LastError}" xml:space="preserve"><value>网络摄像头连接失败：{source.LastError}</value></data>
+  <data name="网络摄像头连接异常，尝试重连..." xml:space="preserve"><value>网络摄像头连接异常，尝试重连...</value></data>
+  <data name="网页访问验证失败，请在保存主机上确认后重试" xml:space="preserve"><value>网页访问验证失败，请在保存主机上确认后重试</value></data>
+  <data name="未安装" xml:space="preserve"><value>未安装</value></data>
+  <data name="未检测到可用麦克风" xml:space="preserve"><value>未检测到可用麦克风</value></data>
+  <data name="未检测到可用摄像头" xml:space="preserve"><value>未检测到可用摄像头</value></data>
+  <data name="未检测到可用摄像头，请返回上一步重新选择" xml:space="preserve"><value>未检测到可用摄像头，请返回上一步重新选择</value></data>
+  <data name="未检测到麦克风" xml:space="preserve"><value>未检测到麦克风</value></data>
+  <data name="未检测到任何摄像头" xml:space="preserve"><value>未检测到任何摄像头</value></data>
+  <data name="未生成 {result.FailureCount} 个，原始录像已保留" xml:space="preserve"><value>未生成 {result.FailureCount} 个，原始录像已保留</value></data>
+  <data name="未找到 config.json，已跳过配置" xml:space="preserve"><value>未找到 config.json，已跳过配置</value></data>
+  <data name="未找到 FFmpeg，无法录制" xml:space="preserve"><value>未找到 FFmpeg，无法录制</value></data>
+  <data name="未找到 log 目录，已跳过日志" xml:space="preserve"><value>未找到 log 目录，已跳过日志</value></data>
+  <data name="未找到 videos.db，已跳过数据库快照" xml:space="preserve"><value>未找到 videos.db，已跳过数据库快照</value></data>
+  <data name="无法创建日期目录: {ex.Message}" xml:space="preserve"><value>无法创建日期目录: {ex.Message}</value></data>
+  <data name="无法打开目录" xml:space="preserve"><value>无法打开目录</value></data>
+  <data name="无法开始录制" xml:space="preserve"><value>无法开始录制</value></data>
+  <data name="无法连接保存主机网页，请检查网络后重试" xml:space="preserve"><value>无法连接保存主机网页，请检查网络后重试</value></data>
+  <data name="无法删除扩展" xml:space="preserve"><value>无法删除扩展</value></data>
+  <data name="性能建议未完成" xml:space="preserve"><value>性能建议未完成</value></data>
+  <data name="选择一台电脑保存录像；暂时不设置也可以先录像" xml:space="preserve"><value>选择一台电脑保存录像；暂时不设置也可以先录像</value></data>
+  <data name="已保持当前录制配置" xml:space="preserve"><value>已保持当前录制配置</value></data>
+  <data name="已触发停录，将继续录制 {Config.SameCodePostRecordSeconds:F1} 秒" xml:space="preserve"><value>已触发停录，将继续录制 {Config.SameCodePostRecordSeconds:F1} 秒</value></data>
+  <data name="已触发停录，正在录制收尾画面" xml:space="preserve"><value>已触发停录，正在录制收尾画面</value></data>
+  <data name="已达最大录像限制时长" xml:space="preserve"><value>已达最大录像限制时长</value></data>
+  <data name="已复制 · 请勿转发" xml:space="preserve"><value>已复制 · 请勿转发</value></data>
+  <data name="已复制地址，打开网页失败: {openError}" xml:space="preserve"><value>已复制地址，打开网页失败: {openError}</value></data>
+  <data name="已恢复 {result.SuccessCount} 个断电残留视频" xml:space="preserve"><value>已恢复 {result.SuccessCount} 个断电残留视频</value></data>
+  <data name="已检测到麦克风音量" xml:space="preserve"><value>已检测到麦克风音量</value></data>
+  <data name="已检测到自动回车，可支持后台扫码" xml:space="preserve"><value>已检测到自动回车，可支持后台扫码</value></data>
+  <data name="已切换为: {CurrentMode}" xml:space="preserve"><value>已切换为: {CurrentMode}</value></data>
+  <data name="已取消导出" xml:space="preserve"><value>已取消导出</value></data>
+  <data name="已取消导出，未生成文件" xml:space="preserve"><value>已取消导出，未生成文件</value></data>
+  <data name="已识别 {status.Code}" xml:space="preserve"><value>已识别 {status.Code}</value></data>
+  <data name="已填入推荐录制规格，保存设置后生效" xml:space="preserve"><value>已填入推荐录制规格，保存设置后生效</value></data>
+  <data name="已停止" xml:space="preserve"><value>已停止</value></data>
+  <data name="已停止触发，将继续录制 {seconds:F1} 秒收尾画面" xml:space="preserve"><value>已停止触发，将继续录制 {seconds:F1} 秒收尾画面</value></data>
+  <data name="已旋转 180°" xml:space="preserve"><value>已旋转 180°</value></data>
+  <data name="已用时 {(int)_elapsed.Elapsed.TotalSeconds} 秒" xml:space="preserve"><value>已用时 {(int)_elapsed.Elapsed.TotalSeconds} 秒</value></data>
+  <data name="音频录制失败，已保留原始文件" xml:space="preserve"><value>音频录制失败，已保留原始文件</value></data>
+  <data name="硬件与编码环境采集失败：{ex.Message}" xml:space="preserve"><value>硬件与编码环境采集失败：{ex.Message}</value></data>
+  <data name="预览画面卡住，正在重连摄像头..." xml:space="preserve"><value>预览画面卡住，正在重连摄像头...</value></data>
+  <data name="预录制缓存未开始" xml:space="preserve"><value>预录制缓存未开始</value></data>
+  <data name="源版本应为 X.Y 格式" xml:space="preserve"><value>源版本应为 X.Y 格式</value></data>
+  <data name="约 {seconds:0.0} 秒 / {size} 内存" xml:space="preserve"><value>约 {seconds:0.0} 秒 / {size} 内存</value></data>
+  <data name="暂未收到订单" xml:space="preserve"><value>暂未收到订单</value></data>
+  <data name="暂无更新说明" xml:space="preserve"><value>暂无更新说明</value></data>
+  <data name="正在导出..." xml:space="preserve"><value>正在导出...</value></data>
+  <data name="正在导入{mode}录像" xml:space="preserve"><value>正在导入{mode}录像</value></data>
+  <data name="正在发送" xml:space="preserve"><value>正在发送</value></data>
+  <data name="正在加载播放器..." xml:space="preserve"><value>正在加载播放器...</value></data>
+  <data name="正在加载列表..." xml:space="preserve"><value>正在加载列表...</value></data>
+  <data name="正在检查..." xml:space="preserve"><value>正在检查...</value></data>
+  <data name="正在检查待备份录像" xml:space="preserve"><value>正在检查待备份录像</value></data>
+  <data name="正在检查待上传录像" xml:space="preserve"><value>正在检查待上传录像</value></data>
+  <data name="正在连接" xml:space="preserve"><value>正在连接</value></data>
+  <data name="正在连接网络摄像头..." xml:space="preserve"><value>正在连接网络摄像头...</value></data>
+  <data name="正在切换" xml:space="preserve"><value>正在切换</value></data>
+  <data name="正在切换视频..." xml:space="preserve"><value>正在切换视频...</value></data>
+  <data name="正在清理临时文件，请稍候" xml:space="preserve"><value>正在清理临时文件，请稍候</value></data>
+  <data name="正在取消" xml:space="preserve"><value>正在取消</value></data>
+  <data name="正在取消导出" xml:space="preserve"><value>正在取消导出</value></data>
+  <data name="正在扫描 MKV 记录..." xml:space="preserve"><value>正在扫描 MKV 记录...</value></data>
+  <data name="正在停止..." xml:space="preserve"><value>正在停止...</value></data>
+  <data name="正在下载扩展包" xml:space="preserve"><value>正在下载扩展包</value></data>
+  <data name="正在修复…" xml:space="preserve"><value>正在修复…</value></data>
+  <data name="正在修复局域网，Windows 可能会请求管理员授权" xml:space="preserve"><value>正在修复局域网，Windows 可能会请求管理员授权</value></data>
+  <data name="正在重新连接" xml:space="preserve"><value>正在重新连接</value></data>
+  <data name="正在准备给其他电脑浏览器使用的网址。两台电脑需要在同一局域网内" xml:space="preserve"><value>正在准备给其他电脑浏览器使用的网址。两台电脑需要在同一局域网内</value></data>
+  <data name="至少需要保留一个存储路径" xml:space="preserve"><value>至少需要保留一个存储路径</value></data>
+  <data name="至少需要一个本地保存位置，请先添加本地磁盘" xml:space="preserve"><value>至少需要一个本地保存位置，请先添加本地磁盘</value></data>
+  <data name="重复打开同一种录像方式，可能抢占摄像头、麦克风、Web 端口或数据库" xml:space="preserve"><value>重复打开同一种录像方式，可能抢占摄像头、麦克风、Web 端口或数据库</value></data>
+  <data name="重试下载" xml:space="preserve"><value>重试下载</value></data>
+  <data name="重新修复" xml:space="preserve"><value>重新修复</value></data>
+  <data name="主机离线，暂时无法检查订单联动设备" xml:space="preserve"><value>主机离线，暂时无法检查订单联动设备</value></data>
+  <data name="自定义脚本已删除" xml:space="preserve"><value>自定义脚本已删除</value></data>
+  <data name="自定义空间" xml:space="preserve"><value>自定义空间</value></data>
+  <data name="自定义天数" xml:space="preserve"><value>自定义天数</value></data>
+  <data name="AV1 (极致压缩)" xml:space="preserve"><value>AV1 (极致压缩)</value></data>
+  <data name="config.json 处理失败：{ex.Message}" xml:space="preserve"><value>config.json 处理失败：{ex.Message}</value></data>
+  <data name="CPU 软编码" xml:space="preserve"><value>CPU 软编码</value></data>
+  <data name="FFmpeg 要求 NVIDIA 驱动版本不低于 {config.EncoderDriverMinimumVersion}" xml:space="preserve"><value>FFmpeg 要求 NVIDIA 驱动版本不低于 {config.EncoderDriverMinimumVersion}</value></data>
+  <data name="H.264 (兼容性好)" xml:space="preserve"><value>H.264 (兼容性好)</value></data>
+  <data name="H.265 / HEVC (体积更小)" xml:space="preserve"><value>H.265 / HEVC (体积更小)</value></data>
 </root>

@@ -1210,4 +1210,244 @@
   <data name="加载统计数据失败" xml:space="preserve"><value>統計データの読み込みに失敗しました</value></data>
   <data name="原因" xml:space="preserve"><value>原因</value></data>
   <data name="注意" xml:space="preserve"><value>注意</value></data>
+  <data name="(读取失败)" xml:space="preserve"><value>（読み込みに失敗）</value></data>
+  <data name="[0] 未检测到摄像头" xml:space="preserve"><value>[0] カメラが検出されません</value></data>
+  <data name="{configuredPath}：磁盘未接入或无法确认存储位置类型" xml:space="preserve"><value>{0}: ディスクが接続されていないか、保存先の種類を確認できません</value></data>
+  <data name="{displaySeconds} 秒内未处理，本次申请将自动取消" xml:space="preserve"><value>{0} 秒以内に対応しない場合、この要求は自動的に取り消されます</value></data>
+  <data name="{name}（{location}）申请连接这台保存主机。{permission}" xml:space="preserve"><value>{0}（{1}）がこの保存ホストへの接続を要求しています。{2}</value></data>
+  <data name="{running.ProcessName}（PID {running.ProcessId}）身份已变化" xml:space="preserve"><value>{0}（PID {1}）の識別情報が変更されました</value></data>
+  <data name="{running.ProcessName}（PID {running.ProcessId}）未在限定时间内退出" xml:space="preserve"><value>{0}（PID {1}）が制限時間内に終了しませんでした</value></data>
+  <data name="30 天以前" xml:space="preserve"><value>30 日より前</value></data>
+  <data name="7 天以前" xml:space="preserve"><value>7 日より前</value></data>
+  <data name="90 天以前" xml:space="preserve"><value>90 日より前</value></data>
+  <data name="安装快递助手联动失败" xml:space="preserve"><value>送り状アシスタント連携のインストールに失敗しました</value></data>
+  <data name="安装失败" xml:space="preserve"><value>インストールに失敗しました</value></data>
+  <data name="按空间释放本地录像" xml:space="preserve"><value>容量のためにローカル録画を解放</value></data>
+  <data name="按时间清理本地录像" xml:space="preserve"><value>期間でローカル録画を削除</value></data>
+  <data name="保存主机返回的网页访问链接无效，请更新保存主机后重试" xml:space="preserve"><value>保存ホストが返した Web アクセス リンクが無効です。保存ホストを更新して再度お試しください</value></data>
+  <data name="保存主机未返回网页访问链接，请更新保存主机后重试" xml:space="preserve"><value>保存ホストが Web アクセス リンクを返しませんでした。保存ホストを更新して再度お試しください</value></data>
+  <data name="本地缓存不可用：{error}" xml:space="preserve"><value>ローカル キャッシュを利用できません: {0}</value></data>
+  <data name="本地缓存会在接近上限时自动清理" xml:space="preserve"><value>ローカル キャッシュは上限に近づくと自動で削除されます</value></data>
+  <data name="本地缓存位置不可用" xml:space="preserve"><value>ローカル キャッシュの場所を利用できません</value></data>
+  <data name="编码器 {EncodingHelper.GetEncoderLabel(encoder)}" xml:space="preserve"><value>エンコーダー {0}</value></data>
+  <data name="编码器不可用" xml:space="preserve"><value>エンコーダーを利用できません</value></data>
+  <data name="播放器解码失败，请确认视频文件完整" xml:space="preserve"><value>プレーヤーのデコードに失敗しました。動画ファイルが壊れていないか確認してください</value></data>
+  <data name="参数无效" xml:space="preserve"><value>パラメーターが正しくありません</value></data>
+  <data name="程序会自动使用所选磁盘下的“快递打包视频”目录" xml:space="preserve"><value>選択したディスクの「快递打包视频」フォルダーを自動的に使用します</value></data>
+  <data name="此地址仅用于接收订单联动，不提供本机录像浏览或备份主机服务" xml:space="preserve"><value>このアドレスは注文連携データの受信専用で、本機の録画閲覧やバックアップ ホスト機能は提供しません</value></data>
+  <data name="存储初始化失败: {ex.Message}" xml:space="preserve"><value>ストレージの初期化に失敗しました: {0}</value></data>
+  <data name="存储路径不可写，请检查磁盘" xml:space="preserve"><value>保存先に書き込めません。ディスクを確認してください</value></data>
+  <data name="存储位置无效" xml:space="preserve"><value>保存先が正しくありません</value></data>
+  <data name="打开本机回放失败：{error}" xml:space="preserve"><value>本機の再生を開けませんでした: {0}</value></data>
+  <data name="打开订单联动安装向导失败：{error}" xml:space="preserve"><value>注文連携のセットアップ ガイドを開けませんでした: {0}</value></data>
+  <data name="打开快递助手联动安装向导失败：{error}" xml:space="preserve"><value>送り状アシスタント連携のセットアップ ガイドを開けませんでした: {0}</value></data>
+  <data name="打开链接失败" xml:space="preserve"><value>リンクを開けませんでした</value></data>
+  <data name="打开失败" xml:space="preserve"><value>開けませんでした</value></data>
+  <data name="打开完整更新页面" xml:space="preserve"><value>完全版の更新ページを開く</value></data>
+  <data name="打开主机录像失败" xml:space="preserve"><value>ホストの録画を開けませんでした</value></data>
+  <data name="单号不一致：{upperResult}" xml:space="preserve"><value>番号が一致しません: {0}</value></data>
+  <data name="当前 PackingProof 版本过低" xml:space="preserve"><value>現在の PackingProof のバージョンが古すぎます</value></data>
+  <data name="当前日期范围内没有可导出的单号" xml:space="preserve"><value>現在の日付範囲にエクスポートできる番号がありません</value></data>
+  <data name="当前识别：{status.Code}" xml:space="preserve"><value>現在の認識: {0}</value></data>
+  <data name="当前选择未通过编码器检测" xml:space="preserve"><value>現在の選択はエンコーダー測定に合格しませんでした</value></data>
+  <data name="当前选择未通过编码器检测，请重新检测或选择列表中的可用编码器" xml:space="preserve"><value>現在の選択はエンコーダー測定に合格しませんでした。再測定するか、一覧から利用可能なエンコーダーを選択してください</value></data>
+  <data name="当前选择未通过编码器检测，请重新检测或选择设置列表中的可用编码器" xml:space="preserve"><value>現在の選択はエンコーダー測定に合格しませんでした。再測定するか、設定の一覧から利用可能なエンコーダーを選択してください</value></data>
+  <data name="当前已打开：{WorkstationRoles.GetDisplayName(runningRole)}" xml:space="preserve"><value>現在開いています: {0}</value></data>
+  <data name="当前已经是{DeploymentPresets.GetDisplayName(Config.DeploymentPreset)}" xml:space="preserve"><value>このパソコンはすでに {0} に設定されています</value></data>
+  <data name="当前已经是连接已有主机用途" xml:space="preserve"><value>このパソコンはすでに既存のホストに接続する用途です</value></data>
+  <data name="导出失败" xml:space="preserve"><value>エクスポートに失敗しました</value></data>
+  <data name="导出文件不存在或路径无效" xml:space="preserve"><value>エクスポート ファイルが存在しないか、パスが正しくありません</value></data>
+  <data name="导入成功" xml:space="preserve"><value>インポートしました</value></data>
+  <data name="导入失败" xml:space="preserve"><value>インポートに失敗しました</value></data>
+  <data name="导入视频失败" xml:space="preserve"><value>動画のインポートに失敗しました</value></data>
+  <data name="地址无效：{error}" xml:space="preserve"><value>アドレスが正しくありません: {0}</value></data>
+  <data name="等待备份完成" xml:space="preserve"><value>バックアップの完了を待機中</value></data>
+  <data name="订单联动接收 · {verifiedAddress}" xml:space="preserve"><value>注文連携の受信 · {0}</value></data>
+  <data name="读取失败" xml:space="preserve"><value>読み込みに失敗しました</value></data>
+  <data name="断句: {processed}" xml:space="preserve"><value>区切り: {0}</value></data>
+  <data name="复制和打开都失败: {openError}" xml:space="preserve"><value>コピーと表示の両方に失敗しました: {0}</value></data>
+  <data name="复制连接地址失败：{ex.Message}" xml:space="preserve"><value>接続アドレスのコピーに失敗しました: {0}</value></data>
+  <data name="该路径已在列表中" xml:space="preserve"><value>このパスはすでに一覧にあります</value></data>
+  <data name="该路径已在列表中。" xml:space="preserve"><value>このパスはすでに一覧にあります。</value></data>
+  <data name="合并出错：{ex.Message}" xml:space="preserve"><value>結合エラー: {0}</value></data>
+  <data name="合并已取消" xml:space="preserve"><value>結合をキャンセルしました</value></data>
+  <data name="检测完成，当前录制规格已是推荐配置" xml:space="preserve"><value>測定が完了しました。現在の録画設定はすでに推奨構成です</value></data>
+  <data name="检测完成，已生成录制规格建议" xml:space="preserve"><value>測定が完了しました。録画設定の推奨を作成しました</value></data>
+  <data name="检查失败" xml:space="preserve"><value>確認に失敗しました</value></data>
+  <data name="检查中" xml:space="preserve"><value>確認中</value></data>
+  <data name="脚本包含需要人工确认的高风险文本" xml:space="preserve"><value>スクリプトに手動確認が必要な高リスクの記述があります</value></data>
+  <data name="脚本已导入，可在安装订单联动中选择" xml:space="preserve"><value>スクリプトをインポートしました。注文連携のインストール時に選択できます</value></data>
+  <data name="局域网服务尚未就绪，请先修复后再安装订单联动" xml:space="preserve"><value>LAN サービスが準備できていません。修復してから注文連携をインストールしてください</value></data>
+  <data name="开启局域网查看后，可点击手机/电脑连接查看二维码或复制网址" xml:space="preserve"><value>LAN 再生を有効にすると、「スマートフォン/パソコンの接続」で QR コードの表示や URL のコピーができます</value></data>
+  <data name="开启局域网查看后可显示在线设备" xml:space="preserve"><value>LAN 再生を有効にするとオンラインのデバイスが表示されます</value></data>
+  <data name="开始录像" xml:space="preserve"><value>録画を開始</value></data>
+  <data name="可选扫码枪测试条码：{_testBarcodeValue}，也可以扫描任意真实面单条码" xml:space="preserve"><value>スキャナー用のテスト バーコード（任意）: {0}。実際の送り状バーコードを読み取ってもかまいません</value></data>
+  <data name="扩展市场不可用" xml:space="preserve"><value>拡張マーケットを利用できません</value></data>
+  <data name="扩展授权已撤销" xml:space="preserve"><value>拡張の認可を取り消しました</value></data>
+  <data name="扩展已安装，但无法定位本地文件，请尝试重新安装" xml:space="preserve"><value>拡張はインストールされていますが、ローカル ファイルが見つかりません。再インストールしてください</value></data>
+  <data name="离线" xml:space="preserve"><value>オフライン</value></data>
+  <data name="浏览…" xml:space="preserve"><value>参照…</value></data>
+  <data name="录像过短({recordDuration:F1}s)，已丢弃" xml:space="preserve"><value>録画が短すぎるため破棄しました（{0} 秒）</value></data>
+  <data name="录像进行中，停止录像后才能切换用途" xml:space="preserve"><value>録画中です。用途を切り替えるには録画を停止してください</value></data>
+  <data name="录像未生成兼容 MP4，原始录像已保留" xml:space="preserve"><value>互換 MP4 を作成できなかったため、元の録画を保持しました</value></data>
+  <data name="录像文件不存在或路径无效" xml:space="preserve"><value>録画ファイルが存在しないか、パスが正しくありません</value></data>
+  <data name="录像文件已不存在：{normalizedPath}" xml:space="preserve"><value>録画ファイルが存在しません: {0}</value></data>
+  <data name="录像文件在确认后发生变化，已保留：{normalizedPath}" xml:space="preserve"><value>確認後に録画ファイルが変化したため保持しました: {0}</value></data>
+  <data name="录制启动失败" xml:space="preserve"><value>録画の開始に失敗しました</value></data>
+  <data name="录制性能检测失败，已保留当前配置" xml:space="preserve"><value>録画性能の測定に失敗したため、現在の設定を保持しました</value></data>
+  <data name="录制中不可检测，停止录制后再重试" xml:space="preserve"><value>録画中は測定できません。録画を停止してから再試行してください</value></data>
+  <data name="录制中不可修改，停止录制后再更改" xml:space="preserve"><value>録画中は変更できません。録画を停止してから変更してください</value></data>
+  <data name="录制主机必须先选择可用摄像头" xml:space="preserve"><value>録画ホストでは、先に利用可能なカメラを選択する必要があります</value></data>
+  <data name="路径无效" xml:space="preserve"><value>パスが正しくありません</value></data>
+  <data name="麦克风不可用，本次仅录视频" xml:space="preserve"><value>マイクを利用できないため、今回は映像のみ録画します</value></data>
+  <data name="麦克风启动失败：{ex.Message}" xml:space="preserve"><value>マイクの起動に失敗しました: {0}</value></data>
+  <data name="没有符合条件的本地录像需要清理" xml:space="preserve"><value>削除条件に一致するローカル録画はありません</value></data>
+  <data name="目标摄像头未连接，等待重新插入" xml:space="preserve"><value>対象のカメラが接続されていません。再接続を待機します</value></data>
+  <data name="你想怎么做？" xml:space="preserve"><value>どうしますか？</value></data>
+  <data name="配置保存失败，请检查磁盘空间或权限: {error}" xml:space="preserve"><value>設定の保存に失敗しました。ディスクの空き容量または権限を確認してください: {0}</value></data>
+  <data name="配置向导错误: {ex.Message}" xml:space="preserve"><value>セットアップ ウィザードのエラー: {0}</value></data>
+  <data name="配置已保存，局域网服务已应用" xml:space="preserve"><value>設定を保存し、LAN サービスに反映しました</value></data>
+  <data name="配置已保存，摄像头配置将在录制结束后生效" xml:space="preserve"><value>設定を保存しました。カメラ設定は録画終了後に反映されます</value></data>
+  <data name="配置已保存，重启相机" xml:space="preserve"><value>設定を保存しました。カメラを再起動します</value></data>
+  <data name="其他设备暂时无法连接这台电脑" xml:space="preserve"><value>現在、他のデバイスはこのパソコンに接続できません</value></data>
+  <data name="启动警告" xml:space="preserve"><value>起動時の警告</value></data>
+  <data name="启动失败" xml:space="preserve"><value>起動に失敗しました</value></data>
+  <data name="切换用途失败" xml:space="preserve"><value>用途の切り替えに失敗しました</value></data>
+  <data name="清单包含重复路径：{normalizedPath}" xml:space="preserve"><value>一覧に重複したパスがあります: {0}</value></data>
+  <data name="清理：已从多盘回收 {count} 个旧视频" xml:space="preserve"><value>クリーンアップ: 複数のディスクから古い動画を {0} 件削除しました</value></data>
+  <data name="清理结束时间早于所选天数的本地录像（例如 7 天以前）" xml:space="preserve"><value>選択した日数より古いローカル録画を削除します（例: 7 日より前）</value></data>
+  <data name="清理旧反馈包失败：{ex.Message}" xml:space="preserve"><value>古いフィードバック パッケージの削除に失敗しました: {0}</value></data>
+  <data name="清理旧反馈包失败：{old.Name}（{ex.Message}）" xml:space="preserve"><value>古いフィードバック パッケージの削除に失敗しました: {0}（{1}）</value></data>
+  <data name="清理失败" xml:space="preserve"><value>クリーンアップに失敗しました</value></data>
+  <data name="请对着麦克风说话，观察音量条" xml:space="preserve"><value>マイクに向かって話し、音量バーを確認してください</value></data>
+  <data name="请返回上一步检查地址后重试" xml:space="preserve"><value>前の手順に戻ってアドレスを確認し、再度お試しください</value></data>
+  <data name="请输入 1 到 3650 之间的天数" xml:space="preserve"><value>1 から 3650 までの日数を入力してください</value></data>
+  <data name="请输入大于 0 的 GB 数值" xml:space="preserve"><value>0 より大きい GB 値を入力してください</value></data>
+  <data name="请输入网络摄像头地址，然后点击测试连接" xml:space="preserve"><value>ネットワーク カメラのアドレスを入力し、「接続をテスト」をクリックしてください</value></data>
+  <data name="请输入预览文本" xml:space="preserve"><value>プレビュー用のテキストを入力してください</value></data>
+  <data name="请先搜索并绑定 PackingProof 主机" xml:space="preserve"><value>先に PackingProof ホストを検索して接続してください</value></data>
+  <data name="请先搜索并连接一台主机" xml:space="preserve"><value>先にホストを検索して接続してください</value></data>
+  <data name="请先填写网络摄像头地址" xml:space="preserve"><value>先にネットワーク カメラのアドレスを入力してください</value></data>
+  <data name="请先选择可用摄像头" xml:space="preserve"><value>先に利用可能なカメラを選択してください</value></data>
+  <data name="请先选择一个可用视频" xml:space="preserve"><value>先に利用可能な動画を選択してください</value></data>
+  <data name="请先在列表中选中要移除的行" xml:space="preserve"><value>先に一覧で削除する行を選択してください</value></data>
+  <data name="取消导入" xml:space="preserve"><value>インポートをキャンセル</value></data>
+  <data name="取消合并" xml:space="preserve"><value>結合をキャンセル</value></data>
+  <data name="缺少录像设备注入占位符" xml:space="preserve"><value>録画デバイス注入用のプレースホルダーがありません</value></data>
+  <data name="缺少自动更新地址占位符" xml:space="preserve"><value>自動更新アドレスのプレースホルダーがありません</value></data>
+  <data name="日志文件读取失败已跳过：{Path.GetFileName(sourcePath)}" xml:space="preserve"><value>ログ ファイルを読み込めなかったためスキップしました: {0}</value></data>
+  <data name="扫码框已清除" xml:space="preserve"><value>スキャン入力をクリアしました</value></data>
+  <data name="删除扩展" xml:space="preserve"><value>拡張を削除</value></data>
+  <data name="删除失败：{normalizedPath}，{ex.Message}" xml:space="preserve"><value>削除に失敗しました: {0}、{1}</value></data>
+  <data name="上传启动失败，录像保留在本机" xml:space="preserve"><value>アップロードを開始できませんでした。録画は本機に保持されます</value></data>
+  <data name="上传失败" xml:space="preserve"><value>アップロードに失敗しました</value></data>
+  <data name="设置错误: {ex.Message}" xml:space="preserve"><value>設定エラー: {0}</value></data>
+  <data name="摄像头唤醒后没有画面，未开始录制" xml:space="preserve"><value>カメラ復帰後に映像がなく、録画を開始しませんでした</value></data>
+  <data name="摄像头连接发生错误，尝试重连..." xml:space="preserve"><value>カメラ接続でエラーが発生しました。再接続します...</value></data>
+  <data name="摄像头连接中断，正在重连..." xml:space="preserve"><value>カメラの接続が切断されました。再接続中...</value></data>
+  <data name="摄像头连续 {MaxConsecutiveRestartFailures} 次启动失败，已停止自动重连。请更换摄像头或重新插拔后在设置中重启" xml:space="preserve"><value>カメラの起動が {0} 回連続で失敗したため、自動再接続を停止しました。カメラを交換するか、接続し直してから設定で再起動してください</value></data>
+  <data name="摄像头连续 {MaxConsecutiveRestartFailures} 次重连失败，录制已停止。请重新插拔后在设置中手动重启" xml:space="preserve"><value>カメラの再接続が {0} 回連続で失敗したため、録画を停止しました。接続し直してから設定で手動で再起動してください</value></data>
+  <data name="摄像头连续 {MaxConsecutiveRestartFailures} 次重连失败，已停止自动重连。请重新插拔后在设置中手动重启" xml:space="preserve"><value>カメラの再接続が {0} 回連続で失敗したため、自動再接続を停止しました。接続し直してから設定で手動で再起動してください</value></data>
+  <data name="摄像头尚未配置" xml:space="preserve"><value>カメラが未設定です</value></data>
+  <data name="摄像头未就绪，请检查连接" xml:space="preserve"><value>カメラの準備ができていません。接続を確認してください</value></data>
+  <data name="摄像头信号丢失，尝试重连..." xml:space="preserve"><value>カメラの信号が失われました。再接続します...</value></data>
+  <data name="摄像头已断开，等待重新连接..." xml:space="preserve"><value>カメラが切断されました。再接続を待機しています...</value></data>
+  <data name="识别中，请保持稳定" xml:space="preserve"><value>認識中です。安定させてください</value></data>
+  <data name="视频文件太小，已删除" xml:space="preserve"><value>動画ファイルが小さすぎるため削除しました</value></data>
+  <data name="试听失败：{message}" xml:space="preserve"><value>試聴に失敗しました: {0}</value></data>
+  <data name="数据库快照失败：{ex.Message}" xml:space="preserve"><value>データベース スナップショットに失敗しました: {0}</value></data>
+  <data name="数据库未登记该文件：{normalizedPath}" xml:space="preserve"><value>データベースにこのファイルの登録がありません: {0}</value></data>
+  <data name="天" xml:space="preserve"><value>日</value></data>
+  <data name="统计错误" xml:space="preserve"><value>統計エラー</value></data>
+  <data name="退出已取消" xml:space="preserve"><value>終了をキャンセルしました</value></data>
+  <data name="外部适配器未包含 README.md" xml:space="preserve"><value>外部アダプターに README.md が含まれていません</value></data>
+  <data name="网络备份位置不可用，录像保留在本地，恢复后自动重试" xml:space="preserve"><value>ネットワークのバックアップ先を利用できません。録画はローカルに保持し、復旧後に自動で再試行します</value></data>
+  <data name="网络备份位置已恢复，继续备份录像" xml:space="preserve"><value>ネットワークのバックアップ先が復旧しました。バックアップを再開します</value></data>
+  <data name="网络摄像头地址无效：{error}" xml:space="preserve"><value>ネットワーク カメラのアドレスが正しくありません: {0}</value></data>
+  <data name="网络摄像头地址无效：{networkError}" xml:space="preserve"><value>ネットワーク カメラのアドレスが正しくありません: {0}</value></data>
+  <data name="网络摄像头连接失败" xml:space="preserve"><value>ネットワーク カメラの接続に失敗しました</value></data>
+  <data name="网络摄像头连接失败：{source.LastError}" xml:space="preserve"><value>ネットワーク カメラの接続に失敗しました: {0}</value></data>
+  <data name="网络摄像头连接异常，尝试重连..." xml:space="preserve"><value>ネットワーク カメラの接続が異常です。再接続します...</value></data>
+  <data name="网页访问验证失败，请在保存主机上确认后重试" xml:space="preserve"><value>Web アクセスの検証に失敗しました。保存ホストで確認して再度お試しください</value></data>
+  <data name="未安装" xml:space="preserve"><value>未インストール</value></data>
+  <data name="未检测到可用麦克风" xml:space="preserve"><value>利用可能なマイクが見つかりません</value></data>
+  <data name="未检测到可用摄像头" xml:space="preserve"><value>利用可能なカメラが見つかりません</value></data>
+  <data name="未检测到可用摄像头，请返回上一步重新选择" xml:space="preserve"><value>利用可能なカメラが見つかりません。前の手順に戻って選び直してください</value></data>
+  <data name="未检测到麦克风" xml:space="preserve"><value>マイクが検出されません</value></data>
+  <data name="未检测到任何摄像头" xml:space="preserve"><value>カメラが検出されません</value></data>
+  <data name="未生成 {result.FailureCount} 个，原始录像已保留" xml:space="preserve"><value>{0} 件を生成できなかったため、元の録画を保持しました</value></data>
+  <data name="未找到 config.json，已跳过配置" xml:space="preserve"><value>config.json が見つからないため、設定をスキップしました</value></data>
+  <data name="未找到 FFmpeg，无法录制" xml:space="preserve"><value>FFmpeg が見つからないため録画できません</value></data>
+  <data name="未找到 log 目录，已跳过日志" xml:space="preserve"><value>log ディレクトリが見つからないため、ログをスキップしました</value></data>
+  <data name="未找到 videos.db，已跳过数据库快照" xml:space="preserve"><value>videos.db が見つからないため、データベース スナップショットをスキップしました</value></data>
+  <data name="无法创建日期目录: {ex.Message}" xml:space="preserve"><value>日付フォルダーを作成できません: {0}</value></data>
+  <data name="无法打开目录" xml:space="preserve"><value>フォルダーを開けません</value></data>
+  <data name="无法开始录制" xml:space="preserve"><value>録画を開始できません</value></data>
+  <data name="无法连接保存主机网页，请检查网络后重试" xml:space="preserve"><value>保存ホストの Web ページに接続できません。ネットワークを確認して再度お試しください</value></data>
+  <data name="无法删除扩展" xml:space="preserve"><value>拡張を削除できません</value></data>
+  <data name="性能建议未完成" xml:space="preserve"><value>性能の推奨が完了していません</value></data>
+  <data name="选择一台电脑保存录像；暂时不设置也可以先录像" xml:space="preserve"><value>録画を保存するパソコンを選択します。後で設定しても、先に録画を始められます</value></data>
+  <data name="已保持当前录制配置" xml:space="preserve"><value>現在の録画設定を保持しました</value></data>
+  <data name="已触发停录，将继续录制 {Config.SameCodePostRecordSeconds:F1} 秒" xml:space="preserve"><value>停止がトリガーされました。あと {0} 秒録画を続けます</value></data>
+  <data name="已触发停录，正在录制收尾画面" xml:space="preserve"><value>停止がトリガーされました。収尾の映像を録画中です</value></data>
+  <data name="已达最大录像限制时长" xml:space="preserve"><value>最大録画時間に達しました</value></data>
+  <data name="已复制 · 请勿转发" xml:space="preserve"><value>コピーしました · 転送しないでください</value></data>
+  <data name="已复制地址，打开网页失败: {openError}" xml:space="preserve"><value>アドレスはコピーしましたが、ページを開けませんでした: {0}</value></data>
+  <data name="已恢复 {result.SuccessCount} 个断电残留视频" xml:space="preserve"><value>停電で残った動画を {0} 件復元しました</value></data>
+  <data name="已检测到麦克风音量" xml:space="preserve"><value>マイクの音量を検出しました</value></data>
+  <data name="已检测到自动回车，可支持后台扫码" xml:space="preserve"><value>自動改行を検出しました。バックグラウンドでのスキャンに対応します</value></data>
+  <data name="已切换为: {CurrentMode}" xml:space="preserve"><value>切り替えました: {0}</value></data>
+  <data name="已取消导出" xml:space="preserve"><value>エクスポートをキャンセルしました</value></data>
+  <data name="已取消导出，未生成文件" xml:space="preserve"><value>エクスポートをキャンセルしました。ファイルは作成されていません</value></data>
+  <data name="已识别 {status.Code}" xml:space="preserve"><value>{0} を認識しました</value></data>
+  <data name="已填入推荐录制规格，保存设置后生效" xml:space="preserve"><value>推奨の録画設定を入力しました。保存すると反映されます</value></data>
+  <data name="已停止" xml:space="preserve"><value>停止しました</value></data>
+  <data name="已停止触发，将继续录制 {seconds:F1} 秒收尾画面" xml:space="preserve"><value>停止をトリガーしました。あと {0} 秒の収尾映像を録画します</value></data>
+  <data name="已旋转 180°" xml:space="preserve"><value>180° 回転しました</value></data>
+  <data name="已用时 {(int)_elapsed.Elapsed.TotalSeconds} 秒" xml:space="preserve"><value>経過時間: {0} 秒</value></data>
+  <data name="音频录制失败，已保留原始文件" xml:space="preserve"><value>音声録音に失敗しました。元のファイルを保持しました</value></data>
+  <data name="硬件与编码环境采集失败：{ex.Message}" xml:space="preserve"><value>ハードウェアとエンコード環境の取得に失敗しました: {0}</value></data>
+  <data name="预览画面卡住，正在重连摄像头..." xml:space="preserve"><value>プレビューが停止しました。カメラを再接続しています...</value></data>
+  <data name="预录制缓存未开始" xml:space="preserve"><value>事前録画バッファが開始されていません</value></data>
+  <data name="源版本应为 X.Y 格式" xml:space="preserve"><value>ソース バージョンは X.Y 形式である必要があります</value></data>
+  <data name="约 {seconds:0.0} 秒 / {size} 内存" xml:space="preserve"><value>約 {0} 秒 / メモリ {1}</value></data>
+  <data name="暂未收到订单" xml:space="preserve"><value>まだ注文を受信していません</value></data>
+  <data name="暂无更新说明" xml:space="preserve"><value>更新内容はありません</value></data>
+  <data name="正在导出..." xml:space="preserve"><value>エクスポート中...</value></data>
+  <data name="正在导入{mode}录像" xml:space="preserve"><value>{0} の録画をインポート中</value></data>
+  <data name="正在发送" xml:space="preserve"><value>送信中</value></data>
+  <data name="正在加载播放器..." xml:space="preserve"><value>プレーヤーを読み込み中...</value></data>
+  <data name="正在加载列表..." xml:space="preserve"><value>一覧を読み込み中...</value></data>
+  <data name="正在检查..." xml:space="preserve"><value>確認中...</value></data>
+  <data name="正在检查待备份录像" xml:space="preserve"><value>バックアップ待ちの録画を確認中</value></data>
+  <data name="正在检查待上传录像" xml:space="preserve"><value>アップロード待ちの録画を確認中</value></data>
+  <data name="正在连接" xml:space="preserve"><value>接続中</value></data>
+  <data name="正在连接网络摄像头..." xml:space="preserve"><value>ネットワーク カメラに接続中...</value></data>
+  <data name="正在切换" xml:space="preserve"><value>切り替え中</value></data>
+  <data name="正在切换视频..." xml:space="preserve"><value>動画を切り替え中...</value></data>
+  <data name="正在清理临时文件，请稍候" xml:space="preserve"><value>一時ファイルを削除中です。しばらくお待ちください</value></data>
+  <data name="正在取消" xml:space="preserve"><value>キャンセル中</value></data>
+  <data name="正在取消导出" xml:space="preserve"><value>エクスポートをキャンセル中</value></data>
+  <data name="正在扫描 MKV 记录..." xml:space="preserve"><value>MKV の記録をスキャン中...</value></data>
+  <data name="正在停止..." xml:space="preserve"><value>停止中...</value></data>
+  <data name="正在下载扩展包" xml:space="preserve"><value>拡張パッケージをダウンロード中</value></data>
+  <data name="正在修复…" xml:space="preserve"><value>修復中…</value></data>
+  <data name="正在修复局域网，Windows 可能会请求管理员授权" xml:space="preserve"><value>LAN アクセスを修復中です。Windows が管理者の承認を求める場合があります</value></data>
+  <data name="正在重新连接" xml:space="preserve"><value>再接続中</value></data>
+  <data name="正在准备给其他电脑浏览器使用的网址。两台电脑需要在同一局域网内" xml:space="preserve"><value>他のパソコンのブラウザーで使う URL を準備しています。2 台のパソコンが同じ LAN にある必要があります</value></data>
+  <data name="至少需要保留一个存储路径" xml:space="preserve"><value>保存先を少なくとも 1 つ保持してください</value></data>
+  <data name="至少需要一个本地保存位置，请先添加本地磁盘" xml:space="preserve"><value>ローカルの保存先が少なくとも 1 つ必要です。先にローカル ディスクを追加してください</value></data>
+  <data name="重复打开同一种录像方式，可能抢占摄像头、麦克风、Web 端口或数据库" xml:space="preserve"><value>同じ録画モードを重複して開くと、カメラ、マイク、Web ポート、データベースが競合する場合があります</value></data>
+  <data name="重试下载" xml:space="preserve"><value>ダウンロードを再試行</value></data>
+  <data name="重新修复" xml:space="preserve"><value>再修復</value></data>
+  <data name="主机离线，暂时无法检查订单联动设备" xml:space="preserve"><value>ホストがオフラインのため、注文連携デバイスを確認できません</value></data>
+  <data name="自定义脚本已删除" xml:space="preserve"><value>カスタム スクリプトを削除しました</value></data>
+  <data name="自定义空间" xml:space="preserve"><value>カスタム容量</value></data>
+  <data name="自定义天数" xml:space="preserve"><value>カスタム日数</value></data>
+  <data name="AV1 (极致压缩)" xml:space="preserve"><value>AV1（最大圧縮）</value></data>
+  <data name="config.json 处理失败：{ex.Message}" xml:space="preserve"><value>config.json の処理に失敗しました: {0}</value></data>
+  <data name="CPU 软编码" xml:space="preserve"><value>CPU ソフトウェア エンコード</value></data>
+  <data name="FFmpeg 要求 NVIDIA 驱动版本不低于 {config.EncoderDriverMinimumVersion}" xml:space="preserve"><value>FFmpeg は NVIDIA ドライバー {0} 以降が必要です</value></data>
+  <data name="H.264 (兼容性好)" xml:space="preserve"><value>H.264（互換性が高い）</value></data>
+  <data name="H.265 / HEVC (体积更小)" xml:space="preserve"><value>H.265 / HEVC（ファイルが小さい）</value></data>
 </root>

@@ -73,8 +73,10 @@ public static class AppLanguage
         PhraseTable table = GetPhraseTable(culture);
 
         // “已连接 主机名”“找到 3 台主机”这类带占位符的完整句式，直接按模板整句替换。
-        foreach ((System.Text.RegularExpressions.Regex pattern, string template) in table.Templates)
+        foreach ((string prefix, System.Text.RegularExpressions.Regex pattern, string template) in table.Templates)
         {
+            // 先做一次廉价的前缀判断，避免每个界面字符串都跑几十条正则。
+            if (prefix.Length > 0 && !value.StartsWith(prefix, StringComparison.Ordinal)) continue;
             System.Text.RegularExpressions.Match match = pattern.Match(value);
             if (!match.Success) continue;
             var arguments = new object[match.Groups.Count - 1];
@@ -99,7 +101,7 @@ public static class AppLanguage
 
     private sealed record PhraseTable(
         IReadOnlyDictionary<string, string> Labels,
-        IReadOnlyList<(System.Text.RegularExpressions.Regex Pattern, string Template)> Templates);
+        IReadOnlyList<(string Prefix, System.Text.RegularExpressions.Regex Pattern, string Template)> Templates);
 
     private static readonly Dictionary<string, PhraseTable> PhraseTables = new(StringComparer.OrdinalIgnoreCase);
     private static readonly object PhraseTableLock = new();
@@ -126,7 +128,9 @@ public static class AppLanguage
 
         System.Collections.IDictionaryEnumerator? enumerator =
             Resources.GetResourceSet(culture, true, false)?.GetEnumerator();
-        if (enumerator == null) return new PhraseTable(labels, Array.Empty<(System.Text.RegularExpressions.Regex, string)>());
+        if (enumerator == null)
+            return new PhraseTable(labels,
+                Array.Empty<(string, System.Text.RegularExpressions.Regex, string)>());
 
         while (enumerator.MoveNext())
         {
@@ -141,26 +145,34 @@ public static class AppLanguage
             labels[key] = value;
         }
 
-        var templates = new List<(System.Text.RegularExpressions.Regex, string)>();
+        var templates = new List<(string, System.Text.RegularExpressions.Regex, string)>();
         foreach (KeyValuePair<string, string> pair in templateKeys.OrderByDescending(item => item.Key.Length))
         {
             System.Text.RegularExpressions.Regex pattern = TryBuildTemplateRegex(pair.Key)!;
-            templates.Add((pattern, pair.Value));
+            templates.Add((GetTemplatePrefix(pair.Key), pattern, pair.Value));
         }
 
         return new PhraseTable(labels, templates);
     }
 
+    /// <summary>模板里第一个占位符之前的固定文本，用于快速排除不可能匹配的字符串。</summary>
+    private static string GetTemplatePrefix(string key)
+    {
+        int index = key.IndexOf('{');
+        return index <= 0 ? "" : key[..index];
+    }
+
     private static System.Text.RegularExpressions.Regex? TryBuildTemplateRegex(string key)
     {
-        // 只有形如“已连接 {0}”的完整句式才做模板匹配，避免误伤普通词条。
-        if (!key.Contains("{0}", StringComparison.Ordinal)) return null;
+        // 只有形如“已连接 {0}”“存储初始化失败: {ex.Message}”的完整句式才做模板匹配，
+        // 花括号里的名字只是占位，运行时按捕获顺序替换成 {0}、{1}…
+        if (!key.Contains('{')) return null;
         if (key.Length < 4) return null;
 
         var builder = new System.Text.StringBuilder("^");
         int index = 0;
         foreach (System.Text.RegularExpressions.Match match in
-                 System.Text.RegularExpressions.Regex.Matches(key, @"\{(\d)\}"))
+                 System.Text.RegularExpressions.Regex.Matches(key, @"\{[^{}]+\}"))
         {
             builder.Append(System.Text.RegularExpressions.Regex.Escape(key[index..match.Index]));
             builder.Append("(.+?)");
