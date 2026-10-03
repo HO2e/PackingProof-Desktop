@@ -468,15 +468,6 @@ namespace ExpressPackingMonitoring.UI
             CameraBarcodeGuideHintHost.Width = hostWidth;
             Canvas.SetLeft(CameraBarcodeGuideHintHost, panelLeft - ((hostWidth - panelWidth) / 2));
             Canvas.SetTop(CameraBarcodeGuideHintHost, hintOriginInLayer.Y + guideRect.Y + 10);
-            Logging.RuntimeLog.Info(
-                "OverlayUi",
-                $"取景框提示定位 guide=({guideRect.X:F0},{guideRect.Y:F0},{guideRect.Width:F0}x{guideRect.Height:F0}) "
-                    + $"video=({videoRect.X:F0},{videoRect.Y:F0},{videoRect.Width:F0}x{videoRect.Height:F0}) "
-                    + $"preview={actualW:F0}x{actualH:F0} "
-                    + $"host={guideHost.ActualWidth:F0}x{guideHost.ActualHeight:F0} "
-                    + $"videoInHost=({videoOriginInHost.X:F0},{videoOriginInHost.Y:F0}) "
-                    + $"videoInHint=({hintOriginInLayer.X:F0},{hintOriginInLayer.Y:F0}) "
-                    + $"hintHost={CameraBarcodeGuideHintHost.Width:F0} panel={panelWidth:F0} layerW={CameraBarcodeGuideHintLayer.ActualWidth:F0}");
         }
 
         /// <summary>

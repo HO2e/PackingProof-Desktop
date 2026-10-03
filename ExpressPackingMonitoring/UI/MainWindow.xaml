@@ -619,6 +619,20 @@
                             <Grid x:Name="CameraBarcodeGuideHintHost"
                                   HorizontalAlignment="Left"
                                   VerticalAlignment="Top">
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <!--
+                                            平时半透明：取景框拖到很小时提示会折成好几行，
+                                            不透明的话整块画面都被挡住；鼠标移上来才完全显示。
+                                        -->
+                                        <Setter Property="Opacity" Value="0.65"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Opacity" Value="1"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
                                 <StackPanel x:Name="CameraBarcodeGuideHintPanel"
                                             Orientation="Horizontal"
                                             HorizontalAlignment="Center">
