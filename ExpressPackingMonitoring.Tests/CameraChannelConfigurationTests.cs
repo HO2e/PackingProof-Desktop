@@ -649,7 +649,7 @@ public sealed class CameraChannelConfigurationTests
     public void MainWindow_ExposesDraggableOverlayBoxes()
     {
         string mainWindow = ReadProjectFile(Path.Combine("UI", "MainWindow.xaml"));
-        Assert.Contains("x:Name=\"SecondaryOverlayBoxLayer\"", mainWindow, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"OverlayBoxLayer\"", mainWindow, StringComparison.Ordinal);
 
         string codeBehind = ReadProjectFile(Path.Combine("UI", "MainWindow.OverlayBoxes.cs"));
         // 每一路接了设备的画中画各有一个框，按通道号生成。

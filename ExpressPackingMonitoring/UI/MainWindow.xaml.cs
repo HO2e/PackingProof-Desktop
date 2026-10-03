@@ -370,7 +370,7 @@ namespace ExpressPackingMonitoring.UI
         }
 
         /// <summary>退出副摄取景编辑，回到正常预览。</summary>
-        private void BtnSecondaryPreviewDone_Click(object sender, RoutedEventArgs e)
+        private void BtnOverlayPreviewDone_Click(object sender, RoutedEventArgs e)
         {
             if (DataContext is not MainViewModel vm)
                 return;
@@ -421,6 +421,18 @@ namespace ExpressPackingMonitoring.UI
                     overlay.Width * overlayScale,
                     overlay.Height * overlayScale);
                 geometry = new CameraBarcodeGuideGeometry(1.0, 1.0, 0, 0);
+                // 框贴到画中画上时，框线圆角也跟着画中画走，两个圆角才对得上。
+                int overlayRadius = Math.Max(
+                    1,
+                    (int)Math.Round(CameraOverlayComposer.ResolveCornerRadius(overlay.Width, overlay.Height) * overlayScale));
+                CameraBarcodeGuideBox.RadiusX = overlayRadius;
+                CameraBarcodeGuideBox.RadiusY = overlayRadius;
+            }
+            else
+            {
+                // 画在主画面上的识别框保持自己一贯的圆角
+                CameraBarcodeGuideBox.RadiusX = 6;
+                CameraBarcodeGuideBox.RadiusY = 6;
             }
 
             Rect guideRect = CameraBarcodeGuideLayout.ToDisplayRect(geometry, videoRect);

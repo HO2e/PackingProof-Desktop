@@ -93,8 +93,8 @@ namespace ExpressPackingMonitoring.UI
             resize.MouseEnter += OverlayBox_MouseEnter;
             resize.MouseLeave += OverlayBox_MouseLeave;
 
-            SecondaryOverlayBoxLayer.Children.Add(drag);
-            SecondaryOverlayBoxLayer.Children.Add(resize);
+            OverlayBoxLayer.Children.Add(drag);
+            OverlayBoxLayer.Children.Add(resize);
             return new OverlayBoxControls
             {
                 ChannelNumber = channelNumber,
@@ -144,7 +144,7 @@ namespace ExpressPackingMonitoring.UI
             // VideoImage 在父容器里不一定从 (0,0) 开始：画面按 Uniform 居中摆放，
             // 四周留出的黑边同样占父容器的坐标。拖动框挂在同一个容器上，
             // 坐标必须换算过去，否则整块框会比画面偏出这段黑边。
-            UIElement overlayHost = SecondaryOverlayBoxLayer;
+            UIElement overlayHost = OverlayBoxLayer;
             Point videoOrigin = VideoImage.TranslatePoint(
                 new Point(videoRect.X, videoRect.Y),
                 overlayHost);
