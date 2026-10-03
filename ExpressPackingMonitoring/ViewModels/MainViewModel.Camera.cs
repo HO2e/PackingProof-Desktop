@@ -1257,6 +1257,10 @@ namespace ExpressPackingMonitoring.ViewModels
 
                         bool previewPublishDue = ShouldPublishPreviewFrameNow();
 
+                        // 先合成副画面、后画水印：水印承载时间戳与单号，是取证核心，必须永远压在
+                        // 最上层。顺序反过来时，用户把副画面拖到右上角就会把水印盖掉。
+                        ComposeSecondaryCameraOverlayIfNeeded(processedFrame, previewPublishDue);
+
                         // 水印直接画在处理循环独占的这一帧上；非录制状态只为真正要发布的预览帧绘制，
                         // 空闲降档时不会按摄像头满帧率反复画水印。
                         if (Config.EnableWatermark && (IsRecording || previewPublishDue))
@@ -1273,9 +1277,6 @@ namespace ExpressPackingMonitoring.ViewModels
                             }
                             catch { }
                         }
-
-                        // 第二路摄像头画面叠到右下角：预览与录像共用这一帧，合成就此一次完成。
-                        ComposeSecondaryCameraOverlayIfNeeded(processedFrame, previewPublishDue);
 
                         if (previewPublishDue)
                         {

@@ -295,7 +295,7 @@ namespace ExpressPackingMonitoring.ViewModels
             return devices[index].MonikerString;
         }
 
-        private void SecondaryVideoSource_NewFrame(object sender, NewFrameEventArgs eventArgs)
+        private void SecondaryVideoSource_NewFrame(object? sender, NewFrameEventArgs eventArgs)
         {
             Mat? frame = null;
             try
@@ -314,7 +314,7 @@ namespace ExpressPackingMonitoring.ViewModels
             }
         }
 
-        private void SecondaryNetworkCameraSource_FrameReady(object sender, NetworkCameraFrameEventArgs e)
+        private void SecondaryNetworkCameraSource_FrameReady(object? sender, NetworkCameraFrameEventArgs e)
         {
             Mat? frame = null;
             try

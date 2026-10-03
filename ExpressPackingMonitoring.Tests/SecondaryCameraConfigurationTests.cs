@@ -124,6 +124,35 @@ public sealed class SecondaryCameraConfigurationTests
         Assert.True(recorderIndex > composeIndex, "合成必须在录像入队之前");
     }
 
+    /// <summary>
+    /// 水印必须后于副画面绘制：水印承载时间戳与单号，是取证核心，必须永远压在最上层。
+    /// 顺序反过来时，用户把副画面拖到右上角就会把水印盖掉。
+    /// </summary>
+    [Fact]
+    public void WatermarkIsDrawnAfterTheSecondaryOverlay()
+    {
+        string camera = ReadProjectFile(Path.Combine("ViewModels", "MainViewModel.Camera.cs"));
+        int composeIndex = camera.IndexOf(
+            "ComposeSecondaryCameraOverlayIfNeeded(processedFrame, previewPublishDue)",
+            StringComparison.Ordinal);
+        int watermarkIndex = camera.IndexOf(
+            "ApplyWatermarkToFrame(processedFrame",
+            StringComparison.Ordinal);
+        Assert.True(composeIndex >= 0, "处理循环里没有调用副画面合成");
+        Assert.True(watermarkIndex >= 0, "处理循环里没有绘制水印");
+        Assert.True(watermarkIndex > composeIndex, "水印必须在副画面之后绘制");
+
+        string recording = ReadProjectFile(Path.Combine("ViewModels", "MainViewModel.Recording.cs"));
+        int preComposeIndex = recording.IndexOf(
+            "ComposeSecondaryCameraOverlayIfNeeded(preFrame",
+            StringComparison.Ordinal);
+        int preWatermarkIndex = recording.IndexOf(
+            "ApplyWatermarkToFrame(preFrame",
+            StringComparison.Ordinal);
+        Assert.True(preComposeIndex >= 0 && preWatermarkIndex >= 0, "预录帧缺少合成或水印");
+        Assert.True(preWatermarkIndex > preComposeIndex, "预录帧的水印必须在副画面之后绘制");
+    }
+
     /// <summary>预录帧也必须贴副画面，否则录像开头几秒只有主画面、与后面接不上。</summary>
     [Fact]
     public void PreRecordFramesAlsoGetTheOverlay()
