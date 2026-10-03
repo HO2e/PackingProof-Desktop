@@ -825,6 +825,9 @@ namespace ExpressPackingMonitoring.ViewModels
                                 // 再在写录像前画水印。预录帧是旋转前缓存下来的，这里必须先补旋转，否则开启旋转后
                                 // 预录那几秒是倒的（现场反馈）。
                                 CameraFrameOrientation.Apply(preFrame, Config.CameraRotate180);
+                                // 预录帧也要贴上副画面，否则录像开头几秒只有主画面，与后面接不上。
+                                // 必须先叠副画面再画水印：副画面占右上角，反过来的话水印里的单号会被盖掉。
+                                ComposeSecondaryCameraOverlayIfNeeded(preFrame, previewPublishDue: true);
                                 if (Config.EnableWatermark)
                                 {
                                     _recordingFramePipelineDiagnostics.Enter(
@@ -837,8 +840,6 @@ namespace ExpressPackingMonitoring.ViewModels
                                         watermarkTime = preRecordTimestamps[preFrameIndex];
                                     ApplyWatermarkToFrame(preFrame, watermarkTime, _recordingOrderId, Array.Empty<string>());
                                 }
-                                // 预录帧也要贴上副画面，否则录像开头几秒只有主画面，与后面接不上。
-                                ComposeSecondaryCameraOverlayIfNeeded(preFrame, previewPublishDue: true);
                                 _recordingFramePipelineDiagnostics.Enter(
                                     RecordingFramePipelineStage.PreRecordEnqueue,
                                     preFrameIndex);

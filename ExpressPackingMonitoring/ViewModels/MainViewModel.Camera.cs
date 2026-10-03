@@ -1131,7 +1131,7 @@ namespace ExpressPackingMonitoring.ViewModels
                         {
                             MarkRecordingFramePipelineStage(RecordingFramePipelineStage.SmartZoom, currentFrameSequence);
                             double effectiveScale = PreviewZoomScale ?? Config.MaxZoomScale;
-                            CameraBarcodeGeometry barcodeGeometry = _lastBarcodeGeometry;
+                            CameraBarcodeGeometry barcodeGeometry = ResolveSmartZoomTargetGeometry(currentFrame.Width, currentFrame.Height);
                             double boundedScale = SmartZoomPolicy.GetBoundedScale(
                                 currentFrame.Width,
                                 currentFrame.Height,
@@ -1257,8 +1257,12 @@ namespace ExpressPackingMonitoring.ViewModels
 
                         bool previewPublishDue = ShouldPublishPreviewFrameNow();
 
+                        // 第二路摄像头画面叠到右下角：预览与录像共用这一帧，合成就此一次完成。
+                        ComposeSecondaryCameraOverlayIfNeeded(processedFrame, previewPublishDue);
+
                         // 水印直接画在处理循环独占的这一帧上；非录制状态只为真正要发布的预览帧绘制，
                         // 空闲降档时不会按摄像头满帧率反复画水印。
+                        // 必须画在副画面之后：副画面占右上角/右下角，先画水印会被它盖掉单号那一行（现场反馈）。
                         if (Config.EnableWatermark && (IsRecording || previewPublishDue))
                         {
                             MarkRecordingFramePipelineStage(RecordingFramePipelineStage.Watermark, currentFrameSequence);
@@ -1273,9 +1277,6 @@ namespace ExpressPackingMonitoring.ViewModels
                             }
                             catch { }
                         }
-
-                        // 第二路摄像头画面叠到右下角：预览与录像共用这一帧，合成就此一次完成。
-                        ComposeSecondaryCameraOverlayIfNeeded(processedFrame, previewPublishDue);
 
                         if (previewPublishDue)
                         {

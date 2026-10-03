@@ -206,6 +206,24 @@ namespace ExpressPackingMonitoring.ViewModels
 
         private void ClearPreviewOrderNotice() => SetPreviewOrderNotice(null);
 
+        /// <summary>
+        /// 没有快递助手扩展推送订单明细时，至少把扫码得到的快递单号显示在主画面上，
+        /// 让店员一眼确认当前在录的是哪个包裹；扩展随后推送明细时会由 SetPreviewOrderNotice 接管。
+        /// </summary>
+        private void ShowPreviewWaybillNotice(string waybillNumber)
+        {
+            string compact = CompactPreviewText(waybillNumber);
+            if (compact.Length == 0)
+            {
+                ClearPreviewOrderNotice();
+                return;
+            }
+            PreviewOrderRemarkText = $"快递单:{compact}";
+            PreviewOrderDetailText = "";
+            PreviewOrderItemCountText = "";
+            IsPreviewOrderNoticeVisible = true;
+        }
+
         private void PresentPreviewAlert(AlertRequest request)
         {
             Application.Current?.Dispatcher?.InvokeAsync(async () =>

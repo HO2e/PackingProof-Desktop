@@ -422,10 +422,19 @@ namespace ExpressPackingMonitoring.ViewModels
             TimeSpan offset = timestamp.Offset;
             string sign = offset < TimeSpan.Zero ? "-" : "+";
             offset = offset.Duration();
-            string offsetText = offset.Minutes == 0
-                ? $"{sign}{offset.Hours:00}"
-                : $"{sign}{offset.Hours:00}:{offset.Minutes:00}";
-            return $"UTC{offsetText}: {timestamp:yyyy/MM/dd HH:mm:ss}";
+            // 水印是留证信息，必须与电脑的区域设置无关：日期分隔符和数字都固定用不变文化，
+            // 否则换一台不同区域的电脑，同一段录像的水印样式会跟着变。
+            string offsetText = string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                offset.Minutes == 0 ? "{0}{1:00}" : "{0}{1:00}:{2:00}",
+                sign,
+                offset.Hours,
+                offset.Minutes);
+            return string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "UTC{0}: {1:yyyy/MM/dd HH:mm:ss}",
+                offsetText,
+                timestamp);
         }
 
         internal static void ApplyWatermarkToFrame(Mat frame, DateTimeOffset timestamp, string orderId)
@@ -435,45 +444,46 @@ namespace ExpressPackingMonitoring.ViewModels
         {
             if (frame == null || frame.IsDisposed || frame.Empty()) return;
 
-            string line1 = FormatWatermarkTimestamp(timestamp);
-            double fontScale = Math.Max(0.5, frame.Height / 720.0) * 0.6;
-            int thickness = fontScale >= 0.8 ? 2 : 1;
-            int lineHeight = (int)(30 * fontScale / 0.6);
-            var size1 = Cv2.GetTextSize(line1, HersheyFonts.HersheySimplex, fontScale, thickness, out _);
-            int x1 = Math.Max(8, frame.Width - size1.Width - 15);
-            int y1 = lineHeight;
+            // 字号随画面高度缩放。中英文都交给 FrameTextRenderer 用 GDI+ 画：
+            // OpenCV 自带的 Hershey 字体画不了中文，会把“快递单”画成问号。
+            float emSize = Math.Max(12f, frame.Height * 0.026f);
+            float rightMargin = Math.Max(8f, frame.Width * 0.008f);
+            float lineGap = emSize * 0.25f;
+            float cursor = emSize * 0.6f;
 
-            Cv2.PutText(frame, line1, new OpenCvSharp.Point(x1, y1),
-                HersheyFonts.HersheySimplex, fontScale, new Scalar(0, 0, 0), thickness + 2, LineTypes.AntiAlias);
-            Cv2.PutText(frame, line1, new OpenCvSharp.Point(x1, y1),
-                HersheyFonts.HersheySimplex, fontScale, new Scalar(255, 255, 255), thickness, LineTypes.AntiAlias);
+            cursor += FrameTextRenderer.DrawRightAlignedLine(
+                frame,
+                FormatWatermarkTimestamp(timestamp),
+                emSize,
+                rightMargin,
+                cursor);
 
-            int nextLine = 1;
             if (!string.IsNullOrWhiteSpace(orderId))
             {
-                string line2 = $"Order:{orderId}";
-                DrawWatermarkLine(frame, line2, fontScale, thickness, lineHeight, ref nextLine);
+                // 快递单号是核心信息，单独用更大字号绘制，作为主画面上的“快递单水印”，
+                // 店员一眼就能确认当前在录的是哪个包裹。
+                cursor += lineGap;
+                cursor += FrameTextRenderer.DrawRightAlignedLine(
+                    frame,
+                    $"快递单:{orderId}",
+                    emSize * 1.5f,
+                    rightMargin,
+                    cursor);
             }
 
             if (extensionLines == null) return;
             foreach (string extensionLine in extensionLines.Take(4))
             {
-                if (!string.IsNullOrWhiteSpace(extensionLine))
-                    DrawWatermarkLine(frame, extensionLine, fontScale, thickness, lineHeight, ref nextLine);
-            }
-        }
+                if (string.IsNullOrWhiteSpace(extensionLine)) continue;
 
-        private static void DrawWatermarkLine(Mat frame, string text, double fontScale, int thickness, int lineHeight, ref int lineIndex)
-        {
-            string line2 = text;
-            var size2 = Cv2.GetTextSize(line2, HersheyFonts.HersheySimplex, fontScale, thickness, out _);
-            int x2 = Math.Max(8, frame.Width - size2.Width - 15);
-            int y2 = (int)(lineHeight * 1.1 * (lineIndex + 1));
-            Cv2.PutText(frame, line2, new OpenCvSharp.Point(x2, y2),
-                HersheyFonts.HersheySimplex, fontScale, new Scalar(0, 0, 0), thickness + 2, LineTypes.AntiAlias);
-            Cv2.PutText(frame, line2, new OpenCvSharp.Point(x2, y2),
-                HersheyFonts.HersheySimplex, fontScale, new Scalar(255, 255, 255), thickness, LineTypes.AntiAlias);
-            lineIndex++;
+                cursor += lineGap;
+                cursor += FrameTextRenderer.DrawRightAlignedLine(
+                    frame,
+                    extensionLine,
+                    emSize,
+                    rightMargin,
+                    cursor);
+            }
         }
 
         private string _toastMessage;
@@ -614,6 +624,7 @@ namespace ExpressPackingMonitoring.ViewModels
                     OnPropertyChanged(nameof(IsPreRecordBufferVisible));
                     OnPropertyChanged(nameof(IsSecondaryCameraOverlayVisible));
                     OnPropertyChanged(nameof(IsBarcodeGuideVisible));
+                    OnPropertyChanged(nameof(IsSmartZoomCustomPositionMode));
                     PublishPreRecordBufferStatus(force: true);
                 }
             }

@@ -122,6 +122,8 @@
     <Compile Include="Services\CameraBarcodeRecognitionService.cs" />
     <Compile Include="Services\CameraBarcodeGuideLayout.cs" />
     <Compile Include="Services\SmartZoomPolicy.cs" />
+    <Compile Include="Services\SmartZoomCustomPositionPolicy.cs" />
+    <Compile Include="Services\FrameTextRenderer.cs" />
     <Compile Include="Services\CameraFrameOrientation.cs" />
     <Compile Include="Services\ClipboardHelper.cs" />
     <Compile Include="Services\NoCameraWorkstationHost.cs" />
@@ -166,6 +168,7 @@
     <Compile Include="ViewModels\MainViewModel.ArchiveBackup.cs" />
     <Compile Include="ViewModels\MainViewModel.Camera.cs" />
     <Compile Include="ViewModels\MainViewModel.CameraGuide.cs" />
+    <Compile Include="ViewModels\MainViewModel.SmartZoom.cs" />
     <Compile Include="ViewModels\MainViewModel.FloatingPreview.cs" />
     <Compile Include="ViewModels\MainViewModel.SecondaryCamera.cs" />
     <Compile Include="ViewModels\MainViewModel.Scanner.cs" />

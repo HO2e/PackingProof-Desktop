@@ -301,6 +301,76 @@ public sealed class DeploymentStartupTests
         Assert.True(rotateIndex < watermarkIndex, "预录帧必须先旋转再画水印");
     }
 
+    /// <summary>
+    /// 水印必须画在副画面合成之后：副画面占画面右上角/右下角，而水印里的单号是第二行，
+    /// 顺序反了的话单号会被副画面整个盖掉——录像里有时间戳却没有快递单号（现场反馈）。
+    /// </summary>
+    [Fact]
+    public void WatermarkIsAppliedAfterSecondaryCameraOverlay()
+    {
+        string cameraSource = ReadRepositoryFile(
+            "ExpressPackingMonitoring",
+            "ViewModels",
+            "MainViewModel.Camera.cs");
+
+        int previewDue = cameraSource.IndexOf(
+            "bool previewPublishDue = ShouldPublishPreviewFrameNow();",
+            StringComparison.Ordinal);
+        Assert.True(previewDue >= 0, "找不到预览发布判定");
+
+        int composeIndex = cameraSource.IndexOf(
+            "ComposeSecondaryCameraOverlayIfNeeded(processedFrame",
+            previewDue,
+            StringComparison.Ordinal);
+        int watermarkIndex = cameraSource.IndexOf(
+            "ApplyWatermarkToFrame(processedFrame",
+            previewDue,
+            StringComparison.Ordinal);
+
+        Assert.True(composeIndex > 0, "找不到实时帧的副画面合成调用");
+        Assert.True(watermarkIndex > 0, "找不到实时帧的水印调用");
+        Assert.True(
+            composeIndex < watermarkIndex,
+            "实时帧必须先合成副画面再画水印，否则水印里的单号会被副画面盖掉");
+
+        string recordingSource = ReadRepositoryFile(
+            "ExpressPackingMonitoring",
+            "ViewModels",
+            "MainViewModel.Recording.cs");
+
+        int preRecordCompose = recordingSource.IndexOf(
+            "ComposeSecondaryCameraOverlayIfNeeded(preFrame",
+            StringComparison.Ordinal);
+        int preRecordWatermark = recordingSource.IndexOf(
+            "ApplyWatermarkToFrame(preFrame,",
+            StringComparison.Ordinal);
+
+        Assert.True(preRecordCompose > 0, "找不到预录帧的副画面合成调用");
+        Assert.True(preRecordWatermark > 0, "找不到预录帧的水印调用");
+        Assert.True(
+            preRecordCompose < preRecordWatermark,
+            "预录帧必须先合成副画面再画水印，否则水印里的单号会被副画面盖掉");
+    }
+
+    /// <summary>
+    /// 水印文字必须走 FrameTextRenderer（GDI+ 渲染）。OpenCV 自带的 Hershey 字体画不了中文，
+    /// 直接把“快递单:单号”丢给 Cv2.PutText 会画成一串问号（现场反馈）。
+    /// </summary>
+    [Fact]
+    public void WatermarkTextGoesThroughCjkCapableRenderer()
+    {
+        string source = ReadRepositoryFile(
+            "ExpressPackingMonitoring",
+            "ViewModels",
+            "MainViewModel.cs");
+
+        Assert.Contains(
+            "FrameTextRenderer.DrawRightAlignedLine",
+            source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("Cv2.PutText", source, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void CameraWakeStartsSourceBeforeClearingSleepFlag()
     {

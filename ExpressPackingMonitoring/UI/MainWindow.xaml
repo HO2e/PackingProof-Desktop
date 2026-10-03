@@ -689,6 +689,42 @@
                                 </ControlTemplate>
                             </Thumb.Template>
                         </Thumb>
+
+                        <!--
+                            特写定位十字：开启「手动指定特写位置」后出现，拖到哪面单特写就固定放大到哪。
+                            和副画面同款做法——帧上画不出可拖控件，用一个 Thumb 代表位置，
+                            坐标由代码按整帧比例换算，落位与取景用的是同一套算法。
+                        -->
+                        <Thumb x:Name="SmartZoomPositionThumb"
+                               Panel.ZIndex="16"
+                               Width="44"
+                               Height="44"
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Top"
+                               Cursor="SizeAll"
+                               Visibility="Collapsed"
+                               DragStarted="SmartZoomPositionThumb_DragStarted"
+                               DragDelta="SmartZoomPositionThumb_DragDelta"
+                               DragCompleted="SmartZoomPositionThumb_DragCompleted"
+                               ToolTip="拖动十字指定面单特写位置">
+                            <Thumb.Template>
+                                <ControlTemplate TargetType="Thumb">
+                                    <Grid>
+                                        <Ellipse Width="34"
+                                                 Height="34"
+                                                 Stroke="{StaticResource AccentBlue}"
+                                                 StrokeThickness="2"
+                                                 Fill="{StaticResource TransparentBrush}"/>
+                                        <Line X1="22" Y1="7" X2="22" Y2="37"
+                                              Stroke="{StaticResource AccentBlue}"
+                                              StrokeThickness="2"/>
+                                        <Line X1="7" Y1="22" X2="37" Y2="22"
+                                              Stroke="{StaticResource AccentBlue}"
+                                              StrokeThickness="2"/>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Thumb.Template>
+                        </Thumb>
                     </Grid>
                 </Border>
 

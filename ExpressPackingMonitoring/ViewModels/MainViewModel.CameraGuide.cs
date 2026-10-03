@@ -33,11 +33,12 @@ namespace ExpressPackingMonitoring.ViewModels
             : AppLanguage.CameraBarcodeGuideUnlockedTipText;
 
         /// <summary>
-        /// 扫码放大当前是否可用。解锁识别框调整取景范围时不放大：预览被裁切后取景框对不准，
-        /// 拖动也会写错范围；锁回识别框后立即恢复。
+        /// 扫码放大当前是否可用。解锁识别框调整取景范围、或正在拖动特写十字标记时不放大：
+        /// 预览被裁切后和整帧比例对不上，拖动也会写错位置；恢复后立即生效。
         /// </summary>
         private bool CanApplySmartZoom =>
-            SmartZoomPolicy.ShouldApplyZoom(
+            !_isSmartZoomPositionDragActive
+            && SmartZoomPolicy.ShouldApplyZoom(
                 Config?.EnableSmartZoom == true,
                 IsCameraBarcodeGuideLocked);
 

@@ -1765,6 +1765,24 @@
                                             <ColumnDefinition Width="260"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Text="手动指定特写位置" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="开启后主画面出现十字标记，拖到哪特写就固定放大到哪"
+                                                       Style="{StaticResource FieldHintStyle}"/>
+                                        </StackPanel>
+                                        <CheckBox x:Name="SmartZoomCustomPositionCheckBox"
+                                                  Grid.Column="2"
+                                                  IsChecked="{Binding Config.EnableSmartZoomCustomPosition}"
+                                                  VerticalAlignment="Center"
+                                                  HorizontalAlignment="Left"
+                                                  Style="{StaticResource ToggleSwitchStyle}"/>
+                                    </Grid>
+                                    <Grid Style="{StaticResource SettingRowStyle}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="260"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,16,0">
                                             <TextBlock Text="最大放大倍数" Style="{StaticResource FieldLabelStyle}"/>
                                             <TextBlock Text="实际倍率会根据面单位置和边界自动调整"
                                                        Style="{StaticResource FieldHintStyle}"/>

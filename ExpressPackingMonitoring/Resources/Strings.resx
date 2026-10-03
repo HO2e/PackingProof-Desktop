@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
@@ -1078,6 +1078,9 @@
   <data name="作者：" xml:space="preserve"><value>Author: </value></data>
   <data name="面单智能特写" xml:space="preserve"><value>Smart shipping-label close-up</value></data>
   <data name="识别面单位置后自动平移特写，停留一会儿后恢复全景" xml:space="preserve"><value>Detect the shipping-label position, pan to its close-up, then restore the full view.</value></data>
+  <data name="手动指定特写位置" xml:space="preserve"><value>Set the close-up position manually</value></data>
+  <data name="开启后主画面出现十字标记，拖到哪特写就固定放大到哪" xml:space="preserve"><value>When on, a crosshair appears on the main view and the close-up always zooms to wherever you drag it</value></data>
+  <data name="拖动十字指定面单特写位置" xml:space="preserve"><value>Drag the crosshair to set the shipping-label close-up position</value></data>
   <data name="最大放大倍数" xml:space="preserve"><value>Maximum close-up</value></data>
   <data name="实际倍率会根据面单位置和边界自动调整" xml:space="preserve"><value>Actual magnification adjusts to the shipping-label position and frame boundaries.</value></data>
   <data name="范围更大" xml:space="preserve"><value>Wider view</value></data>

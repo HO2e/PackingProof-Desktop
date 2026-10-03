@@ -253,6 +253,14 @@ namespace ExpressPackingMonitoring.UI
                             // 开关副画面、或副路刚出第一帧时，拖动框要立刻摆好。
                             Dispatcher.BeginInvoke(new Action(() => UpdateSecondaryOverlayThumb(vm)));
                         }
+                        else if (args.PropertyName == nameof(MainViewModel.IsSmartZoomCustomPositionMode)
+                            || args.PropertyName == nameof(MainViewModel.IsZoomingActive)
+                            || args.PropertyName == nameof(MainViewModel.IsCameraSleeping))
+                        {
+                            // 开关"手动指定特写位置"、特写开始/结束、摄像头休眠或唤醒时，
+                            // 定位十字都要立刻显示/收起。
+                            Dispatcher.BeginInvoke(new Action(() => UpdateSmartZoomPositionThumb(vm)));
+                        }
                     };
                     // 窗口/视频区域大小变化时重新计算边框位置
                     VideoImage.SizeChanged += (_, __) =>
@@ -361,6 +369,7 @@ namespace ExpressPackingMonitoring.UI
         {
             UpdateCameraBarcodeGuide(vm);
             UpdateSecondaryOverlayThumb(vm);
+            UpdateSmartZoomPositionThumb(vm);
         }
 
         /// <summary>
@@ -456,6 +465,91 @@ namespace ExpressPackingMonitoring.UI
             }
 
             border.BorderBrush = TryFindResource(visible ? "AccentBlue" : "TransparentBrush") as Brush;
+        }
+
+        /// <summary>
+        /// 把特写定位十字摆到当前手动指定的中心。特写取景用的是整帧比例，
+        /// 所以十字也按整帧换算，和拖动时写回的坐标完全同源。
+        /// </summary>
+        private void UpdateSmartZoomPositionThumb(MainViewModel vm)
+        {
+            // 放大期间预览显示的是裁剪后的帧，而十字按整帧比例落位，画出来必然错位，先收起；
+            // 正在拖动时不收起：拖动本身已挂起特写，标志也可能比后台循环晚一步清掉。
+            // 摄像头休眠时预览被"已休眠"提示盖住，识别框那时也是收起的，十字同样收起。
+            if (!vm.IsSmartZoomCustomPositionMode
+                || vm.IsCameraSleeping
+                || (vm.IsZoomingActive && !vm.IsSmartZoomPositionAdjusting)
+                || vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
+            {
+                SmartZoomPositionThumb.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(
+                frame.PixelWidth,
+                frame.PixelHeight,
+                VideoImage.ActualWidth,
+                VideoImage.ActualHeight);
+            if (videoRect.IsEmpty || videoRect.Width <= 0 || videoRect.Height <= 0)
+            {
+                SmartZoomPositionThumb.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            (double ratioX, double ratioY) = vm.CurrentSmartZoomCustomCenter;
+            double centerX = videoRect.X + (videoRect.Width * ratioX);
+            double centerY = videoRect.Y + (videoRect.Height * ratioY);
+
+            SmartZoomPositionThumb.Margin = new Thickness(
+                centerX - (SmartZoomPositionThumb.Width / 2.0),
+                centerY - (SmartZoomPositionThumb.Height / 2.0),
+                0,
+                0);
+            SmartZoomPositionThumb.Visibility = Visibility.Visible;
+        }
+
+        /// <summary>开始拖动时挂起特写：预览回到整帧，拖动坐标才和画面一一对应。</summary>
+        private void SmartZoomPositionThumb_DragStarted(object sender, DragStartedEventArgs e)
+        {
+            if (DataContext is not MainViewModel vm)
+                return;
+
+            vm.BeginSmartZoomPositionAdjustment();
+            UpdateSmartZoomPositionThumb(vm);
+        }
+
+        /// <summary>拖动中实时更新中心：预览下一帧就按新位置取景，松手才落盘。</summary>
+        private void SmartZoomPositionThumb_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            if (DataContext is not MainViewModel vm)
+                return;
+            if (vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
+                return;
+
+            Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(
+                frame.PixelWidth,
+                frame.PixelHeight,
+                VideoImage.ActualWidth,
+                VideoImage.ActualHeight);
+            if (videoRect.IsEmpty || videoRect.Width <= 0 || videoRect.Height <= 0)
+                return;
+
+            (double ratioX, double ratioY) = vm.CurrentSmartZoomCustomCenter;
+            vm.SetSmartZoomCustomCenter(
+                ratioX + (e.HorizontalChange / videoRect.Width),
+                ratioY + (e.VerticalChange / videoRect.Height),
+                persist: false);
+            UpdateSmartZoomPositionThumb(vm);
+        }
+
+        private void SmartZoomPositionThumb_DragCompleted(object sender, DragCompletedEventArgs e)
+        {
+            if (DataContext is not MainViewModel vm)
+                return;
+
+            vm.EndSmartZoomPositionAdjustment();
+            (double ratioX, double ratioY) = vm.CurrentSmartZoomCustomCenter;
+            vm.SetSmartZoomCustomCenter(ratioX, ratioY, persist: true);
         }
 
         private void UpdateCameraBarcodeGuide(MainViewModel vm)

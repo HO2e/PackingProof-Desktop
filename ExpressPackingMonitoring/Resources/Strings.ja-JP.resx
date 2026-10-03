@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
@@ -1078,6 +1078,9 @@
   <data name="作者：" xml:space="preserve"><value>作者: </value></data>
   <data name="面单智能特写" xml:space="preserve"><value>送り状スマートズーム</value></data>
   <data name="识别面单位置后自动平移特写，停留一会儿后恢复全景" xml:space="preserve"><value>送り状の位置を認識して自動でズームし、しばらく保持してから全体表示に戻します</value></data>
+  <data name="手动指定特写位置" xml:space="preserve"><value>ズーム位置を手動で指定</value></data>
+  <data name="开启后主画面出现十字标记，拖到哪特写就固定放大到哪" xml:space="preserve"><value>オンにするとメイン画面に十字マークが表示され、ドラッグした位置へ固定でズームします</value></data>
+  <data name="拖动十字指定面单特写位置" xml:space="preserve"><value>十字をドラッグして送り状ズームの位置を指定</value></data>
   <data name="最大放大倍数" xml:space="preserve"><value>最大ズーム倍率</value></data>
   <data name="实际倍率会根据面单位置和边界自动调整" xml:space="preserve"><value>実際の倍率は送り状の位置と枠に合わせて自動調整されます</value></data>
   <data name="范围更大" xml:space="preserve"><value>より広い範囲</value></data>

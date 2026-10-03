@@ -1104,6 +1104,8 @@ namespace ExpressPackingMonitoring.ViewModels
                 var orderInfo = _webServer?.GetOrderInfo(upperResult);
                 if (IsRecording && orderInfo != null)
                     SetPreviewOrderNotice(orderInfo);
+                else if (IsRecording)
+                    ShowPreviewWaybillNotice(upperResult);
                 if (Config.EnableOrderInfoLog)
                     System.Diagnostics.Debug.WriteLine($"[OrderInfo] 查询结果: {(orderInfo != null ? $"命中 买家=[{orderInfo.BuyerMessage}] 卖家=[{orderInfo.SellerMemo}] 商品=[{orderInfo.ProductInfo}]" : "未命中")}");
                 if (Config.EnableOrderInfoAnnounce && orderInfo != null)

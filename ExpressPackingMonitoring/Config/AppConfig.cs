@@ -289,6 +289,12 @@ namespace ExpressPackingMonitoring.Config
         public double ZoomDurationSeconds { get; set; } = DefaultZoomDurationSeconds;
         public bool EnableZoomAnimation { get; set; } = true;
         public double ZoomAnimationDurationMs { get; set; } = 200.0;
+        // 面单智能特写手动定位：开启后特写固定放大到主界面手动指定的位置，
+        // 不再跟随识别到的面单位置（副画面识别时两边机位坐标本来就可能对不上）。
+        public bool EnableSmartZoomCustomPosition { get; set; } = false;
+        // 手动特写中心（0~1 归一化）；未指定时是 UnsetOverlayPosition，按画面中心。
+        public double SmartZoomCustomCenterX { get; set; } = UnsetOverlayPosition;
+        public double SmartZoomCustomCenterY { get; set; } = UnsetOverlayPosition;
         public bool EnableAutoStop { get; set; } = true;
         public double AutoStopMinutes { get; set; } = 1.0;
         public bool EnableMaxDuration { get; set; } = false;
@@ -1021,6 +1027,18 @@ namespace ExpressPackingMonitoring.Config
             if (System.Math.Abs(config.ZoomAnimationDurationMs - normalizedZoomAnimationDurationMs) > 0.001)
             {
                 config.ZoomAnimationDurationMs = normalizedZoomAnimationDurationMs;
+                changed = true;
+            }
+            double normalizedSmartZoomCenterX = NormalizeOverlayPosition(config.SmartZoomCustomCenterX);
+            if (System.Math.Abs(config.SmartZoomCustomCenterX - normalizedSmartZoomCenterX) > 0.001)
+            {
+                config.SmartZoomCustomCenterX = normalizedSmartZoomCenterX;
+                changed = true;
+            }
+            double normalizedSmartZoomCenterY = NormalizeOverlayPosition(config.SmartZoomCustomCenterY);
+            if (System.Math.Abs(config.SmartZoomCustomCenterY - normalizedSmartZoomCenterY) > 0.001)
+            {
+                config.SmartZoomCustomCenterY = normalizedSmartZoomCenterY;
                 changed = true;
             }
             if (System.Math.Abs(config.CameraBarcodeGuideWidthRatio - normalizedGuideWidth) > 0.001)
