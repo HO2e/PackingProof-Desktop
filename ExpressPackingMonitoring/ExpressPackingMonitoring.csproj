@@ -123,6 +123,7 @@
     <Compile Include="Services\CameraBarcodeGuideLayout.cs" />
     <Compile Include="Services\CameraFormatCatalog.cs" />
     <Compile Include="Services\CameraDeviceCatalog.cs" />
+    <Compile Include="Services\CameraDeviceSelectionPolicy.cs" />
     <Compile Include="Services\SmartZoomPolicy.cs" />
     <Compile Include="Services\CameraFrameOrientation.cs" />
     <Compile Include="Services\ClipboardHelper.cs" />
