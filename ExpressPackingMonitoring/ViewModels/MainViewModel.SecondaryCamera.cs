@@ -76,6 +76,91 @@ namespace ExpressPackingMonitoring.ViewModels
         /// <summary>设置页据此显示/隐藏副摄的其余选项：选了"无"就整块收起。</summary>
         public bool IsSecondaryCameraConfigured => IsSecondaryCameraComposeEnabled;
 
+        /// <summary>选了"网络摄像头"才显示地址输入。</summary>
+        public bool IsSecondaryNetworkCameraSelected =>
+            Config is { } config
+            && string.Equals(config.SecondaryCameraSourceKind, "network", StringComparison.Ordinal);
+
+        /// <summary>副摄下拉的一项：无 / 本机某台摄像头 / 网络摄像头。</summary>
+        public sealed record SecondaryCameraChoice(string Name, string Kind, string Moniker, int Index);
+
+        private List<SecondaryCameraChoice>? _secondaryCameraChoices;
+
+        /// <summary>
+        /// 副摄下拉列表：与主摄一样列出本机真实存在的摄像头，只是把主摄已经选走的那一台剔掉
+        /// （同一台设备无法被两路同时打开）。"网络摄像头"只在需要时选，选它才出现地址输入。
+        /// 列表放在 ViewModel 里而不是设置页代码里，是为了不往被冻结的 SettingsWindow.xaml.cs 里加逻辑。
+        /// </summary>
+        public IReadOnlyList<SecondaryCameraChoice> SecondaryCameraChoices =>
+            _secondaryCameraChoices ??= BuildSecondaryCameraChoices();
+
+        private List<SecondaryCameraChoice> BuildSecondaryCameraChoices()
+        {
+            var choices = new List<SecondaryCameraChoice>
+            {
+                new("无", AppConfig.SecondaryCameraSourceNone, "", -1)
+            };
+
+            try
+            {
+                var devices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
+                string mainMoniker = Config?.CameraMonikerString ?? "";
+                for (int i = 0; i < devices.Count; i++)
+                {
+                    // 主摄已经占用的那一台不再出现在副摄列表里。
+                    if (!string.IsNullOrEmpty(mainMoniker)
+                        && string.Equals(devices[i].MonikerString, mainMoniker, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    choices.Add(new SecondaryCameraChoice(devices[i].Name, "usb", devices[i].MonikerString, i));
+                }
+            }
+            catch (Exception ex)
+            {
+                RuntimeLog.Warn("SecondaryCamera", $"枚举副摄候选设备失败：{ex.Message}");
+            }
+
+            choices.Add(new SecondaryCameraChoice("网络摄像头", "network", "", -1));
+            return choices;
+        }
+
+        /// <summary>当前选中的副摄；写入时把选择落到配置并保存，主摄那套字段完全不动。</summary>
+        public SecondaryCameraChoice? SelectedSecondaryCameraChoice
+        {
+            get
+            {
+                if (Config is not { } config)
+                    return null;
+
+                return SecondaryCameraChoices.FirstOrDefault(choice =>
+                    string.Equals(choice.Kind, config.SecondaryCameraSourceKind, StringComparison.Ordinal)
+                    && (choice.Kind != "usb"
+                        || string.Equals(choice.Moniker, config.SecondaryCameraMonikerString, StringComparison.Ordinal)));
+            }
+            set
+            {
+                if (value == null || Config is not { } config)
+                    return;
+                if (ReferenceEquals(value, SelectedSecondaryCameraChoice))
+                    return;
+
+                config.SecondaryCameraSourceKind = value.Kind;
+                config.SecondaryCameraIndex = value.Index;
+                if (value.Kind == "usb")
+                    config.SecondaryCameraMonikerString = value.Moniker;
+                else
+                    config.SecondaryCameraMonikerString = "";
+
+                OnPropertyChanged(nameof(IsSecondaryCameraConfigured));
+                OnPropertyChanged(nameof(IsSecondaryCameraOverlayVisible));
+                OnPropertyChanged(nameof(IsBarcodeGuideVisible));
+                SaveConfig();
+                RestartSecondaryCamera();
+            }
+        }
+
         /// <summary>副摄像头当前是否已启动。</summary>
         internal bool IsSecondaryCameraRunning =>
             _secondaryVideoSource != null

@@ -1277,19 +1277,17 @@
                                             <TextBlock Text="拍面单的摄像头，画面叠在主画面右下角"
                                                        Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
-                                        <ComboBox x:Name="SecondaryCameraSourceComboBox"
+                                        <ComboBox x:Name="SecondaryCameraDeviceComboBox"
                                                   Grid.Column="2"
-                                                  SelectedValuePath="Tag"
-                                                  SelectedValue="{Binding Config.SecondaryCameraSourceKind, Mode=TwoWay}">
-                                            <ComboBoxItem Tag="none" Content="无"/>
-                                            <ComboBoxItem Tag="usb" Content="本地摄像头"/>
-                                            <ComboBoxItem Tag="network" Content="网络摄像头"/>
-                                        </ComboBox>
+                                                  ItemsSource="{Binding SecondaryCameraChoices}"
+                                                  DisplayMemberPath="Name"
+                                                  SelectedItem="{Binding SelectedSecondaryCameraChoice, Mode=TwoWay}"/>
                                     </Grid>
 
                                     <!-- 选了"无"就把下面这些没用的选项整块收起来 -->
                                     <StackPanel Visibility="{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}">
-                                    <Grid Style="{StaticResource SettingRowStyle}">
+                                    <Grid Style="{StaticResource SettingRowStyle}"
+                                          Visibility="{Binding IsSecondaryNetworkCameraSelected, Converter={StaticResource BoolToVisibility}}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="24"/>

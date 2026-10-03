@@ -244,9 +244,9 @@ public sealed class SecondaryCameraConfigurationTests
         string settings = ReadProjectFile(Path.Combine("UI", "SettingsWindow.xaml"));
 
         // 来源就是开关：选"无"时其余选项整块收起。
-        Assert.Contains("SecondaryCameraSourceComboBox", settings, StringComparison.Ordinal);
-        Assert.Contains("{Binding Config.SecondaryCameraSourceKind", settings, StringComparison.Ordinal);
-        Assert.Contains("Tag=\"none\" Content=\"无\"", settings, StringComparison.Ordinal);
+        Assert.Contains("SecondaryCameraDeviceComboBox", settings, StringComparison.Ordinal);
+        Assert.Contains("{Binding SecondaryCameraChoices}", settings, StringComparison.Ordinal);
+        Assert.Contains("{Binding SelectedSecondaryCameraChoice", settings, StringComparison.Ordinal);
         Assert.Contains(
             "Visibility=\"{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}\"",
             settings,
