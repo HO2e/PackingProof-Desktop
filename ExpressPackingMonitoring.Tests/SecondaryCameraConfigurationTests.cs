@@ -255,7 +255,6 @@ public sealed class SecondaryCameraConfigurationTests
         Assert.Contains("{Binding Config.SecondaryNetworkCameraUrl", settings, StringComparison.Ordinal);
         Assert.Contains("{Binding Config.SecondaryCameraOverlayWidthRatio", settings, StringComparison.Ordinal);
         Assert.Contains("{Binding Config.SecondaryResolutionPreset", settings, StringComparison.Ordinal);
-        Assert.Contains("{Binding Config.SecondaryFrameFps", settings, StringComparison.Ordinal);
     }
 
     /// <summary>第二路独立采集：不能占用主路的帧槽与会话闸门。</summary>

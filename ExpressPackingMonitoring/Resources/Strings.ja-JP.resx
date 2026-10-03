@@ -1481,6 +1481,10 @@
   <data name="网络摄像头" xml:space="preserve"><value>ネットワークカメラ</value></data>
   <data name="画中画大小" xml:space="preserve"><value>ピクチャーインピクチャーの大きさ</value></data>
   <data name="副画面占主画面的宽度比例" xml:space="preserve"><value>サブ画面の幅がメイン画面に占める割合</value></data>
+  <data name="副画面规格" xml:space="preserve"><value>サブ画面の解像度</value></data>
+  <data name="面单是静物，720P 够用" xml:space="preserve"><value>伝票は静止しているため 720P で十分です</value></data>
+  <data name="横装或竖装时按 90° 一档调整" xml:space="preserve"><value>横置き・縦置きの場合は 90° 刻みで調整します</value></data>
+  <data name="例如 rtsp://账号:密码@192.168.1.64:554/stream" xml:space="preserve"><value>例：rtsp://ユーザー:パスワード@192.168.1.64:554/stream</value></data>
   <data name="面单摄像头横装或竖装时按 90° 一档调整，副画面与识别同步旋转" xml:space="preserve"><value>伝票カメラを横置き・縦置きにしたときは 90° 刻みで調整します。サブ画面と認識が一緒に回転します</value></data>
   <data name="正装（0°）" xml:space="preserve"><value>正位置（0°）</value></data>
   <data name="顺时针 90°" xml:space="preserve"><value>時計回り 90°</value></data>

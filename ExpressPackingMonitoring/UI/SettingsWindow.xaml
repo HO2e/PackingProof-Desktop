@@ -1133,6 +1133,122 @@
                                         </ComboBox>
                                     </Grid>
 
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 副摄像头 -->
+                            <Border Style="{StaticResource SectionCardStyle}">
+                                <StackPanel>
+                                    <Grid Style="{StaticResource SettingRowStyle}"
+                                          Visibility="{Binding Capabilities.CanUseCamera, Converter={StaticResource BoolToVisibility}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="260"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Text="副摄像头" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="拍面单的摄像头，画面叠在主画面右下角"
+                                                       Style="{StaticResource FieldHintStyle}"/>
+                                        </StackPanel>
+                                        <ComboBox x:Name="SecondaryCameraDeviceComboBox"
+                                                  Grid.Column="2"
+                                                  ItemsSource="{Binding SecondaryCameraChoices}"
+                                                  DisplayMemberPath="Name"
+                                                  SelectedItem="{Binding SelectedSecondaryCameraChoice, Mode=TwoWay}"/>
+                                    </Grid>
+
+                                    <Grid Style="{StaticResource SettingRowStyle}"
+                                          Visibility="{Binding IsSecondaryNetworkCameraSelected, Converter={StaticResource BoolToVisibility}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="260"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Text="副网络摄像头地址" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="例如 rtsp://账号:密码@192.168.1.64:554/stream"
+                                                       Style="{StaticResource FieldHintStyle}"/>
+                                        </StackPanel>
+                                        <TextBox x:Name="SecondaryNetworkCameraUrlTextBox"
+                                                 Grid.Column="2"
+                                                 Text="{Binding Config.SecondaryNetworkCameraUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTip="rtsp://user:password@192.168.1.65:554/stream"/>
+                                    </Grid>
+
+                                    <Grid Style="{StaticResource SettingRowStyle}"
+                                          Visibility="{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="260"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Text="副画面规格" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="面单是静物，720P 够用" Style="{StaticResource FieldHintStyle}"/>
+                                        </StackPanel>
+                                        <ComboBox x:Name="SecondaryResolutionPresetComboBox"
+                                                  Grid.Column="2"
+                                                  SelectedValuePath="Tag"
+                                                  SelectedValue="{Binding Config.SecondaryResolutionPreset, Mode=TwoWay}">
+                                            <ComboBoxItem Tag="480p" Content="480P（640×480）"/>
+                                            <ComboBoxItem Tag="720p" Content="720P（1280×720）"/>
+                                            <ComboBoxItem Tag="1080p" Content="1080P（1920×1080）"/>
+                                        </ComboBox>
+                                    </Grid>
+
+                                    <Grid Style="{StaticResource SettingRowStyle}"
+                                          Visibility="{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="260"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Text="副画面方向" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="横装或竖装时按 90° 一档调整" Style="{StaticResource FieldHintStyle}"/>
+                                        </StackPanel>
+                                        <ComboBox x:Name="SecondaryCameraRotationComboBox"
+                                                  Grid.Column="2"
+                                                  SelectedValuePath="Tag"
+                                                  SelectedValue="{Binding Config.SecondaryCameraRotationDegrees, Mode=TwoWay}">
+                                            <ComboBoxItem Tag="0" Content="正装（0°）"/>
+                                            <ComboBoxItem Tag="90" Content="顺时针 90°"/>
+                                            <ComboBoxItem Tag="180" Content="倒装（180°）"/>
+                                            <ComboBoxItem Tag="270" Content="顺时针 270°"/>
+                                        </ComboBox>
+                                    </Grid>
+
+                                    <Grid Style="{StaticResource SettingRowStyle}"
+                                          Visibility="{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="260"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Text="画中画大小" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="副画面占主画面的宽度比例" Style="{StaticResource FieldHintStyle}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <Grid>
+                                                <TextBlock Text="更小" Style="{StaticResource SliderEndLabelStyle}" HorizontalAlignment="Left"/>
+                                                <TextBlock Text="{Binding ElementName=SecondaryCameraOverlayRatioSlider, Path=Value, StringFormat={}{0:P0}}"
+                                                           Style="{StaticResource SliderValueTextStyle}"
+                                                           HorizontalAlignment="Center"/>
+                                                <TextBlock Text="更大" Style="{StaticResource SliderEndLabelStyle}" HorizontalAlignment="Right"/>
+                                            </Grid>
+                                            <Slider x:Name="SecondaryCameraOverlayRatioSlider"
+                                                    Style="{StaticResource SettingsSliderStyle}"
+                                                    Minimum="0.1" Maximum="0.5" TickFrequency="0.05"
+                                                    Value="{Binding Config.SecondaryCameraOverlayWidthRatio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource SectionCardStyle}">
+                                <StackPanel>
                                     <Grid Style="{StaticResource SettingRowStyle}"
                                           IsEnabled="{Binding IsChecked, ElementName=AudioRecordCheckBox, TargetNullValue=False}"
                                           Visibility="{Binding Capabilities.CanRecordAudio, Converter={StaticResource BoolToVisibility}}">
@@ -1273,109 +1389,6 @@
                                             <ColumnDefinition Width="260"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副摄像头" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="拍面单的摄像头，画面叠在主画面右下角"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <ComboBox x:Name="SecondaryCameraDeviceComboBox"
-                                                  Grid.Column="2"
-                                                  ItemsSource="{Binding SecondaryCameraChoices}"
-                                                  DisplayMemberPath="Name"
-                                                  SelectedItem="{Binding SelectedSecondaryCameraChoice, Mode=TwoWay}"/>
-                                    </Grid>
-
-                                    <!-- 选了"无"就把下面这些没用的选项整块收起来 -->
-                                    <StackPanel Visibility="{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}">
-                                    <Grid Style="{StaticResource SettingRowStyle}"
-                                          Visibility="{Binding IsSecondaryNetworkCameraSelected, Converter={StaticResource BoolToVisibility}}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副网络摄像头地址" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="来源选网络时填这里的地址，与主画面地址不能相同"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <TextBox x:Name="SecondaryNetworkCameraUrlTextBox"
-                                                 Grid.Column="2"
-                                                 Text="{Binding Config.SecondaryNetworkCameraUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                 ToolTip="rtsp://user:password@192.168.1.65:554/stream"/>
-                                    </Grid>
-
-                                    <Grid Style="{StaticResource SettingRowStyle}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副画面采集规格" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="面单特写是静物，720P 就够；两路同时采集时规格越低越稳"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <ComboBox x:Name="SecondaryResolutionPresetComboBox"
-                                                  Grid.Column="2"
-                                                  SelectedValuePath="Tag"
-                                                  SelectedValue="{Binding Config.SecondaryResolutionPreset, Mode=TwoWay}">
-                                            <ComboBoxItem Tag="480p" Content="480P（640×480）"/>
-                                            <ComboBoxItem Tag="720p" Content="720P（1280×720）"/>
-                                            <ComboBoxItem Tag="1080p" Content="1080P（1920×1080）"/>
-                                        </ComboBox>
-                                    </Grid>
-
-                                    <Grid Style="{StaticResource SettingRowStyle}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副画面帧率" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="面单放好后不动，10 帧足够识别与取证"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <ComboBox x:Name="SecondaryFrameFpsComboBox"
-                                                  Grid.Column="2"
-                                                  SelectedValuePath="Tag"
-                                                  SelectedValue="{Binding Config.SecondaryFrameFps, Mode=TwoWay}">
-                                            <ComboBoxItem Tag="5" Content="5 帧/秒"/>
-                                            <ComboBoxItem Tag="10" Content="10 帧/秒"/>
-                                            <ComboBoxItem Tag="15" Content="15 帧/秒"/>
-                                            <ComboBoxItem Tag="30" Content="30 帧/秒"/>
-                                        </ComboBox>
-                                    </Grid>
-
-                                    <Grid Style="{StaticResource SettingRowStyle}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副画面方向" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="面单摄像头横装或竖装时按 90° 一档调整，副画面与识别同步旋转"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <ComboBox x:Name="SecondaryCameraRotationComboBox"
-                                                  Grid.Column="2"
-                                                  SelectedValuePath="Tag"
-                                                  SelectedValue="{Binding Config.SecondaryCameraRotationDegrees, Mode=TwoWay}">
-                                            <ComboBoxItem Tag="0" Content="正装（0°）"/>
-                                            <ComboBoxItem Tag="90" Content="顺时针 90°"/>
-                                            <ComboBoxItem Tag="180" Content="倒装（180°）"/>
-                                            <ComboBoxItem Tag="270" Content="顺时针 270°"/>
-                                        </ComboBox>
-                                    </Grid>
-
-                                    <Grid Style="{StaticResource SettingRowStyle}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
                                             <TextBlock Text="自动识别面单用哪一路" Style="{StaticResource FieldLabelStyle}"/>
                                             <TextBlock Text="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面"
                                                        Style="{StaticResource FieldHintStyle}"/>
@@ -1389,31 +1402,6 @@
                                         </ComboBox>
                                     </Grid>
 
-                                    <Grid Style="{StaticResource SettingRowStyle}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="画中画大小" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="副画面占主画面的宽度比例" Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="2">
-                                            <Grid>
-                                                <TextBlock Text="更小" Style="{StaticResource SliderEndLabelStyle}" HorizontalAlignment="Left"/>
-                                                <TextBlock Text="{Binding ElementName=SecondaryCameraOverlayRatioSlider, Path=Value, StringFormat={}{0:P0}}"
-                                                           Style="{StaticResource SliderValueTextStyle}"
-                                                           HorizontalAlignment="Center"/>
-                                                <TextBlock Text="更大" Style="{StaticResource SliderEndLabelStyle}" HorizontalAlignment="Right"/>
-                                            </Grid>
-                                            <Slider x:Name="SecondaryCameraOverlayRatioSlider"
-                                                    Style="{StaticResource SettingsSliderStyle}"
-                                                    Minimum="0.1" Maximum="0.5" TickFrequency="0.05"
-                                                    Value="{Binding Config.SecondaryCameraOverlayWidthRatio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                        </StackPanel>
-                                    </Grid>
-                                    </StackPanel>
                                 </StackPanel>
                             </Border>
 
