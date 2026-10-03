@@ -562,61 +562,11 @@
                         </Grid>
 
                         <!--
-                            副画面拖动框：副画面是直接画进帧里的，没有可拖的控件，
-                            这里用一个透明 Thumb 代表它的位置，拖动即改变合成落位，
-                            预览与录像同步跟着走。位置和大小由代码按同一套策略计算。
+                            画中画拖动框：每一路接了设备的副画面各一个，代码按通道生成。
+                            副画面是直接画进帧里的、没有可拖的控件，这里用透明 Thumb 代表它的位置，
+                            拖动即改变合成落位；单击进入这一路的取景编辑。位置与大小由代码按同一套策略计算。
                         -->
-                        <Thumb x:Name="SecondaryOverlayDragThumb"
-                               Panel.ZIndex="15"
-                               HorizontalAlignment="Left"
-                               VerticalAlignment="Top"
-                               Cursor="SizeAll"
-                               Visibility="Collapsed"
-                               DragDelta="SecondaryOverlayDragThumb_DragDelta"
-                               DragCompleted="SecondaryOverlayDragCompleted"
-                               MouseEnter="SecondaryOverlayDragThumb_MouseEnter"
-                               MouseLeave="SecondaryOverlayDragThumb_MouseLeave"
-                               ToolTip="按住拖动可调整副画面位置">
-                            <Thumb.Template>
-                                <ControlTemplate TargetType="Thumb">
-                                    <!--
-                                        平时不画边框：拖动框正好压在副画面上，
-                                        一直显形会被当成"画面被这个框框住了"。
-                                        鼠标移上来才出现，此时才看得出可以拖。
-                                    -->
-                                    <Border x:Name="SecondaryOverlayFrameBorder"
-                                            BorderBrush="{StaticResource TransparentBrush}"
-                                            BorderThickness="2"
-                                            CornerRadius="6"
-                                            Background="{StaticResource TransparentBrush}"/>
-                                </ControlTemplate>
-                            </Thumb.Template>
-                        </Thumb>
-
-                        <!--
-                            画中画右下角把手：按住拖动直接改副画面大小。
-                            大小不再放进设置页，就在画面上拖。
-                        -->
-                        <Thumb x:Name="SecondaryOverlayResizeThumb"
-                               Panel.ZIndex="16"
-                               Width="16"
-                               Height="16"
-                               HorizontalAlignment="Left"
-                               VerticalAlignment="Top"
-                               Cursor="SizeNWSE"
-                               Visibility="Collapsed"
-                               DragDelta="SecondaryOverlayResizeThumb_DragDelta"
-                               DragCompleted="SecondaryOverlayResizeThumb_DragCompleted"
-                               ToolTip="按住拖动可调整副画面大小">
-                            <Thumb.Template>
-                                <ControlTemplate TargetType="Thumb">
-                                    <Border Background="{StaticResource AccentBlue}"
-                                            CornerRadius="3"
-                                            BorderBrush="{StaticResource TextOnAccent}"
-                                            BorderThickness="1"/>
-                                </ControlTemplate>
-                            </Thumb.Template>
-                        </Thumb>
+                        <Canvas x:Name="SecondaryOverlayBoxLayer" Panel.ZIndex="15" ClipToBounds="False"/>
 
                         <!--
                             识别框的小锁与提示：单独一层，永远压在画中画之上。
@@ -624,7 +574,7 @@
                             位置由代码按识别框的顶部中点摆好。
                         -->
                         <Grid x:Name="CameraBarcodeGuideHintLayer"
-                              Panel.ZIndex="35"
+                              Panel.ZIndex="90"
                               Width="0"
                               Height="0"
                               HorizontalAlignment="Center"

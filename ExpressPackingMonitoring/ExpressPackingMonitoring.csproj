@@ -206,6 +206,7 @@
     <Compile Include="UI\DriveSelectionDialog.cs" />
     <Compile Include="UI\FirstUseSetupWizardWindow.xaml.cs" />
     <Compile Include="UI\MainWindow.xaml.cs" />
+    <Compile Include="UI\MainWindow.OverlayBoxes.cs" />
     <Compile Include="UI\MarkdownFlowDocumentRenderer.cs" />
     <Compile Include="UI\MobileAppUpdatePrompt.cs" />
     <Compile Include="UI\MobileAppUpdatePromptWindow.xaml.cs" />

@@ -126,6 +126,28 @@ namespace ExpressPackingMonitoring.ViewModels
         /// <summary>任意一路出过帧：界面据此决定什么时候可以摆拖动框。</summary>
         internal bool HasOverlayFrame => _overlayChannels.Any(channel => channel.HasFrame);
 
+        /// <summary>
+        /// 需要显示拖动框的通道号（1 起）：配置里接了设备的每一路都要有一个框，
+        /// 点哪个框就进哪一路的取景编辑。以后开放第三、第四路时界面不用再改。
+        /// </summary>
+        internal IReadOnlyList<int> VisibleOverlayChannelNumbers
+        {
+            get
+            {
+                if (Config is not { } config)
+                    return Array.Empty<int>();
+
+                var numbers = new List<int>();
+                for (int i = 0; i < config.CameraChannels.Count; i++)
+                {
+                    if (config.CameraChannels[i].IsConfigured)
+                        numbers.Add(i + 1);
+                }
+
+                return numbers;
+            }
+        }
+
         /// <summary>叠加画面是否正在显示，供主界面的拖动框显隐使用。</summary>
         internal bool IsOverlayVisible => HasConfiguredOverlayChannels;
 
@@ -1282,6 +1304,9 @@ namespace ExpressPackingMonitoring.ViewModels
         /// </summary>
         internal bool ShouldUseOverlayChannelForBarcode =>
             ActiveBarcodeOverlayChannel is { HasFrame: true };
+
+        /// <summary>识别来源当前选中的通道号；没选或那一路没接设备时为 0。</summary>
+        internal int BarcodeOverlayChannelNumber => ActiveBarcodeOverlayChannel?.Number ?? 0;
 
         /// <summary>这一帧来自哪一路叠加画面（0 = 主摄）：识别只接受当前识别来源那一路。</summary>
         private int BarcodeFrameSourceChannelNumber { get; set; }

@@ -506,18 +506,18 @@ public sealed class CameraChannelConfigurationTests
     /// 少了这条通知，框会停在上一帧的位置，用户看到的就是"主画面上画中画的框偏了"。
     /// </summary>
     [Fact]
-    public void OverlayThumbFollowsComposedPlacement()
+    public void OverlayBoxesFollowComposedPlacement()
     {
         string channels = ReadProjectFile(Path.Combine("ViewModels", "MainViewModel.OverlayChannels.cs"));
         Assert.Contains("NotifyOverlayPlacementChanged", channels, StringComparison.Ordinal);
         Assert.Contains("OverlayPlacementVersion", channels, StringComparison.Ordinal);
 
-        string window = ReadProjectFile(Path.Combine("UI", "MainWindow.xaml.cs"));
+        string window = ReadProjectFile(Path.Combine("UI", "MainWindow.xaml.cs"))
+            + ReadProjectFile(Path.Combine("UI", "MainWindow.OverlayBoxes.cs"));
         Assert.Contains(
             "nameof(MainViewModel.OverlayPlacementVersion)",
             window,
             StringComparison.Ordinal);
-        Assert.Contains("UpdateSecondaryOverlayThumb(vm)", window, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -526,9 +526,9 @@ public sealed class CameraChannelConfigurationTests
     /// 少这一步换算，框就会整体偏出画面、压到黑边上（现场反馈"画中画框超出摄像头画面"）。
     /// </summary>
     [Fact]
-    public void OverlayThumbMapsIntoTheImageCoordinateSpace()
+    public void OverlayBoxMapsIntoTheImageCoordinateSpace()
     {
-        string window = ReadProjectFile(Path.Combine("UI", "MainWindow.xaml.cs"));
+        string window = ReadProjectFile(Path.Combine("UI", "MainWindow.OverlayBoxes.cs"));
 
         Assert.Contains("VideoImage.TranslatePoint", window, StringComparison.Ordinal);
         Assert.Contains("overlayHost", window, StringComparison.Ordinal);
@@ -616,21 +616,23 @@ public sealed class CameraChannelConfigurationTests
     }
 
     /// <summary>
-    /// 主界面必须给出可拖动的画中画框：画中画是画进帧里的，没有它就没法用鼠标调位置。
+    /// 主界面必须给每一路画中画都生成可拖动的框：画中画是画进帧里的，
+    /// 没有它就没法用鼠标调位置；按通道生成，以后加第三、第四路不用改。
     /// </summary>
     [Fact]
-    public void MainWindow_ExposesDraggableOverlayThumb()
+    public void MainWindow_ExposesDraggableOverlayBoxes()
     {
         string mainWindow = ReadProjectFile(Path.Combine("UI", "MainWindow.xaml"));
-        Assert.Contains("x:Name=\"SecondaryOverlayDragThumb\"", mainWindow, StringComparison.Ordinal);
-        Assert.Contains("SecondaryOverlayDragThumb_DragDelta", mainWindow, StringComparison.Ordinal);
-        Assert.Contains("SecondaryOverlayDragCompleted", mainWindow, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"SecondaryOverlayBoxLayer\"", mainWindow, StringComparison.Ordinal);
 
-        string codeBehind = ReadProjectFile(Path.Combine("UI", "MainWindow.xaml.cs"));
+        string codeBehind = ReadProjectFile(Path.Combine("UI", "MainWindow.OverlayBoxes.cs"));
+        // 每一路接了设备的画中画各有一个框，按通道号生成。
+        Assert.Contains("VisibleOverlayChannelNumbers", codeBehind, StringComparison.Ordinal);
         Assert.Contains("SetOverlayPosition", codeBehind, StringComparison.Ordinal);
         Assert.Contains("SaveOverlayPosition", codeBehind, StringComparison.Ordinal);
         // 拖动框与合成必须用同一套落位算法，不能各算一份。
         Assert.Contains("TryResolveOverlayRect", codeBehind, StringComparison.Ordinal);
+        Assert.Contains("EnterOverlayPreviewEdit(channelNumber)", codeBehind, StringComparison.Ordinal);
     }
 
     /// <summary>

@@ -244,7 +244,7 @@ namespace ExpressPackingMonitoring.UI
                     && vm.IsEditingOverlayPreview)
                 {
                     vm.ExitOverlayPreviewEdit();
-                    UpdateSecondaryOverlayThumb(vm);
+                    UpdateOverlayBoxes(vm);
                     UpdateCameraBarcodeGuide(vm);
                     e.Handled = true;
                 }
@@ -267,7 +267,7 @@ namespace ExpressPackingMonitoring.UI
                             // 识别框贴到画中画上时，框和小锁提示也要跟着挪。
                             Dispatcher.BeginInvoke(new Action(() =>
                             {
-                                UpdateSecondaryOverlayThumb(vm);
+                                UpdateOverlayBoxes(vm);
                                 UpdateCameraBarcodeGuide(vm);
                             }));
                         }
@@ -277,7 +277,7 @@ namespace ExpressPackingMonitoring.UI
                             // 拖动框必须跟着重摆；识别框贴在画中画上时也要一起重摆，否则反馈框会错位。
                             Dispatcher.BeginInvoke(new Action(() =>
                             {
-                                UpdateSecondaryOverlayThumb(vm);
+                                UpdateOverlayBoxes(vm);
                                 UpdateCameraBarcodeGuide(vm);
                             }));
                         }
@@ -288,7 +288,7 @@ namespace ExpressPackingMonitoring.UI
                             Dispatcher.BeginInvoke(new Action(() =>
                             {
                                 UpdateCameraBarcodeGuide(vm);
-                                UpdateSecondaryOverlayThumb(vm);
+                                UpdateOverlayBoxes(vm);
                             }));
                         }
                     };
@@ -354,162 +354,11 @@ namespace ExpressPackingMonitoring.UI
             vm.ReportMainPreviewVisibility(true);
         }
 
-        /// <summary>
-        /// 预览里那个画中画拖动框当前绑定的通道号。
-        /// 现在只有一路叠加画面，频道化的下一步再按通道各生成一个框。
-        /// </summary>
-        private const int PreviewOverlayChannelNumber = 1;
+        /// <summary>预览上跟画中画有关的两层：每一路的拖动框、以及识别框。</summary>
         private void UpdateCameraOverlays(MainViewModel vm)
         {
+            UpdateOverlayBoxes(vm);
             UpdateCameraBarcodeGuide(vm);
-            UpdateSecondaryOverlayThumb(vm);
-        }
-
-        /// <summary>
-        /// 把副画面拖动框摆到副画面当前所在的位置。
-        /// 位置和尺寸都来自 <see cref="MainViewModel.TryResolveOverlayRect"/>，
-        /// 与合成用的是同一套策略，所以框住哪里、画面就画在哪里。
-        /// </summary>
-        private void UpdateSecondaryOverlayThumb(MainViewModel vm)
-        {
-            // 先收起把手：下面任何一条提前返回（没有副帧、没有预览）都不该留下一个悬空的把手。
-            SecondaryOverlayResizeThumb.Visibility = Visibility.Collapsed;
-
-            // 副摄取景编辑态下预览显示的是副摄整幅画面，画中画的位置/大小框这时候没有意义。
-            if (vm.IsEditingOverlayPreview)
-            {
-                SecondaryOverlayDragThumb.Visibility = Visibility.Collapsed;
-                return;
-            }
-
-            if (!vm.IsOverlayVisible
-                || vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
-            {
-                SecondaryOverlayDragThumb.Visibility = Visibility.Collapsed;
-                return;
-            }
-
-            Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(
-                frame.PixelWidth,
-                frame.PixelHeight,
-                VideoImage.ActualWidth,
-                VideoImage.ActualHeight);
-            if (videoRect.IsEmpty || videoRect.Width <= 0 || videoRect.Height <= 0)
-            {
-                SecondaryOverlayDragThumb.Visibility = Visibility.Collapsed;
-                return;
-            }
-
-            if (!vm.TryResolveOverlayRect(PreviewOverlayChannelNumber, frame.PixelWidth, frame.PixelHeight, out CameraOverlayRect rect))
-            {
-                SecondaryOverlayDragThumb.Visibility = Visibility.Collapsed;
-                return;
-            }
-
-            // VideoImage 在父容器里不一定从 (0,0) 开始：画面按 Uniform 居中摆放，
-            // 四周留出的黑边同样占父容器的坐标。拖动框是父容器的子元素，
-            // Margin 必须换算到父容器坐标系，否则整块框会比画面偏出这段黑边。
-            if (SecondaryOverlayDragThumb.Parent is not UIElement overlayHost)
-            {
-                SecondaryOverlayDragThumb.Visibility = Visibility.Collapsed;
-                return;
-            }
-            Point videoOrigin = VideoImage.TranslatePoint(
-                new Point(videoRect.X, videoRect.Y),
-                overlayHost);
-
-            // 帧坐标 → 预览控件坐标（Uniform 缩放，两边黑边已由 videoRect 扣掉）。
-            double scale = videoRect.Width / frame.PixelWidth;
-            SecondaryOverlayDragThumb.Width = rect.Width * scale;
-            SecondaryOverlayDragThumb.Height = rect.Height * scale;
-            SecondaryOverlayDragThumb.Margin = new Thickness(
-                videoOrigin.X + (rect.X * scale),
-                videoOrigin.Y + (rect.Y * scale),
-                0,
-                0);
-            SecondaryOverlayDragThumb.Visibility = Visibility.Visible;
-
-            // 右下角把手贴在画中画右下角上，拖它就是改大小。
-            SecondaryOverlayResizeThumb.Margin = new Thickness(
-                videoOrigin.X + ((rect.X + rect.Width) * scale) - (SecondaryOverlayResizeThumb.Width / 2),
-                videoOrigin.Y + ((rect.Y + rect.Height) * scale) - (SecondaryOverlayResizeThumb.Height / 2),
-                0,
-                0);
-            SecondaryOverlayResizeThumb.Visibility = Visibility.Visible;
-        }
-
-        /// <summary>拖右下角把手改副画面大小：只按横向位移换算宽度比例，高度跟着画面比例走。</summary>
-        private void SecondaryOverlayResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
-        {
-            if (DataContext is not MainViewModel vm)
-                return;
-            if (vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
-                return;
-
-            Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(
-                frame.PixelWidth,
-                frame.PixelHeight,
-                VideoImage.ActualWidth,
-                VideoImage.ActualHeight);
-            if (videoRect.IsEmpty || videoRect.Width <= 0)
-                return;
-            if (!vm.TryResolveOverlayRect(PreviewOverlayChannelNumber, frame.PixelWidth, frame.PixelHeight, out CameraOverlayRect current))
-                return;
-
-            double scale = videoRect.Width / frame.PixelWidth;
-            double targetWidthPixels = current.Width + (e.HorizontalChange / scale);
-            vm.SetOverlayWidth(PreviewOverlayChannelNumber, targetWidthPixels / frame.PixelWidth);
-            UpdateSecondaryOverlayThumb(vm);
-        }
-
-        private void SecondaryOverlayResizeThumb_DragCompleted(object sender, DragCompletedEventArgs e)
-        {
-            if (DataContext is MainViewModel vm)
-                vm.SaveOverlayWidth(PreviewOverlayChannelNumber);
-        }
-
-        /// <summary>拖动中实时改变合成位置：预览下一帧就跟着动，松手才落盘。</summary>
-        private void SecondaryOverlayDragThumb_DragDelta(object sender, DragDeltaEventArgs e)
-        {
-            if (DataContext is not MainViewModel vm)
-                return;
-            if (vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
-                return;
-
-            Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(
-                frame.PixelWidth,
-                frame.PixelHeight,
-                VideoImage.ActualWidth,
-                VideoImage.ActualHeight);
-            if (videoRect.IsEmpty || videoRect.Width <= 0)
-                return;
-            if (!vm.TryResolveOverlayRect(PreviewOverlayChannelNumber, frame.PixelWidth, frame.PixelHeight, out CameraOverlayRect current))
-                return;
-
-            // 控件像素增量 → 帧像素增量，再交给 ViewModel 夹紧落位。
-            double scale = videoRect.Width / frame.PixelWidth;
-            double frameX = current.X + (e.HorizontalChange / scale);
-            double frameY = current.Y + (e.VerticalChange / scale);
-
-            vm.SetOverlayPosition(PreviewOverlayChannelNumber, frameX, frameY, frame.PixelWidth, frame.PixelHeight);
-            UpdateSecondaryOverlayThumb(vm);
-        }
-
-        private void SecondaryOverlayDragCompleted(object sender, DragCompletedEventArgs e)
-        {
-            if (DataContext is not MainViewModel vm)
-                return;
-
-            // 没有实际位移 = 单击画中画：进入副摄取景编辑（就像点图片进裁剪）。
-            if (Math.Abs(e.HorizontalChange) < 2 && Math.Abs(e.VerticalChange) < 2)
-            {
-                vm.EnterOverlayPreviewEdit(PreviewOverlayChannelNumber);
-                UpdateSecondaryOverlayThumb(vm);
-                UpdateCameraBarcodeGuide(vm);
-                return;
-            }
-
-            vm.SaveOverlayPosition(PreviewOverlayChannelNumber);
         }
 
         /// <summary>退出副摄取景编辑，回到正常预览。</summary>
@@ -519,28 +368,12 @@ namespace ExpressPackingMonitoring.UI
                 return;
 
             vm.ExitOverlayPreviewEdit();
-            UpdateSecondaryOverlayThumb(vm);
+            UpdateOverlayBoxes(vm);
             UpdateCameraBarcodeGuide(vm);
         }
 
-        private void SecondaryOverlayDragThumb_MouseEnter(object sender, MouseEventArgs e) =>
-            SetSecondaryOverlayThumbBorderVisible(true);
 
-        private void SecondaryOverlayDragThumb_MouseLeave(object sender, MouseEventArgs e) =>
-            SetSecondaryOverlayThumbBorderVisible(false);
 
-        /// <summary>拖动框平时不画边框，鼠标移上来才显形。</summary>
-        private void SetSecondaryOverlayThumbBorderVisible(bool visible)
-        {
-            if (SecondaryOverlayDragThumb.Template?.FindName(
-                    "SecondaryOverlayFrameBorder",
-                    SecondaryOverlayDragThumb) is not Border border)
-            {
-                return;
-            }
-
-            border.BorderBrush = TryFindResource(visible ? "AccentBlue" : "TransparentBrush") as Brush;
-        }
 
         private void UpdateCameraBarcodeGuide(MainViewModel vm)
         {
@@ -567,7 +400,8 @@ namespace ExpressPackingMonitoring.UI
             if (!vm.IsEditingOverlayPreview
                 && vm.ShouldUseOverlayChannelForBarcode
                 && vm.VideoFrame is { PixelWidth: > 0, PixelHeight: > 0 } overlayFrame
-                && vm.TryResolveOverlayRect(PreviewOverlayChannelNumber, 
+                && vm.BarcodeOverlayChannelNumber > 0
+                && vm.TryResolveOverlayRect(vm.BarcodeOverlayChannelNumber,
                     overlayFrame.PixelWidth,
                     overlayFrame.PixelHeight,
                     out CameraOverlayRect overlay))
@@ -598,7 +432,7 @@ namespace ExpressPackingMonitoring.UI
                 guideRect.Y - (actualH - guideRect.Height) / 2.0);
             // 画中画在主摄识别框之上：被小窗盖住的那段框线要真的被遮掉，不能透出来。
             // 只裁框体本身，别裁到四角把手和拖动命中层（它们要留在框外一点）。
-            CameraBarcodeGuideBox.Clip = BuildGuideClip(guideRect, ResolveSecondaryOverlayOccluder(vm, actualW, actualH));
+            CameraBarcodeGuideBox.Clip = BuildGuideClip(guideRect, ResolveOverlayOccluders(vm, actualW, actualH));
 
             // 小锁与提示是独立的一层（在画中画之上），用与识别框完全相同的摆法：
             // 同样大小的居中层 + 同一套平移，面板停在框的顶部中点，不依赖测量时机。
@@ -610,20 +444,18 @@ namespace ExpressPackingMonitoring.UI
         }
 
         /// <summary>
-        /// 画中画在预览里的矩形；只有"识别框画在主画面上"时才需要拿它来挖洞。
-        /// 编辑副摄时预览里没有画中画；识别来源是副摄时框本身就贴在画中画上，不能再挖掉。
+        /// 预览里每一块画中画的矩形：只有"识别框画在主画面上"时才需要拿它们挖洞。
+        /// 编辑取景时预览里没有画中画；识别来源是画中画时框本身就贴在那块上，不能再挖掉。
         /// </summary>
-        private Rect? ResolveSecondaryOverlayOccluder(MainViewModel vm, double actualW, double actualH)
+        private List<Rect> ResolveOverlayOccluders(MainViewModel vm, double actualW, double actualH)
         {
-            if (vm.IsEditingOverlayPreview || vm.ShouldUseOverlayChannelForBarcode)
-                return null;
-            if (!vm.IsOverlayVisible
+            var occluders = new List<Rect>();
+            if (vm.IsEditingOverlayPreview
+                || vm.ShouldUseOverlayChannelForBarcode
                 || vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
             {
-                return null;
+                return occluders;
             }
-            if (!vm.TryResolveOverlayRect(PreviewOverlayChannelNumber, frame.PixelWidth, frame.PixelHeight, out CameraOverlayRect overlay))
-                return null;
 
             Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(
                 frame.PixelWidth,
@@ -631,28 +463,47 @@ namespace ExpressPackingMonitoring.UI
                 actualW,
                 actualH);
             if (videoRect.IsEmpty || videoRect.Width <= 0)
-                return null;
+                return occluders;
 
             double scale = videoRect.Width / frame.PixelWidth;
-            return new Rect(
-                videoRect.X + (overlay.X * scale),
-                videoRect.Y + (overlay.Y * scale),
-                overlay.Width * scale,
-                overlay.Height * scale);
+            foreach (int channelNumber in vm.VisibleOverlayChannelNumbers)
+            {
+                if (!vm.TryResolveOverlayRect(channelNumber, frame.PixelWidth, frame.PixelHeight, out CameraOverlayRect overlay))
+                    continue;
+
+                occluders.Add(new Rect(
+                    videoRect.X + (overlay.X * scale),
+                    videoRect.Y + (overlay.Y * scale),
+                    overlay.Width * scale,
+                    overlay.Height * scale));
+            }
+
+            return occluders;
         }
 
-        /// <summary>把识别框裁成"框减掉画中画"的形状；没有遮挡时返回 null（不裁剪）。</summary>
-        private static Geometry? BuildGuideClip(Rect guideRect, Rect? occluder)
+        /// <summary>
+        /// 把识别框裁成"框减掉每一块画中画"的形状；没有遮挡时返回 null（不裁剪）。
+        /// 这样被画中画盖住的那段框线真的被遮掉，不会透出来。
+        /// </summary>
+        private static Geometry? BuildGuideClip(Rect guideRect, IReadOnlyList<Rect> occluders)
         {
-            if (occluder is not { } pip || pip.Width <= 0 || pip.Height <= 0)
-                return null;
-
             // 外扩 2px：框线是 3px 描边，正好压在矩形边界上，不外扩会被裁掉一圈。
-            var box = new RectangleGeometry(
+            Geometry clip = new RectangleGeometry(
                 new Rect(-2, -2, guideRect.Width + 4, guideRect.Height + 4));
-            var hole = new RectangleGeometry(
-                new Rect(pip.X - guideRect.X, pip.Y - guideRect.Y, pip.Width, pip.Height));
-            return new CombinedGeometry(GeometryCombineMode.Exclude, box, hole);
+            bool clipped = false;
+            foreach (Rect pip in occluders)
+            {
+                if (pip.Width <= 0 || pip.Height <= 0)
+                    continue;
+
+                clip = new CombinedGeometry(
+                    GeometryCombineMode.Exclude,
+                    clip,
+                    new RectangleGeometry(new Rect(pip.X - guideRect.X, pip.Y - guideRect.Y, pip.Width, pip.Height)));
+                clipped = true;
+            }
+
+            return clipped ? clip : null;
         }
 
         /// <summary>
