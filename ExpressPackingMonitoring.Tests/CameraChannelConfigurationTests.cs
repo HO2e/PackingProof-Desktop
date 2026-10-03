@@ -25,10 +25,12 @@ public sealed class CameraChannelConfigurationTests
     {
         var config = new AppConfig();
 
-        // 默认必须关：老用户升级后画面不能凭空多出一路。留一路空通道只为设置页有卡片可显示。
-        CameraChannelConfig channel = Assert.Single(config.CameraChannels);
+        // 默认必须关：老用户升级后画面不能凭空多出一路。空通道只为设置页有卡片可显示。
+        Assert.Equal(AppConfig.MaxOverlayChannels, config.CameraChannels.Count);
+        Assert.All(config.CameraChannels, channel => Assert.False(channel.IsConfigured));
+
+        CameraChannelConfig channel = config.CameraChannels[0];
         Assert.Equal(AppConfig.OverlayChannelSourceNone, channel.SourceKind);
-        Assert.False(channel.IsConfigured);
         Assert.Equal(AppConfig.DefaultOverlayWidthRatio, channel.OverlayWidthRatio);
         Assert.Equal(AppConfig.DefaultOverlayMargin, channel.OverlayMargin);
         Assert.Equal(AppConfig.UnsetOverlayPosition, channel.OverlayLeftRatio);
@@ -165,11 +167,11 @@ public sealed class CameraChannelConfigurationTests
     }
 
     /// <summary>
-    /// 最多 MaxOverlayChannels 路：超出的截掉，末尾没接设备的空路收起来，但永远留一路
-    /// （设置页要有"副画面 1"这张卡片可显示）。
+    /// 路数固定：设置页永远显示这几张卡（都是"无"就是不接）。少了补齐、多了截断，
+    /// 所以界面不需要"添加/删除"这种入口。
     /// </summary>
     [Fact]
-    public void NormalizeAfterLoad_KeepsChannelCountWithinLimits()
+    public void NormalizeAfterLoad_KeepsAFixedChannelCount()
     {
         var tooMany = new AppConfig
         {
@@ -180,20 +182,18 @@ public sealed class CameraChannelConfigurationTests
         AppConfig.NormalizeAfterLoad(tooMany);
         Assert.Equal(AppConfig.MaxOverlayChannels, tooMany.CameraChannels.Count);
 
-        var trailingEmpty = new AppConfig
+        var onlyOne = new AppConfig
         {
-            CameraChannels =
-            [
-                new CameraChannelConfig { SourceKind = "usb", MonikerString = "m1" },
-                new CameraChannelConfig()
-            ]
+            CameraChannels = [new CameraChannelConfig { SourceKind = "usb", MonikerString = "m1" }]
         };
-        AppConfig.NormalizeAfterLoad(trailingEmpty);
-        Assert.Single(trailingEmpty.CameraChannels);
+        AppConfig.NormalizeAfterLoad(onlyOne);
+        Assert.Equal(AppConfig.MaxOverlayChannels, onlyOne.CameraChannels.Count);
+        Assert.Equal("m1", onlyOne.CameraChannels[0].MonikerString);
+        Assert.False(onlyOne.CameraChannels[1].IsConfigured);
 
         var empty = new AppConfig { CameraChannels = [] };
         AppConfig.NormalizeAfterLoad(empty);
-        Assert.Single(empty.CameraChannels);
+        Assert.Equal(AppConfig.MaxOverlayChannels, empty.CameraChannels.Count);
     }
 
     /// <summary>两路各自独立：设备、旋转、档位、画中画比例互不干扰。</summary>
@@ -480,13 +480,15 @@ public sealed class CameraChannelConfigurationTests
         Assert.Contains("ItemsControl ItemsSource=\"{Binding OverlayCameraCards}\"", settings, StringComparison.Ordinal);
         Assert.Contains("ItemsSource=\"{Binding DeviceChoices}\"", settings, StringComparison.Ordinal);
         Assert.Contains("SelectedItem=\"{Binding SelectedDevice, Mode=TwoWay}\"", settings, StringComparison.Ordinal);
-        Assert.Contains("Command=\"{Binding AddOverlayChannelCommand}\"", settings, StringComparison.Ordinal);
-        Assert.Contains("Command=\"{Binding RemoveCommand}\"", settings, StringComparison.Ordinal);
         // 来源就是开关：选"无"时其余选项整块收起。
         Assert.Contains(
             "Visibility=\"{Binding IsConfigured, Converter={StaticResource BoolToVisibility}}\"",
             settings,
             StringComparison.Ordinal);
+        // 路数固定，界面不再需要"添加/删除"这种入口。
+        Assert.DoesNotContain("添加副画面", settings, StringComparison.Ordinal);
+        Assert.DoesNotContain("AddOverlayChannelCommand", settings, StringComparison.Ordinal);
+        Assert.DoesNotContain("RemoveCommand", settings, StringComparison.Ordinal);
         Assert.DoesNotContain("SecondaryCameraCheckBox", settings, StringComparison.Ordinal);
         // 叠加画面规格与主摄共用同一套档位枚举：分辨率/帧率下拉由 CameraFormatCatalog 填
         Assert.Contains("ItemsSource=\"{Binding Resolutions}\"", settings, StringComparison.Ordinal);
@@ -571,7 +573,7 @@ public sealed class CameraChannelConfigurationTests
     [Fact]
     public void OverlayBarcodeGuideDefaultsToCenteredBox()
     {
-        CameraChannelConfig channel = Assert.Single(new AppConfig().CameraChannels);
+        CameraChannelConfig channel = new AppConfig().CameraChannels[0];
 
         Assert.Equal(AppConfig.DefaultOverlayGuideRatio, channel.BarcodeGuideWidthRatio);
         Assert.Equal(AppConfig.DefaultOverlayGuideRatio, channel.BarcodeGuideHeightRatio);

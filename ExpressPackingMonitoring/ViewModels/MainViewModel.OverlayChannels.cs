@@ -134,6 +134,15 @@ namespace ExpressPackingMonitoring.ViewModels
             _overlayChannels.FirstOrDefault(channel => channel.Number == channelNumber);
 
         /// <summary>
+        /// 用户没拖过时贴哪一角：第 1 路贴右下（沿用老习惯）、第 2 路贴左下，
+        /// 两块画中画一右一左不会叠在一起。以后再加路按奇偶轮着来。
+        /// </summary>
+        private static CameraOverlayAnchor OverlayAnchorFor(OverlayChannel channel) =>
+            channel.Number % 2 == 0
+                ? CameraOverlayAnchor.BottomLeft
+                : CameraOverlayAnchor.BottomRight;
+
+        /// <summary>
         /// 按当前配置对齐运行时通道：路数或配置对象变了就整组重建（设置页应用配置会换一份 AppConfig）。
         /// 重建前先把旧通道全部停掉，避免换设备时两路抢同一台。
         /// </summary>
@@ -767,7 +776,8 @@ namespace ExpressPackingMonitoring.ViewModels
                         channel.Config.OverlayMargin,
                         channel.Config.OverlayLeftRatio,
                         channel.Config.OverlayTopRatio,
-                        allowUpscale: false);
+                        allowUpscale: false,
+                        anchor: OverlayAnchorFor(channel));
 
                     if (CameraOverlayComposer.TryCompose(
                             frame,
@@ -1111,7 +1121,8 @@ namespace ExpressPackingMonitoring.ViewModels
                 channel.Config.OverlayMargin,
                 channel.Config.OverlayLeftRatio,
                 channel.Config.OverlayTopRatio,
-                allowUpscale: false);
+                allowUpscale: false,
+                anchor: OverlayAnchorFor(channel));
 
             if (resolved is not { } value)
                 return false;

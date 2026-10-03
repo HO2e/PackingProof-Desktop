@@ -6,8 +6,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using CommunityToolkit.Mvvm.Input;
 using ExpressPackingMonitoring.Config;
 using ExpressPackingMonitoring.Services;
 
@@ -34,7 +32,6 @@ namespace ExpressPackingMonitoring.UI
         {
             _owner = owner;
             _index = index;
-            RemoveCommand = new RelayCommand(() => owner.RemoveOverlayChannel(this));
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -43,8 +40,6 @@ namespace ExpressPackingMonitoring.UI
         public int Number => _index + 1;
 
         public string Title => $"副画面 {Number}";
-
-        public ICommand RemoveCommand { get; }
 
         /// <summary>卡头显示的当前画面来源。</summary>
         public string DeviceSummary =>
@@ -181,22 +176,41 @@ namespace ExpressPackingMonitoring.UI
         /// <summary>窗口枚举出这一路支持的档位后调用。</summary>
         internal void ApplyFormats(CameraChannelConfig config, CameraFormatOptions formats)
         {
-            _resolutions = formats.Resolutions.ToList();
+            List<CameraResolutionOption> resolutions = formats.Resolutions.ToList();
             (int width, int height) = AppConfig.ResolveOverlayFrameSize(
                 config.ResolutionPreset,
                 config.FrameWidth,
                 config.FrameHeight);
-            _selectedResolution =
-                _resolutions.FirstOrDefault(r => r.Width == width && r.Height == height)
-                ?? _resolutions.FirstOrDefault();
+            CameraResolutionOption? selectedResolution =
+                resolutions.FirstOrDefault(r => r.Width == width && r.Height == height);
+            if (selectedResolution == null)
+            {
+                // 设备这次报出来的档位里没有用户存的那一档（设备被本程序占用、换了采集后端、
+                // 换了设备都会这样）。把存的那一档补进列表，**绝不能**默默改成第一项 ——
+                // 那样保存时会把用户选好的分辨率改掉，看起来就是"一进设置页分辨率就被清了"。
+                selectedResolution = new CameraResolutionOption(
+                    $"{width}x{height}{CameraFormatCatalog.ResolutionLabel(width, height)}",
+                    width,
+                    height);
+                resolutions.Insert(0, selectedResolution);
+            }
 
-            _fpsOptions = formats.FpsValues
+            List<FpsOption> fpsOptions = formats.FpsValues
                 .Select(fps => new FpsOption { Fps = fps, Label = $"{fps} FPS" })
                 .ToList();
             int currentFps = config.FrameFps > 0 ? config.FrameFps : AppConfig.DefaultOverlayFrameFps;
-            _selectedFps =
-                _fpsOptions.FirstOrDefault(option => option.Fps == currentFps)
-                ?? _fpsOptions.FirstOrDefault();
+            FpsOption? selectedFps = fpsOptions.FirstOrDefault(option => option.Fps == currentFps);
+            if (selectedFps == null)
+            {
+                // 同理：帧率列表对不上时保留用户存的那一档，而不是回退到列表第一项。
+                selectedFps = new FpsOption { Fps = currentFps, Label = $"{currentFps} FPS" };
+                fpsOptions.Insert(0, selectedFps);
+            }
+
+            _resolutions = resolutions;
+            _selectedResolution = selectedResolution;
+            _fpsOptions = fpsOptions;
+            _selectedFps = selectedFps;
 
             Raise(nameof(Resolutions));
             Raise(nameof(SelectedResolution));
@@ -275,16 +289,6 @@ namespace ExpressPackingMonitoring.UI
 
         /// <summary>每一路叠加画面一张卡；没接设备的那一路也留着，用户才能"添加"。</summary>
         public ObservableCollection<OverlayChannelCard> OverlayCameraCards { get; } = new();
-
-        /// <summary>还能不能再加一路（见 <see cref="AppConfig.MaxOverlayChannels"/>）。</summary>
-        public bool CanAddOverlayChannel =>
-            Config is { } config && config.CameraChannels.Count < AppConfig.MaxOverlayChannels;
-
-        public ICommand AddOverlayChannelCommand => _addOverlayChannelCommand ??= new RelayCommand(
-            AddOverlayChannel,
-            () => CanAddOverlayChannel);
-
-        private ICommand? _addOverlayChannelCommand;
 
         /// <summary>面单识别来源可选项：主摄像头 + 已经接了设备的叠加画面。</summary>
         public IReadOnlyList<BarcodeRecognitionChannelOption> BarcodeRecognitionChannelChoices =>
@@ -398,9 +402,6 @@ namespace ExpressPackingMonitoring.UI
                 for (int i = 0; i < config.CameraChannels.Count; i++)
                     OverlayCameraCards.Add(new OverlayChannelCard(this, i));
             }
-
-            Raise(nameof(CanAddOverlayChannel));
-            (AddOverlayChannelCommand as RelayCommand)?.NotifyCanExecuteChanged();
         }
 
         /// <summary>
@@ -425,6 +426,7 @@ namespace ExpressPackingMonitoring.UI
                     requested[i + 1] = ChannelMoniker(config.CameraChannels[i]);
 
                 IReadOnlyList<string> resolved = CameraDeviceSelectionPolicy.ResolveOwnership(requested, all);
+                List<int> clearedChannels = new();
                 for (int i = 1; i < requested.Length; i++)
                 {
                     if (string.Equals(resolved[i], requested[i], StringComparison.Ordinal))
@@ -433,11 +435,21 @@ namespace ExpressPackingMonitoring.UI
                     // 直接改配置：卡片的 setter 带同步守卫，从同步流程里调会被挡掉。
                     ClearChannel(config.CameraChannels[i - 1]);
                     requested[i] = "";
+                    clearedChannels.Add(i);
                 }
 
                 ApplyMainCameraChoices(all, requested);
                 ApplyCardChoices(all, requested);
                 RaiseBarcodeChannelChoices();
+
+                // 只有真的被让位（设备变成"无"）的那一路才需要重算档位；
+                // 其它路重新枚举会把用户选好的分辨率/帧率冲掉。
+                foreach (int number in clearedChannels)
+                {
+                    OverlayChannelCard? cleared = OverlayCameraCards.FirstOrDefault(card => card.Number == number);
+                    if (cleared != null)
+                        LoadOverlayChannelFormats(cleared);
+                }
             }
             finally
             {
@@ -549,45 +561,6 @@ namespace ExpressPackingMonitoring.UI
             Raise(nameof(SelectedBarcodeRecognitionChannel));
         }
 
-        private void AddOverlayChannel()
-        {
-            if (Config is not { } config || !CanAddOverlayChannel)
-                return;
-
-            config.CameraChannels.Add(new CameraChannelConfig());
-            RebuildOverlayCards();
-            foreach (OverlayChannelCard card in OverlayCameraCards)
-                LoadOverlayChannelFormats(card);
-            SyncCameraChoices();
-        }
-
-        internal void RemoveOverlayChannel(OverlayChannelCard card)
-        {
-            if (Config is not { } config)
-                return;
-
-            int index = card.Number - 1;
-            if (index < 0 || index >= config.CameraChannels.Count)
-                return;
-
-            config.CameraChannels.RemoveAt(index);
-            // 通道号就是位置编号：后面的路整体前移，识别来源跟着对齐，指到被删的那一路就回主摄。
-            int barcodeChannel = config.CameraBarcodeRecognitionChannel;
-            if (barcodeChannel == card.Number)
-                config.CameraBarcodeRecognitionChannel = 0;
-            else if (barcodeChannel > card.Number)
-                config.CameraBarcodeRecognitionChannel = barcodeChannel - 1;
-
-            // 至少留一路：设置页始终有一张"副画面 1"的卡片。
-            if (config.CameraChannels.Count == 0)
-                config.CameraChannels.Add(new CameraChannelConfig());
-
-            RebuildOverlayCards();
-            foreach (OverlayChannelCard remaining in OverlayCameraCards)
-                LoadOverlayChannelFormats(remaining);
-            SyncCameraChoices();
-        }
-
         /// <summary>
         /// 下拉第一次显示时把卡片与档位填好，并盯住主摄下拉：主摄换设备 → 所有下拉都重算。
         /// （在 XAML 挂 Loaded，避免动冻结的 SettingsWindow.xaml.cs）
@@ -601,6 +574,7 @@ namespace ExpressPackingMonitoring.UI
             }
 
             WatchCameraItemsSource();
+            WatchMainCameraFormats();
             RebuildOverlayCards();
             foreach (OverlayChannelCard card in OverlayCameraCards)
                 LoadOverlayChannelFormats(card);
@@ -627,15 +601,94 @@ namespace ExpressPackingMonitoring.UI
             descriptor.AddValueChanged(CameraComboBox, _cameraItemsSourceWatcher);
         }
 
+        private bool _repairingMainCameraFormats;
+
+        /// <summary>
+        /// 盯住主摄的分辨率/帧率下拉。它们由冻结的设置页代码填：设备这次枚举不到档位时
+        /// （采集中的摄像头被本程序占用，很常见）会回退到列表第一项，保存时就把用户选好的档位改掉 ——
+        /// 现场表现就是"每次进设置页，这些摄像头的帧率/分辨率被清掉，要重新点"。
+        /// 这里等它填完，再把用户存的那一档补回下拉并选中。
+        /// </summary>
+        private void WatchMainCameraFormats()
+        {
+            if (ResComboBox != null)
+            {
+                ResComboBox.SelectionChanged -= MainCameraFormatSelectionChanged;
+                ResComboBox.SelectionChanged += MainCameraFormatSelectionChanged;
+            }
+
+            if (FpsComboBox != null)
+            {
+                FpsComboBox.SelectionChanged -= MainCameraFormatSelectionChanged;
+                FpsComboBox.SelectionChanged += MainCameraFormatSelectionChanged;
+            }
+        }
+
+        private void MainCameraFormatSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_repairingMainCameraFormats)
+                return;
+
+            // 冻结的加载是"先填列表再选一项"，要等它这一轮走完再补，否则会被它覆盖掉。
+            Dispatcher.BeginInvoke(
+                new Action(RepairMainCameraFormatSelections),
+                System.Windows.Threading.DispatcherPriority.Background);
+        }
+
+        private void RepairMainCameraFormatSelections()
+        {
+            if (_repairingMainCameraFormats || Config is not { } config)
+                return;
+
+            _repairingMainCameraFormats = true;
+            try
+            {
+                List<CameraResolutionOption> resolutions =
+                    (ResComboBox?.ItemsSource as IEnumerable)?.OfType<CameraResolutionOption>().ToList()
+                    ?? new List<CameraResolutionOption>();
+                if (resolutions.Count > 0
+                    && config.FrameWidth > 0
+                    && config.FrameHeight > 0
+                    && !resolutions.Any(r => r.Width == config.FrameWidth && r.Height == config.FrameHeight))
+                {
+                    var savedResolution = new CameraResolutionOption(
+                        $"{config.FrameWidth}x{config.FrameHeight}"
+                            + CameraFormatCatalog.ResolutionLabel(config.FrameWidth, config.FrameHeight),
+                        config.FrameWidth,
+                        config.FrameHeight);
+                    resolutions.Insert(0, savedResolution);
+                    ResComboBox!.ItemsSource = resolutions;
+                    ResComboBox.SelectedItem = savedResolution;
+                }
+
+                List<ComboBoxItem> fpsItems =
+                    (FpsComboBox?.ItemsSource as IEnumerable)?.OfType<ComboBoxItem>().ToList()
+                    ?? new List<ComboBoxItem>();
+                if (fpsItems.Count > 0
+                    && config.Fps > 0
+                    && !fpsItems.Any(item => item.Tag is int fps && fps == config.Fps))
+                {
+                    var savedFps = new ComboBoxItem { Content = $"{config.Fps} FPS", Tag = config.Fps };
+                    fpsItems.Insert(0, savedFps);
+                    FpsComboBox!.ItemsSource = fpsItems;
+                    FpsComboBox.SelectedItem = savedFps;
+                }
+            }
+            finally
+            {
+                _repairingMainCameraFormats = false;
+            }
+        }
+
         private void MainCameraSelectionChangedForChannels(object sender, SelectionChangedEventArgs e)
         {
             // 我们自己重排清单、恢复选中项时也会触发一次 SelectionChanged，这里不用再跟着跑一遍
             if (_syncingCameraChoices)
                 return;
 
+            // 只重算占用关系：这一路的设备没变就不重新枚举档位 ——
+            // 设备每次枚举出来的档位可能不一样，重新枚举会把用户选好的分辨率/帧率冲掉。
             SyncCameraChoices();
-            foreach (OverlayChannelCard card in OverlayCameraCards)
-                LoadOverlayChannelFormats(card);
         }
 
         /// <summary>

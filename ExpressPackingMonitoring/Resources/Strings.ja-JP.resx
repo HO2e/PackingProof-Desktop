@@ -1518,5 +1518,4 @@
   <data name="主画面" xml:space="preserve"><value>メイン画面</value></data>
   <data name="副画面" xml:space="preserve"><value>サブ画面</value></data>
 <data name="这一路不接就选“无”" xml:space="preserve"><value>この系統を使わないときは「なし」を選びます</value></data>
-<data name="添加副画面" xml:space="preserve"><value>子画面を追加</value></data>
 </root>

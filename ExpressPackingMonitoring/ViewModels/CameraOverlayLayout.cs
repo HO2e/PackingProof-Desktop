@@ -6,6 +6,15 @@ namespace ExpressPackingMonitoring.ViewModels
     internal readonly record struct CameraOverlayRect(int X, int Y, int Width, int Height);
 
     /// <summary>
+    /// 没自定义落位时贴哪一角。第一路贴右下、第二路贴左下，两块画中画一右一左不会叠在一起。
+    /// </summary>
+    internal enum CameraOverlayAnchor
+    {
+        BottomRight,
+        BottomLeft,
+    }
+
+    /// <summary>
     /// 第二路摄像头画面贴到主画面右下角的落位规则。纯计算，便于在没有摄像头的情况下回归。
     ///
     /// 副画面按**自身比例**缩放：先按主画面宽度的比例定宽，再把高度按副画面宽高比算出来；
@@ -50,7 +59,8 @@ namespace ExpressPackingMonitoring.ViewModels
             int margin,
             double leftRatio = AppConfig.UnsetOverlayPosition,
             double topRatio = AppConfig.UnsetOverlayPosition,
-            bool allowUpscale = true)
+            bool allowUpscale = true,
+            CameraOverlayAnchor anchor = CameraOverlayAnchor.BottomRight)
         {
             if (frameWidth <= 0 || frameHeight <= 0 || overlaySourceWidth <= 0 || overlaySourceHeight <= 0)
                 return null;
@@ -94,8 +104,11 @@ namespace ExpressPackingMonitoring.ViewModels
                 return new CameraOverlayRect(customX, customY, targetWidth, targetHeight);
             }
 
+            int defaultX = anchor == CameraOverlayAnchor.BottomLeft
+                ? safeMargin
+                : frameWidth - safeMargin - targetWidth;
             return new CameraOverlayRect(
-                frameWidth - safeMargin - targetWidth,
+                defaultX,
                 frameHeight - safeMargin - targetHeight,
                 targetWidth,
                 targetHeight);

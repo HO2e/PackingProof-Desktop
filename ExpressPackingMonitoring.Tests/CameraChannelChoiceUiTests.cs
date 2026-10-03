@@ -30,7 +30,7 @@ public sealed class CameraChannelChoiceUiTests
             AppConfig config = CreateConfig(mainMoniker: "moniker-a", channelMoniker: "moniker-b");
             SettingsWindow window = CreateWindow(config);
             ComboBox main = PrepareWindow(window);
-            OverlayChannelCard card = Assert.Single(window.OverlayCameraCards);
+            OverlayChannelCard card = window.OverlayCameraCards[0];
 
             Assert.Equal("moniker-a", SelectedMoniker(main));
             Assert.Equal(0, config.CameraIndex);
@@ -59,7 +59,7 @@ public sealed class CameraChannelChoiceUiTests
             AppConfig config = CreateConfig(mainMoniker: "moniker-a", channelMoniker: "");
             SettingsWindow window = CreateWindow(config);
             ComboBox main = PrepareWindow(window);
-            OverlayChannelCard card = Assert.Single(window.OverlayCameraCards);
+            OverlayChannelCard card = window.OverlayCameraCards[0];
 
             Assert.Equal("无", card.SelectedDevice?.Name);
             Assert.Contains(MainItems(main), camera => camera.Moniker == "moniker-b");
@@ -88,7 +88,7 @@ public sealed class CameraChannelChoiceUiTests
             AppConfig config = CreateConfig(mainMoniker: "moniker-b", channelMoniker: "moniker-b");
             SettingsWindow window = CreateWindow(config);
             ComboBox main = PrepareWindow(window);
-            OverlayChannelCard card = Assert.Single(window.OverlayCameraCards);
+            OverlayChannelCard card = window.OverlayCameraCards[0];
 
             Assert.Equal("moniker-b", SelectedMoniker(main));
             // 主摄那台在完整清单里排第二：没有被挤到第一台才算没跳
@@ -114,7 +114,7 @@ public sealed class CameraChannelChoiceUiTests
             config.CameraIndex = 99; // 旧索引已经不在这次枚举出来的清单里
             SettingsWindow window = CreateWindow(config);
             ComboBox main = PrepareWindow(window, selectConfiguredCamera: false);
-            OverlayChannelCard card = Assert.Single(window.OverlayCameraCards);
+            OverlayChannelCard card = window.OverlayCameraCards[0];
 
             Assert.Equal("moniker-b", SelectedMoniker(main));
             // 主摄占着 B，这一路能选的只有 A 和 C
@@ -124,9 +124,48 @@ public sealed class CameraChannelChoiceUiTests
         });
     }
 
-    /// <summary>加一路就是往配置里多放一个通道，卡片、设备清单与识别来源都要跟着长出来。</summary>
+    /// <summary>
+    /// 设备这次枚举出来的档位未必包含用户存的那一档（设备被本程序占用、换了采集后端都会这样）。
+    /// 这时必须保留用户存的值，不能默默换成列表第一项 —— 现场表现就是
+    /// "每次进设置页帧率/分辨率就被清掉，要重新点一次"。
+    /// </summary>
     [Fact]
-    public void AddingAndRemovingOverlayChannel_RebuildsCardsAndBarcodeChoices()
+    public void OpeningSettings_KeepsSavedFrameRateAndResolution()
+    {
+        RunOnStaThread(() =>
+        {
+            AppConfig config = CreateConfig(mainMoniker: "moniker-a", channelMoniker: "moniker-b");
+            // 假设备枚举不到任何档位，走的是兜底列表（720P/1080P/2K/4K、10~30 FPS）：
+            // 60 FPS 与 480p 都不在里面，正是"对不上"的那种情况。
+            config.CameraChannels[0].FrameFps = 60;
+            config.CameraChannels[0].FrameWidth = 640;
+            config.CameraChannels[0].FrameHeight = 480;
+            config.CameraChannels[0].ResolutionPreset = "480p";
+
+            SettingsWindow window = CreateWindow(config);
+            PrepareWindow(window);
+            OverlayChannelCard card = window.OverlayCameraCards[0];
+
+            Assert.Equal(60, card.SelectedFps?.Fps);
+            Assert.Equal(640, card.SelectedResolution?.Width);
+            Assert.Contains(card.FpsOptions, option => option.Fps == 60);
+            Assert.Contains(card.Resolutions, option => option.Width == 640 && option.Height == 480);
+
+            // 保存也一样：不能把用户选好的档位改掉。
+            window.ApplySecondaryCameraFormatsToConfig();
+            Assert.Equal(60, config.CameraChannels[0].FrameFps);
+            Assert.Equal(640, config.CameraChannels[0].FrameWidth);
+            Assert.Equal(480, config.CameraChannels[0].FrameHeight);
+            Assert.Equal("480p", config.CameraChannels[0].ResolutionPreset);
+        });
+    }
+
+    /// <summary>
+    /// 路数是固定的：设置页永远两张卡（默认都是"无"），不加删除入口；
+    /// 识别来源只列真的接了设备的那几路。
+    /// </summary>
+    [Fact]
+    public void CardsAreFixedAndBarcodeChoicesOnlyListConfiguredOnes()
     {
         RunOnStaThread(() =>
         {
@@ -134,31 +173,23 @@ public sealed class CameraChannelChoiceUiTests
             SettingsWindow window = CreateWindow(config);
             PrepareWindow(window);
 
-            Assert.Single(window.OverlayCameraCards);
-            Assert.True(window.CanAddOverlayChannel);
+            Assert.Equal(AppConfig.MaxOverlayChannels, window.OverlayCameraCards.Count);
             Assert.Equal(["主摄像头", "副画面 1"], window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
 
-            window.AddOverlayChannelCommand.Execute(null);
+            // 第二路默认是"无"，接上设备后识别来源里才会出现它
+            OverlayChannelCard second = window.OverlayCameraCards[1];
+            Assert.Equal("无", second.SelectedDevice?.Name);
+            second.SelectedDevice = second.DeviceChoices.First(choice => choice.Moniker == "moniker-c");
 
-            Assert.Equal(2, config.CameraChannels.Count);
-            Assert.Equal(2, window.OverlayCameraCards.Count);
-            // 到达上限后不能再加
-            Assert.False(window.CanAddOverlayChannel);
-            Assert.Equal(2, window.OverlayCameraCards[1].Number);
+            Assert.Equal(["主摄像头", "副画面 1", "副画面 2"], window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
+            Assert.Equal(2, second.Number);
+            // 两路各自排除别人占用的设备，但自己那台一定还在自己的清单里
+            Assert.Contains(second.DeviceChoices, choice => choice.Moniker == "moniker-c");
+            Assert.DoesNotContain(second.DeviceChoices, choice => choice.Moniker == "moniker-b");
 
-            // 识别来源指向第二路，删掉第一路以后要跟着前移
-            config.CameraBarcodeRecognitionChannel = 2;
-            config.CameraChannels[1].SourceKind = "usb";
-            config.CameraChannels[1].MonikerString = "moniker-c";
-            window.OverlayCameraCards[1].SelectedDevice =
-                window.OverlayCameraCards[1].DeviceChoices.First(choice => choice.Moniker == "moniker-c");
-            Assert.Equal(2, config.CameraBarcodeRecognitionChannel);
-
-            window.RemoveOverlayChannel(window.OverlayCameraCards[0]);
-
-            Assert.Single(window.OverlayCameraCards);
-            Assert.Equal(1, config.CameraBarcodeRecognitionChannel);
-            Assert.Equal("moniker-c", config.CameraChannels[0].MonikerString);
+            // 取消这一路（选回"无"）后识别来源也要收回这一项
+            second.SelectedDevice = second.DeviceChoices.First(choice => choice.Kind == "none");
+            Assert.Equal(["主摄像头", "副画面 1"], window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
         });
     }
 
@@ -169,12 +200,10 @@ public sealed class CameraChannelChoiceUiTests
         RunOnStaThread(() =>
         {
             AppConfig config = CreateConfig(mainMoniker: "moniker-a", channelMoniker: "moniker-b");
-            config.CameraChannels.Add(new CameraChannelConfig
-            {
-                SourceKind = "usb",
-                MonikerString = "moniker-c",
-                FrameFps = 15
-            });
+            // 第二路本来就是配置里的一项，不需要"添加"：直接把它接上设备。
+            config.CameraChannels[1].SourceKind = "usb";
+            config.CameraChannels[1].MonikerString = "moniker-c";
+            config.CameraChannels[1].FrameFps = 15;
 
             SettingsWindow window = CreateWindow(config);
             PrepareWindow(window);
@@ -245,8 +274,10 @@ public sealed class CameraChannelChoiceUiTests
         Assert.Contains("ItemsControl ItemsSource=\"{Binding OverlayCameraCards}\"", xaml, StringComparison.Ordinal);
         Assert.Contains("ItemsSource=\"{Binding DeviceChoices}\"", xaml, StringComparison.Ordinal);
         Assert.Contains("SelectedItem=\"{Binding SelectedDevice, Mode=TwoWay}\"", xaml, StringComparison.Ordinal);
-        Assert.Contains("Command=\"{Binding AddOverlayChannelCommand}\"", xaml, StringComparison.Ordinal);
-        Assert.Contains("Command=\"{Binding RemoveCommand}\"", xaml, StringComparison.Ordinal);
+        // 路数固定：界面上没有"添加副画面/删除"这种入口，不接就选"无"。
+        Assert.DoesNotContain("添加副画面", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("AddOverlayChannelCommand", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("RemoveCommand", xaml, StringComparison.Ordinal);
         Assert.Contains("ItemsSource=\"{Binding Resolutions}\"", xaml, StringComparison.Ordinal);
         Assert.Contains("ItemsSource=\"{Binding FpsOptions}\"", xaml, StringComparison.Ordinal);
         Assert.Contains("SelectedValue=\"{Binding RotationDegrees, Mode=TwoWay}\"", xaml, StringComparison.Ordinal);

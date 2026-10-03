@@ -257,12 +257,21 @@ namespace ExpressPackingMonitoring.Config
         public string NetworkCameraUrl { get; set; } = "";
         public string NetworkCameraRtspTransport { get; set; } = "tcp";
 
-        // 叠加画面（画中画）：每个元素是一路，至少保留一路（没接也算一路，设置页才有卡片可显示），
-        // 最多 MaxOverlayChannels 路。来源即开关：这一路的来源是"无"就是没接。
+        // 叠加画面（画中画）：固定 MaxOverlayChannels 路，每个元素是一路，设置页一张卡。
+        // 没接的那一路来源就是"无"（来源即开关），不用的那一路不需要删掉。
         // 必须是**另一台**物理设备：同一台 USB 摄像头被两路同时打开时设备是独占的，
         // 会有一路拿不到画面甚至被判掉线。
         // 主摄像头不在这里：它是录像主链路，用的仍是上面的主摄字段。
-        public List<CameraChannelConfig> CameraChannels { get; set; } = new() { new CameraChannelConfig() };
+        public List<CameraChannelConfig> CameraChannels { get; set; } = CreateDefaultCameraChannels();
+
+        /// <summary>默认给满 MaxOverlayChannels 路空通道：设置页固定显示这几张卡，都是"无"。</summary>
+        private static List<CameraChannelConfig> CreateDefaultCameraChannels()
+        {
+            var channels = new List<CameraChannelConfig>(MaxOverlayChannels);
+            for (int i = 0; i < MaxOverlayChannels; i++)
+                channels.Add(new CameraChannelConfig());
+            return channels;
+        }
 
         // 「摄像头自动识别面单」读哪一路画面：0 = 主摄像头（默认，行为与从前一致），
         // 1..n = 第 n 路叠加画面（专门对准面单的那台机位）。
@@ -1241,12 +1250,6 @@ namespace ExpressPackingMonitoring.Config
         {
             bool changed = false;
             config.CameraChannels ??= new List<CameraChannelConfig>();
-            while (config.CameraChannels.Count < 1)
-            {
-                config.CameraChannels.Add(new CameraChannelConfig());
-                changed = true;
-            }
-
             if (config.CameraChannels.Count > MaxOverlayChannels)
             {
                 config.CameraChannels.RemoveRange(
@@ -1255,16 +1258,16 @@ namespace ExpressPackingMonitoring.Config
                 changed = true;
             }
 
-            foreach (CameraChannelConfig channel in config.CameraChannels)
-                changed |= NormalizeCameraChannel(channel);
-
-            // 末尾没接设备的路只有设置页的"添加"入口会用到，配置里不留多余的空路；
-            // 第一路永远保留：设置页要显示"副画面 1"这张卡片。
-            while (config.CameraChannels.Count > 1 && !config.CameraChannels[^1].IsConfigured)
+            // 固定这么多路：设置页永远显示"副画面 1/2"两张卡，不接的那一路来源就是"无"。
+            // 少了就补齐，多了（手改配置/降级）就截断。
+            while (config.CameraChannels.Count < MaxOverlayChannels)
             {
-                config.CameraChannels.RemoveAt(config.CameraChannels.Count - 1);
+                config.CameraChannels.Add(new CameraChannelConfig());
                 changed = true;
             }
+
+            foreach (CameraChannelConfig channel in config.CameraChannels)
+                changed |= NormalizeCameraChannel(channel);
 
             return changed;
         }

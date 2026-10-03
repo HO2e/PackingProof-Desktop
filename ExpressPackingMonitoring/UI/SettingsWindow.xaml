@@ -1200,11 +1200,6 @@
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Foreground="{DynamicResource TextSecondary}"/>
-                                                        <Button Content="删除"
-                                                                Height="28"
-                                                                Padding="10,0"
-                                                                Style="{StaticResource SecondarySmallButtonStyle}"
-                                                                Command="{Binding RemoveCommand}"/>
                                                     </StackPanel>
                                                 </Grid>
 
@@ -1306,14 +1301,6 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <Button Content="添加副画面"
-                                    Height="32"
-                                    Padding="14,0"
-                                    Margin="0,0,0,12"
-                                    HorizontalAlignment="Left"
-                                    Style="{StaticResource SecondarySmallButtonStyle}"
-                                    Command="{Binding AddOverlayChannelCommand}"
-                                    Visibility="{Binding CanAddOverlayChannel, Converter={StaticResource BoolToVisibility}}"/>
 
                             <Border Style="{StaticResource SectionCardStyle}">
                                 <StackPanel>

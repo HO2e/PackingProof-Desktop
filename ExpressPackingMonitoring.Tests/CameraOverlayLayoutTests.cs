@@ -151,6 +151,25 @@ public sealed class CameraOverlayLayoutTests
     }
 
     /// <summary>
+    /// 第二路默认贴左下角：两块画中画一右一左，开箱即用不会叠在一起。
+    /// 用户拖过以后按拖到的位置走，与这个默认无关。
+    /// </summary>
+    [Fact]
+    public void UnsetPosition_WithLeftAnchor_FallsBackToBottomLeft()
+    {
+        CameraOverlayRect? rect = CameraOverlayLayout.Resolve(
+            1920, 1080, 1920, 1080, 0.25, 16,
+            leftRatio: AppConfig.UnsetOverlayPosition,
+            topRatio: AppConfig.UnsetOverlayPosition,
+            anchor: CameraOverlayAnchor.BottomLeft);
+
+        Assert.NotNull(rect);
+        Assert.Equal(16, rect!.Value.X);
+        Assert.Equal(1080 - 16 - rect.Value.Height, rect.Value.Y);
+        Assert.Equal(480, rect.Value.Width);
+    }
+
+    /// <summary>
     /// 默认不允许放大：副画面比目标矩形小的时候按原生尺寸贴，只有显式允许才超采样。
     /// 放大只会更糊，不会多出任何细节。
     /// </summary>
