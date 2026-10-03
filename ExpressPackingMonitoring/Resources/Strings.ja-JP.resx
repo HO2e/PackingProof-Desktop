@@ -561,7 +561,6 @@
   <data name="将面单条形码放入框内" xml:space="preserve"><value>送り状のバーコードを枠内に入れてください</value></data>
   <data name="主摄像头" xml:space="preserve"><value>メインカメラ</value></data>
   <data name="画面旋转" xml:space="preserve"><value>画面の回転</value></data>
-  <data name="副画面旋转" xml:space="preserve"><value>サブ画面の回転</value></data>
   <data name="决定录出来的视频方向" xml:space="preserve"><value>録画される映像の向きを決めます</value></data>
   <data name="决定画中画的方向" xml:space="preserve"><value>ピクチャインピクチャの向きを決めます</value></data>
   <data name="不旋转" xml:space="preserve"><value>回転なし</value></data>
@@ -572,8 +571,6 @@
   <data name="帧率" xml:space="preserve"><value>フレームレート</value></data>
   <data name="画面方向" xml:space="preserve"><value>画面の向き</value></data>
   <data name="叠加在主画面上的另一路摄像头" xml:space="preserve"><value>メイン画面に重ねるもう一つのカメラ</value></data>
-  <data name="横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转" xml:space="preserve"><value>横向き・縦向き・逆さ向きのときは 90° 単位で調整してください。プレビュー・認識・録画が一緒に回転します</value></data>
-  <data name="副画面分辨率" xml:space="preserve"><value>サブ画面の解像度</value></data>
   <data name="越高响应越快，普通电脑保持默认即可" xml:space="preserve"><value>高いほど応答が速くなります。通常のPCでは既定のままで構いません</value></data>
   <data name="拖动框调整副摄取景，点完成或按 Esc 退出" xml:space="preserve"><value>枠をドラッグして副カメラの構図を調整し、完了または Esc で終了します</value></data>
   <data name="扫码枪（可选）" xml:space="preserve"><value>バーコードスキャナー（任意）</value></data>
@@ -1466,55 +1463,16 @@
   <data name="FFmpeg 要求 NVIDIA 驱动版本不低于 {config.EncoderDriverMinimumVersion}" xml:space="preserve"><value>FFmpeg は NVIDIA ドライバー {0} 以降が必要です</value></data>
   <data name="H.264 (兼容性好)" xml:space="preserve"><value>H.264（互換性が高い）</value></data>
   <data name="H.265 / HEVC (体积更小)" xml:space="preserve"><value>H.265 / HEVC（ファイルが小さい）</value></data>
-  <data name="副画面（第二路摄像头）" xml:space="preserve"><value>サブ画面（2 台目のカメラ）</value></data>
-  <data name="再选一台摄像头叠在主画面右下角，预览和录像里都有" xml:space="preserve"><value>もう 1 台のカメラをメイン画面の右下に重ねます。プレビューと録画の両方に写ります</value></data>
-  <data name="副画面来源" xml:space="preserve"><value>サブ画面のソース</value></data>
-  <data name="不能和主画面选同一台摄像头，同一台设备无法被两路同时打开" xml:space="preserve"><value>メイン画面と同じカメラは選べません。1 台のデバイスを同時に 2 回開くことはできません</value></data>
-  <data name="本地 USB 摄像头" xml:space="preserve"><value>ローカル USB カメラ</value></data>
   <data name="网络摄像头流" xml:space="preserve"><value>ネットワークカメラ配信</value></data>
-  <data name="副网络摄像头地址" xml:space="preserve"><value>サブネットワークカメラのアドレス</value></data>
-  <data name="来源选网络时填这里的地址，与主画面地址不能相同" xml:space="preserve"><value>ソースがネットワークのときに入力します。メイン画面のアドレスとは別のものにしてください</value></data>
   <data name="副画面大小" xml:space="preserve"><value>サブ画面のサイズ</value></data>
-  <data name="副画面宽度占主画面的比例，越大越占画面" xml:space="preserve"><value>サブ画面の幅がメイン画面に占める割合</value></data>
-  <data name="副画面采集规格" xml:space="preserve"><value>サブ画面の取り込み解像度</value></data>
-  <data name="面单特写是静物，720P 就够；两路同时采集时规格越低越稳" xml:space="preserve"><value>伝票の接写は静止画なので 720P で十分です。同時に 2 路取り込む場合は解像度を下げるほど安定します</value></data>
-  <data name="副画面帧率" xml:space="preserve"><value>サブ画面のフレームレート</value></data>
-  <data name="面单放好后不动，10 帧足够识别与取证" xml:space="preserve"><value>伝票を置いたら動かないため、10fps で認識と証跡に十分です</value></data>
-  <data name="副画面取景大小" xml:space="preserve"><value>サブ画面の切り出しサイズ</value></data>
-  <data name="按副画面短边取一块居中方形，这块既是要显示的画面，也是识别范围" xml:space="preserve"><value>サブ画面の短辺から中央の正方形を切り出します。これが表示される映像であり、認識範囲でもあります</value></data>
-  <data name="取景水平位置" xml:space="preserve"><value>切り出しの水平位置</value></data>
-  <data name="0 靠左、1 靠右，默认居中" xml:space="preserve"><value>0 が左端、1 が右端、既定は中央です</value></data>
-  <data name="取景垂直位置" xml:space="preserve"><value>切り出しの垂直位置</value></data>
-  <data name="0 靠上、1 靠下，默认居中" xml:space="preserve"><value>0 が上端、1 が下端、既定は中央です</value></data>
-  <data name="允许放大副画面" xml:space="preserve"><value>サブ画面の拡大を許可</value></data>
-  <data name="关闭时副画面不会超过摄像头本身的分辨率；放大只会更糊，不会多出细节" xml:space="preserve"><value>オフの場合、サブ画面はカメラ自体の解像度を超えません。拡大してもぼやけるだけで情報は増えません</value></data>
   <data name="摄像头画面方向" xml:space="preserve"><value>カメラ映像の向き</value></data>
-  <data name="摄像头横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转" xml:space="preserve"><value>カメラを横置き・縦置き・逆さまにしたときは 90° 刻みで調整します。プレビュー・認識・録画が一緒に回転します</value></data>
-  <data name="副画面方向" xml:space="preserve"><value>サブ画面の向き</value></data>
   <data name="副摄像头" xml:space="preserve"><value>サブカメラ</value></data>
-  <data name="拍面单的摄像头，画面叠在主画面右下角" xml:space="preserve"><value>伝票を写すカメラ。映像はメイン画面の右下に重ねて表示されます</value></data>
   <data name="无" xml:space="preserve"><value>なし</value></data>
-  <data name="本地摄像头" xml:space="preserve"><value>ローカルカメラ</value></data>
   <data name="网络摄像头" xml:space="preserve"><value>ネットワークカメラ</value></data>
   <data name="画中画大小" xml:space="preserve"><value>ピクチャーインピクチャーの大きさ</value></data>
-  <data name="副画面占主画面的宽度比例" xml:space="preserve"><value>サブ画面の幅がメイン画面に占める割合</value></data>
-  <data name="副画面规格" xml:space="preserve"><value>サブ画面の解像度</value></data>
-  <data name="面单是静物，720P 够用" xml:space="preserve"><value>伝票は静止しているため 720P で十分です</value></data>
-  <data name="横装或竖装时按 90° 一档调整" xml:space="preserve"><value>横置き・縦置きの場合は 90° 刻みで調整します</value></data>
   <data name="例如 rtsp://账号:密码@192.168.1.64:554/stream" xml:space="preserve"><value>例：rtsp://ユーザー:パスワード@192.168.1.64:554/stream</value></data>
   <data name="按住拖动可调整副画面大小" xml:space="preserve"><value>ドラッグでサブ画面の大きさを変更できます</value></data>
-  <data name="面单摄像头横装或竖装时按 90° 一档调整，副画面与识别同步旋转" xml:space="preserve"><value>伝票カメラを横置き・縦置きにしたときは 90° 刻みで調整します。サブ画面と認識が一緒に回転します</value></data>
-  <data name="正装（0°）" xml:space="preserve"><value>正位置（0°）</value></data>
-  <data name="顺时针 90°" xml:space="preserve"><value>時計回り 90°</value></data>
-  <data name="倒装（180°）" xml:space="preserve"><value>逆さま（180°）</value></data>
-  <data name="顺时针 270°" xml:space="preserve"><value>時計回り 270°</value></data>
-  <data name="5 帧/秒" xml:space="preserve"><value>5 fps</value></data>
-  <data name="10 帧/秒" xml:space="preserve"><value>10 fps</value></data>
-  <data name="15 帧/秒" xml:space="preserve"><value>15 fps</value></data>
-  <data name="30 帧/秒" xml:space="preserve"><value>30 fps</value></data>
   <data name="按住拖动可调整副画面位置" xml:space="preserve"><value>ドラッグしてサブ画面の位置を調整できます</value></data>
-  <data name="自动识别面单用哪一路" xml:space="preserve"><value>伝票の自動認識に使う映像</value></data>
-  <data name="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面" xml:space="preserve"><value>サブ画面を伝票に向けている場合はサブ画面で認識できます。サブ画面に映像がないときはメイン画面に戻ります</value></data>
   <data name="主画面" xml:space="preserve"><value>メイン画面</value></data>
   <data name="副画面" xml:space="preserve"><value>サブ画面</value></data>
 <data name="这一路不接就选“无”" xml:space="preserve"><value>この系統を使わないときは「なし」を選びます</value></data>

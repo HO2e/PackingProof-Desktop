@@ -561,7 +561,6 @@
   <data name="将面单条形码放入框内" xml:space="preserve"><value>Place the shipping-label barcode inside the guide</value></data>
   <data name="主摄像头" xml:space="preserve"><value>Main camera</value></data>
   <data name="画面旋转" xml:space="preserve"><value>Image rotation</value></data>
-  <data name="副画面旋转" xml:space="preserve"><value>Secondary rotation</value></data>
   <data name="决定录出来的视频方向" xml:space="preserve"><value>Determines the orientation of the recorded video</value></data>
   <data name="决定画中画的方向" xml:space="preserve"><value>Determines the orientation of the picture-in-picture</value></data>
   <data name="不旋转" xml:space="preserve"><value>No rotation</value></data>
@@ -572,8 +571,6 @@
   <data name="帧率" xml:space="preserve"><value>Frame rate</value></data>
   <data name="画面方向" xml:space="preserve"><value>Orientation</value></data>
   <data name="叠加在主画面上的另一路摄像头" xml:space="preserve"><value>Another camera overlaid on the main picture</value></data>
-  <data name="横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转" xml:space="preserve"><value>Adjust in 90° steps when the camera is mounted sideways or upside down; preview, recognition, and recording rotate together</value></data>
-  <data name="副画面分辨率" xml:space="preserve"><value>Secondary resolution</value></data>
   <data name="越高响应越快，普通电脑保持默认即可" xml:space="preserve"><value>Higher is more responsive; keep the default on ordinary PCs</value></data>
   <data name="拖动框调整副摄取景，点完成或按 Esc 退出" xml:space="preserve"><value>Drag the box to set the secondary framing, then click Finish or press Esc to exit</value></data>
   <data name="扫码枪（可选）" xml:space="preserve"><value>Scanner (optional)</value></data>
@@ -1467,54 +1464,15 @@
   <data name="FFmpeg 要求 NVIDIA 驱动版本不低于 {config.EncoderDriverMinimumVersion}" xml:space="preserve"><value>FFmpeg requires NVIDIA driver version {0} or later</value></data>
   <data name="H.264 (兼容性好)" xml:space="preserve"><value>H.264 (best compatibility)</value></data>
   <data name="H.265 / HEVC (体积更小)" xml:space="preserve"><value>H.265 / HEVC (smaller files)</value></data>
-  <data name="副画面（第二路摄像头）" xml:space="preserve"><value>Secondary view (second camera)</value></data>
-  <data name="再选一台摄像头叠在主画面右下角，预览和录像里都有" xml:space="preserve"><value>Pick another camera to overlay in the bottom-right corner; it shows in both preview and recording</value></data>
-  <data name="副画面来源" xml:space="preserve"><value>Secondary view source</value></data>
-  <data name="不能和主画面选同一台摄像头，同一台设备无法被两路同时打开" xml:space="preserve"><value>Cannot be the same camera as the main view; one device cannot be opened twice</value></data>
-  <data name="本地 USB 摄像头" xml:space="preserve"><value>Local USB camera</value></data>
   <data name="网络摄像头流" xml:space="preserve"><value>Network camera stream</value></data>
-  <data name="副网络摄像头地址" xml:space="preserve"><value>Secondary network camera address</value></data>
-  <data name="来源选网络时填这里的地址，与主画面地址不能相同" xml:space="preserve"><value>Fill this in for a network source; it must differ from the main view address</value></data>
   <data name="副画面大小" xml:space="preserve"><value>Secondary view size</value></data>
-  <data name="副画面宽度占主画面的比例，越大越占画面" xml:space="preserve"><value>Width of the secondary view relative to the main view</value></data>
-  <data name="副画面采集规格" xml:space="preserve"><value>Secondary view capture format</value></data>
-  <data name="面单特写是静物，720P 就够；两路同时采集时规格越低越稳" xml:space="preserve"><value>A label close-up is static, so 720P is enough; lower formats keep two simultaneous captures more stable</value></data>
-  <data name="副画面帧率" xml:space="preserve"><value>Secondary view frame rate</value></data>
-  <data name="面单放好后不动，10 帧足够识别与取证" xml:space="preserve"><value>The label stays still, so 10 fps is enough for both recognition and evidence</value></data>
-  <data name="副画面取景大小" xml:space="preserve"><value>Secondary view crop size</value></data>
-  <data name="按副画面短边取一块居中方形，这块既是要显示的画面，也是识别范围" xml:space="preserve"><value>Takes a centered square from the short side of the secondary view; it is both the displayed picture and the recognition area</value></data>
-  <data name="取景水平位置" xml:space="preserve"><value>Crop horizontal position</value></data>
-  <data name="0 靠左、1 靠右，默认居中" xml:space="preserve"><value>0 is left, 1 is right, centered by default</value></data>
-  <data name="取景垂直位置" xml:space="preserve"><value>Crop vertical position</value></data>
-  <data name="0 靠上、1 靠下，默认居中" xml:space="preserve"><value>0 is top, 1 is bottom, centered by default</value></data>
-  <data name="允许放大副画面" xml:space="preserve"><value>Allow enlarging the secondary view</value></data>
-  <data name="关闭时副画面不会超过摄像头本身的分辨率；放大只会更糊，不会多出细节" xml:space="preserve"><value>When off, the secondary view never exceeds the camera's own resolution; enlarging only blurs it and adds no detail</value></data>
-  <data name="摄像头横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转" xml:space="preserve"><value>Adjust in 90-degree steps when the camera is mounted sideways or upside down; preview, recognition and recording rotate together</value></data>
-  <data name="副画面方向" xml:space="preserve"><value>Secondary view orientation</value></data>
   <data name="副摄像头" xml:space="preserve"><value>Secondary camera</value></data>
-  <data name="拍面单的摄像头，画面叠在主画面右下角" xml:space="preserve"><value>Camera aimed at the label; its picture overlays the main view's bottom-right corner</value></data>
   <data name="无" xml:space="preserve"><value>None</value></data>
-  <data name="本地摄像头" xml:space="preserve"><value>Local camera</value></data>
   <data name="网络摄像头" xml:space="preserve"><value>Network camera</value></data>
   <data name="画中画大小" xml:space="preserve"><value>Overlay size</value></data>
-  <data name="副画面占主画面的宽度比例" xml:space="preserve"><value>Width of the secondary view relative to the main view</value></data>
-  <data name="副画面规格" xml:space="preserve"><value>Secondary view format</value></data>
-  <data name="面单是静物，720P 够用" xml:space="preserve"><value>A label is static, so 720P is enough</value></data>
-  <data name="横装或竖装时按 90° 一档调整" xml:space="preserve"><value>Adjust in 90-degree steps when mounted sideways</value></data>
   <data name="例如 rtsp://账号:密码@192.168.1.64:554/stream" xml:space="preserve"><value>For example rtsp://user:password@192.168.1.64:554/stream</value></data>
   <data name="按住拖动可调整副画面大小" xml:space="preserve"><value>Drag to resize the secondary view</value></data>
-  <data name="面单摄像头横装或竖装时按 90° 一档调整，副画面与识别同步旋转" xml:space="preserve"><value>Adjust in 90-degree steps when the label camera is mounted sideways; the secondary view and recognition rotate together</value></data>
-  <data name="正装（0°）" xml:space="preserve"><value>Upright (0°)</value></data>
-  <data name="顺时针 90°" xml:space="preserve"><value>90° clockwise</value></data>
-  <data name="倒装（180°）" xml:space="preserve"><value>Upside down (180°)</value></data>
-  <data name="顺时针 270°" xml:space="preserve"><value>270° clockwise</value></data>
-  <data name="5 帧/秒" xml:space="preserve"><value>5 fps</value></data>
-  <data name="10 帧/秒" xml:space="preserve"><value>10 fps</value></data>
-  <data name="15 帧/秒" xml:space="preserve"><value>15 fps</value></data>
-  <data name="30 帧/秒" xml:space="preserve"><value>30 fps</value></data>
   <data name="按住拖动可调整副画面位置" xml:space="preserve"><value>Drag to move the secondary view</value></data>
-  <data name="自动识别面单用哪一路" xml:space="preserve"><value>Which view auto-detects labels</value></data>
-  <data name="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面" xml:space="preserve"><value>Switch to the secondary view when it is aimed at the label; falls back to the main view when it has no picture</value></data>
   <data name="主画面" xml:space="preserve"><value>Main view</value></data>
   <data name="副画面" xml:space="preserve"><value>Secondary view</value></data>
 <data name="这一路不接就选“无”" xml:space="preserve"><value>Choose "None" to leave this overlay unused</value></data>
