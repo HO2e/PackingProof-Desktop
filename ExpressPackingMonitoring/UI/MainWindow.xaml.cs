@@ -292,12 +292,20 @@ namespace ExpressPackingMonitoring.UI
                             }));
                         }
                     };
-                    // 窗口/视频区域大小变化时重新计算边框位置
+                    // 窗口/视频区域大小变化时重新计算边框位置。
+                    //
+                    // 只盯 VideoImage 不够：画面按 Uniform 摆放，在有黑边的那一侧拖动窗口时
+                    // 画面本身尺寸不变（黑边变宽而已），SizeChanged 不会触发，框就会停在旧位置。
+                    // 所以预览容器的大小变化也要盯。
                     VideoImage.SizeChanged += (_, __) =>
                     {
                         UpdateCameraOverlays(vm);
                         ReportPreviewDisplayWidth();
                     };
+                    if (VideoImage.Parent is FrameworkElement previewHost)
+                    {
+                        previewHost.SizeChanged += (_, __) => UpdateCameraOverlays(vm);
+                    }
                     ReportPreviewDisplayWidth();
                 }
 
@@ -440,14 +448,28 @@ namespace ExpressPackingMonitoring.UI
             // 只裁框体本身，别裁到四角把手和拖动命中层（它们要留在框外一点）。
             CameraBarcodeGuideBox.Clip = BuildGuideClip(guideRect, ResolveOverlayOccluders(vm, actualW, actualH));
 
-            // 小锁与提示是独立的一层（铺满整块预览、在最顶层）：锚在取景框内侧左上角。
-            // 这里刻意不去量面板宽度再居中 —— 宽度一旦量成 0，面板就会被推到框外很远。
+            // 小锁与提示是独立的一层（铺满整块预览、在最顶层）：居中放在取景框顶部内侧，
+            // 再整体夹进预览范围内 —— 框很窄、或者贴着预览边缘时也不会被预览边界裁掉。
             // 坐标同样要先从"画面坐标系"换算到提示层的坐标系（两者原点不重合）。
             Point hintOriginInLayer = VideoImage.TranslatePoint(new Point(0, 0), CameraBarcodeGuideHintLayer);
-            // 宿主跟取景框一样宽、顶到框的顶部，面板在宿主里居中 —— 回到原来居中的观感，
-            // 又不用量面板宽度；框再窄也只是面板左右探出去一点，不会被挤变形。
-            CameraBarcodeGuideHintHost.Width = guideRect.Width;
-            Canvas.SetLeft(CameraBarcodeGuideHintHost, hintOriginInLayer.X + guideRect.X);
+            double hostWidth = Math.Max(guideRect.Width, 1);
+            double panelWidth = CameraBarcodeGuideHintPanel.ActualWidth > 0
+                ? CameraBarcodeGuideHintPanel.ActualWidth
+                : CameraBarcodeGuideHintPanel.DesiredSize.Width;
+            if (panelWidth <= 0)
+                panelWidth = hostWidth;
+
+            double panelLeft = hintOriginInLayer.X + guideRect.X + ((guideRect.Width - panelWidth) / 2);
+            double layerWidth = CameraBarcodeGuideHintLayer.ActualWidth;
+            if (layerWidth > 0)
+            {
+                double maxLeft = Math.Max(hintOriginInLayer.X, layerWidth - panelWidth - 2);
+                panelLeft = Math.Min(Math.Max(panelLeft, hintOriginInLayer.X + 2), maxLeft);
+            }
+
+            // 宿主与取景框同宽、面板在宿主里居中：面板左边界 = 宿主左边界 + (宿主宽 - 面板宽)/2
+            CameraBarcodeGuideHintHost.Width = hostWidth;
+            Canvas.SetLeft(CameraBarcodeGuideHintHost, panelLeft - ((hostWidth - panelWidth) / 2));
             Canvas.SetTop(CameraBarcodeGuideHintHost, hintOriginInLayer.Y + guideRect.Y + 10);
             Logging.RuntimeLog.Info(
                 "OverlayUi",
@@ -456,7 +478,8 @@ namespace ExpressPackingMonitoring.UI
                     + $"preview={actualW:F0}x{actualH:F0} "
                     + $"host={guideHost.ActualWidth:F0}x{guideHost.ActualHeight:F0} "
                     + $"videoInHost=({videoOriginInHost.X:F0},{videoOriginInHost.Y:F0}) "
-                    + $"videoInHint=({hintOriginInLayer.X:F0},{hintOriginInLayer.Y:F0})");
+                    + $"videoInHint=({hintOriginInLayer.X:F0},{hintOriginInLayer.Y:F0}) "
+                    + $"hintHost={CameraBarcodeGuideHintHost.Width:F0} panel={panelWidth:F0} layerW={CameraBarcodeGuideHintLayer.ActualWidth:F0}");
         }
 
         /// <summary>
