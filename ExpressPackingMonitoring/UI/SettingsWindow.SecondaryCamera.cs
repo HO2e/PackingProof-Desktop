@@ -25,12 +25,26 @@ namespace ExpressPackingMonitoring.UI
         private bool _syncingCameraChoices;
         private List<CameraDeviceChoice>? _allCameraChoices;
 
-        /// <summary>摄像头完整清单（含主摄清单末尾的"网络摄像头（手动地址）"伪项），只抓一次。</summary>
-        private List<CameraDeviceChoice> AllCameraChoices =>
-            _allCameraChoices ??= (CameraComboBox?.ItemsSource as System.Collections.IEnumerable)?
-                .OfType<CameraInfo>()
-                .Select(ToChoice)
-                .ToList() ?? new List<CameraDeviceChoice>();
+        /// <summary>
+        /// 摄像头完整清单（含主摄清单末尾的"网络摄像头（手动地址）"伪项）。
+        ///
+        /// 注意：主摄的设备清单是**异步**填进下拉的，第一次读到时很可能还是空的；
+        /// 所以只缓存"非空"的结果，读到空时不能缓存，否则副摄下拉会一直是空的。
+        /// </summary>
+        private List<CameraDeviceChoice> AllCameraChoices
+        {
+            get
+            {
+                List<CameraDeviceChoice> current = (CameraComboBox?.ItemsSource as System.Collections.IEnumerable)?
+                    .OfType<CameraInfo>()
+                    .Select(ToChoice)
+                    .ToList() ?? new List<CameraDeviceChoice>();
+                if (current.Count > 0)
+                    _allCameraChoices = current;
+
+                return _allCameraChoices ?? current;
+            }
+        }
 
         private static CameraDeviceChoice ToChoice(CameraInfo camera) =>
             new(
