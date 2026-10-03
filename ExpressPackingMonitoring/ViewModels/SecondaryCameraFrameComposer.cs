@@ -58,7 +58,10 @@ namespace ExpressPackingMonitoring.ViewModels
 
             var targetRect = new Rect(rect.X, rect.Y, rect.Width, rect.Height);
             using var region = new Mat(frame, targetRect);
-            bgr.CopyTo(region);
+            // 圆角裁剪：四个角保留主画面自己的内容，不能把小窗的方角贴上去。
+            int cornerRadius = ResolveCornerRadius(rect.Width, rect.Height);
+            using Mat roundedMask = BuildRoundedMask(rect.Width, rect.Height, cornerRadius);
+            bgr.CopyTo(region, roundedMask);
 
             // 边框画在画面内侧，不会越出主帧边界；圆角与识别框对应，不要生硬的方角。
             var borderRect = new Rect(rect.X + 1, rect.Y + 1, rect.Width - 2, rect.Height - 2);
@@ -67,13 +70,36 @@ namespace ExpressPackingMonitoring.ViewModels
                 borderRect,
                 new Scalar(255, 255, 255),
                 BorderThickness,
-                ResolveCornerRadius(borderRect.Width, borderRect.Height));
+                cornerRadius);
             return true;
         }
 
         /// <summary>圆角半径：按小窗短边取比例，保证和识别框的圆角观感一致，不随分辨率跑偏。</summary>
         private static int ResolveCornerRadius(int width, int height) =>
             Math.Clamp((int)Math.Round(Math.Min(width, height) * 0.02), 4, 48);
+
+        /// <summary>
+        /// 圆角矩形蒙版：中间两个十字交叠的矩形加四个实心圆，合成一块圆角形状。
+        /// 用来把小窗内容按圆角贴进目标区域，四角留出主画面原本的内容。
+        /// </summary>
+        private static Mat BuildRoundedMask(int width, int height, int radius)
+        {
+            var mask = new Mat(height, width, MatType.CV_8UC1, Scalar.Black);
+            int r = Math.Min(radius, Math.Min(width, height) / 2);
+            if (r <= 0)
+            {
+                mask.SetTo(Scalar.White);
+                return mask;
+            }
+
+            Cv2.Rectangle(mask, new Rect(r, 0, width - (2 * r), height), Scalar.White, -1, LineTypes.AntiAlias);
+            Cv2.Rectangle(mask, new Rect(0, r, width, height - (2 * r)), Scalar.White, -1, LineTypes.AntiAlias);
+            Cv2.Circle(mask, new Point(r, r), r, Scalar.White, -1, LineTypes.AntiAlias);
+            Cv2.Circle(mask, new Point(width - r, r), r, Scalar.White, -1, LineTypes.AntiAlias);
+            Cv2.Circle(mask, new Point(r, height - r), r, Scalar.White, -1, LineTypes.AntiAlias);
+            Cv2.Circle(mask, new Point(width - r, height - r), r, Scalar.White, -1, LineTypes.AntiAlias);
+            return mask;
+        }
 
         /// <summary>
         /// 画一圈圆角边框：OpenCV 没有现成的圆角矩形，用四段直边加四个 90° 圆弧拼出来。

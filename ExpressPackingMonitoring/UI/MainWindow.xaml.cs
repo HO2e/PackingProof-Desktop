@@ -264,7 +264,12 @@ namespace ExpressPackingMonitoring.UI
                             || args.PropertyName == nameof(MainViewModel.HasSecondaryCameraFrame))
                         {
                             // 开关副画面、或副路刚出第一帧时，拖动框要立刻摆好。
-                            Dispatcher.BeginInvoke(new Action(() => UpdateSecondaryOverlayThumb(vm)));
+                            // 识别框贴到画中画上时，框和小锁提示也要跟着挪。
+                            Dispatcher.BeginInvoke(new Action(() =>
+                            {
+                                UpdateSecondaryOverlayThumb(vm);
+                                UpdateCameraBarcodeGuide(vm);
+                            }));
                         }
                         else if (args.PropertyName == nameof(MainViewModel.SecondaryOverlayPlacementVersion))
                         {
@@ -586,6 +591,62 @@ namespace ExpressPackingMonitoring.UI
             CameraBarcodeGuide.RenderTransform = new TranslateTransform(
                 guideRect.X - (actualW - guideRect.Width) / 2.0,
                 guideRect.Y - (actualH - guideRect.Height) / 2.0);
+            // 画中画在主摄识别框之上：被小窗盖住的那段框线要真的被遮掉，不能透出来。
+            CameraBarcodeGuide.Clip = BuildGuideClip(guideRect, ResolveSecondaryOverlayOccluder(vm, actualW, actualH));
+
+            // 小锁与提示是独立的一层（在画中画之上），用与识别框完全相同的摆法：
+            // 同样大小的居中层 + 同一套平移，面板停在框的顶部中点，不依赖测量时机。
+            CameraBarcodeGuideHintLayer.Width = guideRect.Width;
+            CameraBarcodeGuideHintLayer.Height = guideRect.Height;
+            CameraBarcodeGuideHintLayer.RenderTransform = new TranslateTransform(
+                guideRect.X - (actualW - guideRect.Width) / 2.0,
+                guideRect.Y - (actualH - guideRect.Height) / 2.0);
+        }
+
+        /// <summary>
+        /// 画中画在预览里的矩形；只有"识别框画在主画面上"时才需要拿它来挖洞。
+        /// 编辑副摄时预览里没有画中画；识别来源是副摄时框本身就贴在画中画上，不能再挖掉。
+        /// </summary>
+        private Rect? ResolveSecondaryOverlayOccluder(MainViewModel vm, double actualW, double actualH)
+        {
+            if (vm.IsEditingSecondaryCameraPreview || vm.ShouldUseSecondaryCameraForBarcode)
+                return null;
+            if (!vm.IsSecondaryCameraOverlayVisible
+                || vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
+            {
+                return null;
+            }
+            if (!vm.TryResolveSecondaryOverlayRect(frame.PixelWidth, frame.PixelHeight, out SecondaryCameraOverlayRect overlay))
+                return null;
+
+            Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(
+                frame.PixelWidth,
+                frame.PixelHeight,
+                actualW,
+                actualH);
+            if (videoRect.IsEmpty || videoRect.Width <= 0)
+                return null;
+
+            double scale = videoRect.Width / frame.PixelWidth;
+            return new Rect(
+                videoRect.X + (overlay.X * scale),
+                videoRect.Y + (overlay.Y * scale),
+                overlay.Width * scale,
+                overlay.Height * scale);
+        }
+
+        /// <summary>把识别框裁成"框减掉画中画"的形状；没有遮挡时返回 null（不裁剪）。</summary>
+        private static Geometry? BuildGuideClip(Rect guideRect, Rect? occluder)
+        {
+            if (occluder is not { } pip || pip.Width <= 0 || pip.Height <= 0)
+                return null;
+
+            // 外扩 2px：框线是 3px 描边，正好压在矩形边界上，不外扩会被裁掉一圈。
+            var box = new RectangleGeometry(
+                new Rect(-2, -2, guideRect.Width + 4, guideRect.Height + 4));
+            var hole = new RectangleGeometry(
+                new Rect(pip.X - guideRect.X, pip.Y - guideRect.Y, pip.Width, pip.Height));
+            return new CombinedGeometry(GeometryCombineMode.Exclude, box, hole);
         }
 
         /// <summary>

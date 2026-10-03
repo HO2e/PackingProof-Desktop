@@ -57,24 +57,36 @@ public sealed class SecondaryCameraFrameComposerTests
     [Fact]
     public void OverlayBorderIsRounded()
     {
-        using var main = new Mat(400, 640, MatType.CV_8UC3, new Scalar(0, 0, 0));
-        using var secondary = new Mat(200, 300, MatType.CV_8UC3, new Scalar(0, 0, 0));
+        using var main = new Mat(800, 1280, MatType.CV_8UC3, new Scalar(0, 0, 0));
+        // 小窗用纯白，方便区分"贴上去的内容"和"被圆角裁掉后露出的主画面"
+        using var secondary = new Mat(400, 600, MatType.CV_8UC3, new Scalar(255, 255, 255));
 
         Assert.True(SecondaryCameraFrameComposer.TryCompose(main, secondary, widthRatio: 0.5, margin: 16));
 
         SecondaryCameraOverlayRect rect = SecondaryCameraOverlayPolicy
-            .Resolve(640, 400, 300, 200, widthRatio: 0.5, margin: 16)!.Value;
+            .Resolve(1280, 800, 600, 400, widthRatio: 0.5, margin: 16)!.Value;
 
-        // 边框画在小窗内侧 1px 处：顶边中段必须是白的
+        // 顶边中段：小窗内容 + 内侧边框，必须是白的
         int middleX = rect.X + (rect.Width / 2);
         Vec3b edge = main.At<Vec3b>(rect.Y + 1, middleX);
         Assert.True(edge.Item0 > 200 && edge.Item1 > 200 && edge.Item2 > 200, "小窗边框没有画出来");
 
-        // 圆角处：小窗矩形最外侧的直角位置不能是白边
-        Vec3b corner = main.At<Vec3b>(rect.Y + 1, rect.X + 1);
-        Assert.False(
-            corner.Item0 > 200 && corner.Item1 > 200 && corner.Item2 > 200,
-            "小窗边框还是方角，没有圆角");
+        // 四个角必须按圆角裁掉，露出主画面原本的内容，而不是小窗的方角。
+        // 半径只有几像素，取角上 3x3 小片看均值：整块都贴上的话均值会接近 255。
+        foreach ((int x, int y) in new[]
+                 {
+                     (rect.X, rect.Y),
+                     (rect.X + rect.Width - 3, rect.Y),
+                     (rect.X, rect.Y + rect.Height - 3),
+                     (rect.X + rect.Width - 3, rect.Y + rect.Height - 3)
+                 })
+        {
+            using var patch = new Mat(main, new Rect(x, y, 3, 3));
+            double mean = Cv2.Mean(patch).Val0;
+            Assert.True(
+                mean < 200,
+                $"小窗 {(x - rect.X)},{y - rect.Y} 这个角没有按圆角裁掉（均值 {mean:F0}）");
+        }
     }
 
     /// <summary>灰度副画面（某些后端/网络流会给单通道）必须能合成，而不是抛异常。</summary>
