@@ -29,7 +29,6 @@ using System.Collections.ObjectModel;
 namespace ExpressPackingMonitoring.UI
 {
     public class CameraInfo { public int Index { get; set; } public string Name { get; set; } public string Moniker { get; set; } public override string ToString() => Name; }
-    public class ResOption { public string Name { get; set; } public int Width { get; set; } public int Height { get; set; } public override string ToString() => Name; }
     public class MicInfo
     {
         public string Name { get; set; }
@@ -497,7 +496,7 @@ namespace ExpressPackingMonitoring.UI
             {
                 var cams = new List<CameraInfo>();
                 var micList = new List<MicInfo>();
-                var resList = new List<ResOption>();
+                var resList = new List<CameraResolutionOption>();
                 var fpsList = new List<int>();
 
                 try
@@ -527,25 +526,11 @@ namespace ExpressPackingMonitoring.UI
 
                     if (targetIndex != -1)
                     {
-                        var device = new VideoCaptureDevice(videoDevices[targetIndex].MonikerString);
-                        resList = device.VideoCapabilities
-                            .Select(c => new { c.FrameSize.Width, c.FrameSize.Height })
-                            .Distinct()
-                            .OrderByDescending(r => r.Width * r.Height)
-                            .Select(r => new ResOption
-                            {
-                                Name = $"{r.Width}x{r.Height}{GetResLabel(r.Width, r.Height)}",
-                                Width = r.Width,
-                                Height = r.Height
-                            })
-                            .ToList();
-
-                        fpsList = device.VideoCapabilities
-                            .Select(c => c.AverageFrameRate)
-                            .Where(f => f > 0)
-                            .Distinct()
-                            .OrderBy(f => f)
-                            .ToList();
+                        // 与副摄（以及以后的第三、第四路）共用同一套档位枚举
+                        CameraFormatOptions formats = CameraFormatCatalog.Enumerate(
+                            videoDevices[targetIndex].MonikerString);
+                        resList = formats.Resolutions.ToList();
+                        fpsList = formats.FpsValues.ToList();
                     }
                 }
                 catch { }
@@ -592,13 +577,7 @@ namespace ExpressPackingMonitoring.UI
             var resolutions = result.Resolutions;
             if (resolutions.Count == 0)
             {
-                resolutions = new List<ResOption>
-                {
-                    new ResOption { Name = "720P - 省空间", Width = 1280, Height = 720 },
-                    new ResOption { Name = "1080P - 高清", Width = 1920, Height = 1080 },
-                    new ResOption { Name = "2K - 超清", Width = 2560, Height = 1440 },
-                    new ResOption { Name = "4K - 极清", Width = 3840, Height = 2160 }
-                };
+                resolutions = CameraFormatOptions.DefaultResolutions.ToList();
             }
             ResComboBox.ItemsSource = resolutions;
             var resMatch = resolutions.FirstOrDefault(r => r.Width == config.FrameWidth && r.Height == config.FrameHeight);
@@ -625,34 +604,21 @@ namespace ExpressPackingMonitoring.UI
         {
             var result = await RunOnStaThread(() =>
             {
-                var resList = new List<ResOption>();
-                var fpsList = new List<int>();
+                List<CameraResolutionOption> resList = [];
+                List<int> fpsList = [];
                 IReadOnlyList<NativeCameraMode> nativeModes = [];
                 try
                 {
                     var videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
                     if (cameraIndex >= 0 && cameraIndex < videoDevices.Count)
                     {
-                        var device = new VideoCaptureDevice(videoDevices[cameraIndex].MonikerString);
-                        nativeModes = RecordingProfileDetector.GetNativeModes(device.VideoCapabilities);
-                        resList = device.VideoCapabilities
-                            .Select(c => new { c.FrameSize.Width, c.FrameSize.Height })
-                            .Distinct()
-                            .OrderByDescending(r => r.Width * r.Height)
-                            .Select(r => new ResOption
-                            {
-                                Name = $"{r.Width}x{r.Height}{GetResLabel(r.Width, r.Height)}",
-                                Width = r.Width,
-                                Height = r.Height
-                            })
-                            .ToList();
-
-                        fpsList = device.VideoCapabilities
-                            .Select(c => c.AverageFrameRate)
-                            .Where(f => f > 0)
-                            .Distinct()
-                            .OrderBy(f => f)
-                            .ToList();
+                        // 与副摄（以及以后的第三、第四路）共用同一套档位枚举
+                        VideoCapabilities[] capabilities = CameraFormatCatalog.ReadCapabilities(
+                            videoDevices[cameraIndex].MonikerString);
+                        CameraFormatOptions formats = CameraFormatCatalog.FromCapabilities(capabilities);
+                        resList = formats.Resolutions.ToList();
+                        fpsList = formats.FpsValues.ToList();
+                        nativeModes = RecordingProfileDetector.GetNativeModes(capabilities);
                     }
                 }
                 catch { }
@@ -669,15 +635,7 @@ namespace ExpressPackingMonitoring.UI
 
             var resolutions = result.Resolutions;
             if (resolutions.Count == 0)
-            {
-                resolutions = new List<ResOption>
-                {
-                    new ResOption { Name = "720P - 省空间", Width = 1280, Height = 720 },
-                    new ResOption { Name = "1080P - 高清", Width = 1920, Height = 1080 },
-                    new ResOption { Name = "2K - 超清", Width = 2560, Height = 1440 },
-                    new ResOption { Name = "4K - 极清", Width = 3840, Height = 2160 }
-                };
-            }
+                resolutions = CameraFormatOptions.DefaultResolutions.ToList();
             ResComboBox.ItemsSource = resolutions;
             var resMatch = resolutions.FirstOrDefault(r => r.Width == currentWidth && r.Height == currentHeight);
             ResComboBox.SelectedItem = resMatch ?? resolutions.FirstOrDefault();
@@ -691,15 +649,6 @@ namespace ExpressPackingMonitoring.UI
             FpsComboBox.ItemsSource = fpsCbiList;
             var fpsMatch = fpsCbiList.FirstOrDefault(i => (int)i.Tag == currentFps);
             FpsComboBox.SelectedItem = fpsMatch ?? fpsCbiList.FirstOrDefault();
-        }
-
-        private static string GetResLabel(int w, int h)
-        {
-            if (w == 1280 && h == 720) return " (720P)";
-            if (w == 1920 && h == 1080) return " (1080P)";
-            if (w == 2560 && h == 1440) return " (2K)";
-            if (w == 3840 && h == 2160) return " (4K)";
-            return "";
         }
 
         private async void CameraComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1851,7 +1800,7 @@ namespace ExpressPackingMonitoring.UI
                     Config.CameraMonikerString = cam.Moniker;
                     Config.CameraIndex = cam.Index;
 
-                    if (ResComboBox.SelectedItem is ResOption selectedRes)
+                    if (ResComboBox.SelectedItem is CameraResolutionOption selectedRes)
                     {
                         Config.FrameWidth = selectedRes.Width;
                         Config.FrameHeight = selectedRes.Height;
@@ -1909,6 +1858,8 @@ namespace ExpressPackingMonitoring.UI
                 Config,
                 _originalDeploymentPreset,
                 DateTime.UtcNow);
+            // 副摄下拉里选的是这台设备实际支持的档位，保存时写回配置（与主摄同一套口径）
+            ApplySecondaryCameraFormatsToConfig();
             AppConfig.NormalizeAfterLoad(Config);
 
             if (Capabilities.CanRecordPcVideo && !ValidateEncoderSelectionBeforeSave())
@@ -2098,7 +2049,7 @@ namespace ExpressPackingMonitoring.UI
 
         private bool ConfirmCachedRecordingProfileRisk()
         {
-            if (ResComboBox.SelectedItem is not ResOption resolution
+            if (ResComboBox.SelectedItem is not CameraResolutionOption resolution
                 || FpsComboBox.SelectedItem is not ComboBoxItem fpsItem
                 || fpsItem.Tag is not int fps)
             {
@@ -2348,7 +2299,7 @@ namespace ExpressPackingMonitoring.UI
 
             int width = Config?.FrameWidth ?? 0;
             int height = Config?.FrameHeight ?? 0;
-            if (ResComboBox?.SelectedItem is ResOption resolution)
+            if (ResComboBox?.SelectedItem is CameraResolutionOption resolution)
             {
                 width = resolution.Width;
                 height = resolution.Height;

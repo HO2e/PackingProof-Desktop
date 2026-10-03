@@ -498,7 +498,10 @@ namespace ExpressPackingMonitoring.ViewModels
                 if (device == null)
                     return false;
 
-                (int width, int height) = AppConfig.ResolveSecondaryFrameSize(config.SecondaryResolutionPreset);
+                (int width, int height) = AppConfig.ResolveSecondaryFrameSize(
+                    config.SecondaryResolutionPreset,
+                    config.SecondaryFrameWidth,
+                    config.SecondaryFrameHeight);
                 int fps = config.SecondaryFrameFps > 0
                     ? config.SecondaryFrameFps
                     : AppConfig.DefaultSecondaryFrameFps;

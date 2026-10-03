@@ -273,6 +273,10 @@ namespace ExpressPackingMonitoring.Config
         // 副画面（第二路摄像头）的采集规格。面单特写是静物，默认 720p@10：
         // 既保证面单清晰，又让两路同时采集的带宽、解码与合成成本都可控。
         public string SecondaryResolutionPreset { get; set; } = DefaultSecondaryResolutionPreset;
+        // 副摄实际采集宽高：设置页像主摄一样枚举这台设备支持的档位后写这里；
+        // 0/0 表示没有枚举过，按上面的预设兜底。
+        public int SecondaryFrameWidth { get; set; }
+        public int SecondaryFrameHeight { get; set; }
         public int SecondaryFrameFps { get; set; } = DefaultSecondaryFrameFps;
         // 副摄识别框：与主摄同一套定义（宽高占画面的比例、偏移按四周留白）。
         // 副画面显示整幅副摄画面，这个框只决定识别哪一块，在预览里直接拖。
@@ -851,6 +855,19 @@ namespace ExpressPackingMonitoring.Config
                 changed = true;
             }
 
+            // 副摄实际采集宽高必须成对有效且在合理范围内；半个尺寸或越界一律清空回落到预设。
+            const int maximumFrameDimension = 7680;
+            if (config.SecondaryFrameWidth < 0
+                || config.SecondaryFrameHeight < 0
+                || config.SecondaryFrameWidth > maximumFrameDimension
+                || config.SecondaryFrameHeight > maximumFrameDimension
+                || (config.SecondaryFrameWidth > 0) != (config.SecondaryFrameHeight > 0))
+            {
+                config.SecondaryFrameWidth = 0;
+                config.SecondaryFrameHeight = 0;
+                changed = true;
+            }
+
             double normalizedSecondaryGuideWidth = NormalizeSecondaryGuideRatio(
                 config.SecondaryBarcodeGuideWidthRatio);
             if (!double.IsFinite(config.SecondaryBarcodeGuideWidthRatio)
@@ -1352,6 +1369,28 @@ namespace ExpressPackingMonitoring.Config
             };
 
         /// <summary>
+        /// 副摄实际采集宽高：优先用设置页从设备枚举出来的档位（与主摄同一套口径），
+        /// 没枚举过（0/0）才回落到预设。两个字段必须成对有效，避免半个尺寸。
+        /// </summary>
+        internal static (int Width, int Height) ResolveSecondaryFrameSize(
+            string? preset,
+            int explicitWidth,
+            int explicitHeight) =>
+            explicitWidth > 0 && explicitHeight > 0
+                ? (explicitWidth, explicitHeight)
+                : ResolveSecondaryFrameSize(preset);
+
+        /// <summary>把实际采集尺寸回填成预设名（兼容旧口径/降级读配置）；非标准尺寸回落到默认预设。</summary>
+        internal static string PresetForSize(int width, int height) =>
+            (width, height) switch
+            {
+                (640, 480) => "480p",
+                (1280, 720) => "720p",
+                (1920, 1080) => "1080p",
+                _ => DefaultSecondaryResolutionPreset,
+            };
+
+        /// <summary>
         /// 副摄来源归一：除"无"以外，其它取值与主摄同口径（网络/本地）。
         /// 写成无法识别的值时回到"无"，绝不因为一个坏值让副摄悄悄开始采集。
         /// </summary>
@@ -1475,6 +1514,8 @@ namespace ExpressPackingMonitoring.Config
                     NormalizeSecondaryResolutionPreset(next.SecondaryResolutionPreset),
                     StringComparison.Ordinal)
                 || current.SecondaryFrameFps != next.SecondaryFrameFps
+                || current.SecondaryFrameWidth != next.SecondaryFrameWidth
+                || current.SecondaryFrameHeight != next.SecondaryFrameHeight
                 || !string.Equals(currentSecondaryKind, nextSecondaryKind, StringComparison.Ordinal)
                 || !string.Equals(currentSecondaryUrl, nextSecondaryUrl, StringComparison.Ordinal)
                 || (currentSecondaryKind == "network"

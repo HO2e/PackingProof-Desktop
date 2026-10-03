@@ -253,7 +253,10 @@ public sealed class SecondaryCameraConfigurationTests
             StringComparison.Ordinal);
         Assert.DoesNotContain("SecondaryCameraCheckBox", settings, StringComparison.Ordinal);
         Assert.Contains("{Binding Config.SecondaryNetworkCameraUrl", settings, StringComparison.Ordinal);
-        Assert.Contains("{Binding Config.SecondaryResolutionPreset", settings, StringComparison.Ordinal);
+        // 副摄规格与主摄共用同一套档位枚举：分辨率/帧率下拉由 CameraFormatCatalog 填，不再是写死的预设
+        Assert.Contains("SecondaryResolutionComboBox", settings, StringComparison.Ordinal);
+        Assert.Contains("SecondaryFpsComboBox", settings, StringComparison.Ordinal);
+        Assert.Contains("SecondaryCameraFormats_Loaded", settings, StringComparison.Ordinal);
     }
 
     /// <summary>第二路独立采集：不能占用主路的帧槽与会话闸门。</summary>

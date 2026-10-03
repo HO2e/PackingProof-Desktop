@@ -1047,6 +1047,12 @@
                                         </ComboBox>
                                     </Grid>
 
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 主摄像头 -->
+                            <Border Style="{StaticResource SectionCardStyle}">
+                                <StackPanel>
                                     <Grid Style="{StaticResource SettingRowStyle}"
                                           Visibility="{Binding Capabilities.CanUseCamera, Converter={StaticResource BoolToVisibility}}">
                                         <Grid.ColumnDefinitions>
@@ -1055,9 +1061,7 @@
                                             <ColumnDefinition Width="260"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="摄像头" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="选择拍摄打包过程的摄像头"
-                                                       Style="{StaticResource FieldHintStyle}"/>
+                                            <TextBlock Text="主摄像头" Style="{StaticResource FieldLabelStyle}"/>
                                         </StackPanel>
                                         <ComboBox x:Name="CameraComboBox"
                                                   Grid.Column="2"
@@ -1077,8 +1081,6 @@
                                         </Grid.RowDefinitions>
                                         <StackPanel Grid.Row="0" Margin="0,0,0,10">
                                             <TextBlock Text="网络摄像头地址" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="支持 RTSP、RTMP、HTTP 视频流，需手动填写地址"
-                                                       Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <Grid Grid.Row="1">
                                             <TextBox x:Name="NetworkCameraUrlTextBox"
@@ -1109,6 +1111,37 @@
                                         </StackPanel>
                                     </Grid>
 
+                                    <Grid Style="{StaticResource SettingRowStyle}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="260"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Text="分辨率" Style="{StaticResource FieldLabelStyle}"/>
+                                        </StackPanel>
+                                        <ComboBox x:Name="ResComboBox"
+                                                  Grid.Column="2"
+                                                  SelectionChanged="VideoFormat_SelectionChanged"
+                                                  DisplayMemberPath="Name"
+                                                  Cursor="Hand"/>
+                                    </Grid>
+
+                                    <Grid Style="{StaticResource SettingRowStyle}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="260"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Text="帧率" Style="{StaticResource FieldLabelStyle}"/>
+                                        </StackPanel>
+                                        <ComboBox x:Name="FpsComboBox" Grid.Column="2"
+                                                  Height="32"
+                                                  SelectionChanged="VideoFormat_SelectionChanged"
+                                                  Cursor="Hand"/>
+                                    </Grid>
+
                                     <Grid Style="{StaticResource SettingRowStyle}"
                                           Visibility="{Binding Capabilities.CanUseCamera, Converter={StaticResource BoolToVisibility}}">
                                         <Grid.ColumnDefinitions>
@@ -1117,9 +1150,7 @@
                                             <ColumnDefinition Width="260"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="摄像头画面方向" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="摄像头横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转"
-                                                       Style="{StaticResource FieldHintStyle}"/>
+                                            <TextBlock Text="画面方向" Style="{StaticResource FieldLabelStyle}"/>
                                         </StackPanel>
                                         <ComboBox x:Name="CameraRotationComboBox"
                                                   Grid.Column="2"
@@ -1132,7 +1163,6 @@
                                             <ComboBoxItem Tag="270" Content="顺时针 270°"/>
                                         </ComboBox>
                                     </Grid>
-
                                 </StackPanel>
                             </Border>
 
@@ -1148,8 +1178,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
                                             <TextBlock Text="副摄像头" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="拍面单的摄像头，画面叠在主画面右下角"
-                                                       Style="{StaticResource FieldHintStyle}"/>
+                                            <TextBlock Text="选择拍面单的摄像头" Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <ComboBox x:Name="SecondaryCameraDeviceComboBox"
                                                   Grid.Column="2"
@@ -1184,17 +1213,28 @@
                                             <ColumnDefinition Width="260"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副画面规格" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="面单是静物，720P 够用" Style="{StaticResource FieldHintStyle}"/>
+                                            <TextBlock Text="副画面分辨率" Style="{StaticResource FieldLabelStyle}"/>
                                         </StackPanel>
-                                        <ComboBox x:Name="SecondaryResolutionPresetComboBox"
+                                        <ComboBox x:Name="SecondaryResolutionComboBox"
                                                   Grid.Column="2"
-                                                  SelectedValuePath="Tag"
-                                                  SelectedValue="{Binding Config.SecondaryResolutionPreset, Mode=TwoWay}">
-                                            <ComboBoxItem Tag="480p" Content="480P（640×480）"/>
-                                            <ComboBoxItem Tag="720p" Content="720P（1280×720）"/>
-                                            <ComboBoxItem Tag="1080p" Content="1080P（1920×1080）"/>
-                                        </ComboBox>
+                                                  DisplayMemberPath="Name"
+                                                  Cursor="Hand"
+                                                  Loaded="SecondaryCameraFormats_Loaded"/>
+                                    </Grid>
+
+                                    <Grid Style="{StaticResource SettingRowStyle}"
+                                          Visibility="{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="260"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Text="副画面帧率" Style="{StaticResource FieldLabelStyle}"/>
+                                        </StackPanel>
+                                        <ComboBox x:Name="SecondaryFpsComboBox"
+                                                  Grid.Column="2"
+                                                  Cursor="Hand"/>
                                     </Grid>
 
                                     <Grid Style="{StaticResource SettingRowStyle}"
@@ -1409,8 +1449,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
                                             <TextBlock Text="识别频率" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="实时识别跟随摄像头帧率，响应最快；普通电脑保持默认即可"
-                                                       Style="{StaticResource FieldHintStyle}"/>
+                                            <TextBlock Text="越高响应越快，普通电脑保持默认即可" Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <ComboBox Grid.Column="2"
                                                   SelectedValue="{Binding Config.CameraBarcodeRecognitionSpeed}"
@@ -2353,41 +2392,6 @@
                                                   Grid.Column="2"
                                                   SelectedValuePath="Value"
                                                   DisplayMemberPath="DisplayName"
-                                                  Cursor="Hand"/>
-                                    </Grid>
-
-                                    <Grid Style="{StaticResource SettingRowStyle}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="分辨率" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="越高越清晰，文件也越大"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <ComboBox x:Name="ResComboBox"
-                                                  Grid.Column="2"
-                                                  SelectionChanged="VideoFormat_SelectionChanged"
-                                                  DisplayMemberPath="Name"
-                                                  Cursor="Hand"/>
-                                    </Grid>
-
-                                    <Grid Style="{StaticResource AdvancedSettingRowStyle}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="画面流畅度" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="越高越流畅，也更占空间"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <ComboBox x:Name="FpsComboBox" Grid.Column="2"
-                                                  Height="32"
-                                                  SelectionChanged="VideoFormat_SelectionChanged"
                                                   Cursor="Hand"/>
                                     </Grid>
 

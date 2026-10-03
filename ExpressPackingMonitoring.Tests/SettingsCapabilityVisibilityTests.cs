@@ -42,7 +42,7 @@ public sealed class SettingsCapabilityVisibilityTests
     }
 
     [Theory]
-    [InlineData("摄像头", "Capabilities.CanUseCamera")]
+    [InlineData("主摄像头", "Capabilities.CanUseCamera")]
     [InlineData("麦克风", "Capabilities.CanRecordAudio")]
     [InlineData("录制声音", "Capabilities.CanRecordAudio")]
     [InlineData("视频编码格式", "Capabilities.CanRecordPcVideo")]
