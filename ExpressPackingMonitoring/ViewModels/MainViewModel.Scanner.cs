@@ -325,11 +325,10 @@ namespace ExpressPackingMonitoring.ViewModels
                     Config.CameraBarcodeRecognitionSpeed,
                     _actualCameraFps),
                 guideGeometryProvider: () =>
-                    // 副画面识别按整帧找条码：取景框比例是为主画面构图调的（比如右上角一小块），
-                    // 原样套到副画面上会整个错位，条码落在框外就永远解不出来。
-                    // 副画面本来就是"面单特写"，整帧解码命中率最高。
+                    // 副画面用副摄自己的取景框：主画面那套比例是按打包台构图调的，
+                    // 原样套过去会错位；副摄的取景框与 PiP 显示的是同一块 ROI，所画即所识别。
                     ShouldUseSecondaryCameraForBarcode
-                        ? new CameraBarcodeGuideGeometry(1.0, 1.0, 0, 0)
+                        ? GetSecondaryCameraGuideGeometry()
                         : new CameraBarcodeGuideGeometry(
                             Config.CameraBarcodeGuideWidthRatio,
                             Config.CameraBarcodeGuideHeightRatio,

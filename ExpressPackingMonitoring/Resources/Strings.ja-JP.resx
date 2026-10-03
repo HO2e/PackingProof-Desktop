@@ -1464,6 +1464,14 @@
   <data name="面单特写是静物，720P 就够；两路同时采集时规格越低越稳" xml:space="preserve"><value>伝票の接写は静止画なので 720P で十分です。同時に 2 路取り込む場合は解像度を下げるほど安定します</value></data>
   <data name="副画面帧率" xml:space="preserve"><value>サブ画面のフレームレート</value></data>
   <data name="面单放好后不动，10 帧足够识别与取证" xml:space="preserve"><value>伝票を置いたら動かないため、10fps で認識と証跡に十分です</value></data>
+  <data name="副画面取景大小" xml:space="preserve"><value>サブ画面の切り出しサイズ</value></data>
+  <data name="按副画面短边取一块居中方形，这块既是要显示的画面，也是识别范围" xml:space="preserve"><value>サブ画面の短辺から中央の正方形を切り出します。これが表示される映像であり、認識範囲でもあります</value></data>
+  <data name="取景水平位置" xml:space="preserve"><value>切り出しの水平位置</value></data>
+  <data name="0 靠左、1 靠右，默认居中" xml:space="preserve"><value>0 が左端、1 が右端、既定は中央です</value></data>
+  <data name="取景垂直位置" xml:space="preserve"><value>切り出しの垂直位置</value></data>
+  <data name="0 靠上、1 靠下，默认居中" xml:space="preserve"><value>0 が上端、1 が下端、既定は中央です</value></data>
+  <data name="允许放大副画面" xml:space="preserve"><value>サブ画面の拡大を許可</value></data>
+  <data name="关闭时副画面不会超过摄像头本身的分辨率；放大只会更糊，不会多出细节" xml:space="preserve"><value>オフの場合、サブ画面はカメラ自体の解像度を超えません。拡大してもぼやけるだけで情報は増えません</value></data>
   <data name="按住拖动可调整副画面位置" xml:space="preserve"><value>ドラッグしてサブ画面の位置を調整できます</value></data>
   <data name="自动识别面单用哪一路" xml:space="preserve"><value>伝票の自動認識に使う映像</value></data>
   <data name="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面" xml:space="preserve"><value>サブ画面を伝票に向けている場合はサブ画面で認識できます。サブ画面に映像がないときはメイン画面に戻ります</value></data>

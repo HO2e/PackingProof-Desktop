@@ -569,25 +569,42 @@ namespace ExpressPackingMonitoring.ViewModels
                     if (Config is not { } config)
                         return;
 
+                    // 先按取景框裁剪：PiP 显示的就是取景框内容，条码识别也用同一块 ROI，
+                    // 做到"看到什么就识别什么"。裁剪是 ROI 视图，不拷贝像素。
+                    SecondaryCameraOverlayRect crop = SecondaryCameraOverlayPolicy.ResolveCropRect(
+                        secondary.Width,
+                        secondary.Height,
+                        config.SecondaryCropSizeRatio,
+                        config.SecondaryCropCenterX,
+                        config.SecondaryCropCenterY);
+                    if (crop.Width <= 0 || crop.Height <= 0)
+                        return;
+
+                    using var cropped = new Mat(
+                        secondary,
+                        new Rect(crop.X, crop.Y, crop.Width, crop.Height));
+
                     // 与下面的合成用同一套输入算一次，用来记录"这一帧把副画面画在哪"；
                     // 界面拖动框据此换算，不再自己另算一份。
                     SecondaryCameraOverlayRect? composedRect = SecondaryCameraOverlayPolicy.Resolve(
                         frame.Width,
                         frame.Height,
-                        secondary.Width,
-                        secondary.Height,
+                        crop.Width,
+                        crop.Height,
                         config.SecondaryCameraOverlayWidthRatio,
                         config.SecondaryCameraOverlayMargin,
                         config.SecondaryCameraOverlayLeftRatio,
-                        config.SecondaryCameraOverlayTopRatio);
+                        config.SecondaryCameraOverlayTopRatio,
+                        config.SecondaryAllowUpscale);
 
                     if (SecondaryCameraFrameComposer.TryCompose(
                             frame,
-                            secondary,
+                            cropped,
                             config.SecondaryCameraOverlayWidthRatio,
                             config.SecondaryCameraOverlayMargin,
                             config.SecondaryCameraOverlayLeftRatio,
-                            config.SecondaryCameraOverlayTopRatio))
+                            config.SecondaryCameraOverlayTopRatio,
+                            config.SecondaryAllowUpscale))
                     {
                         _lastComposedOverlayRect = composedRect;
                         _lastComposedFrameSize = (frame.Width, frame.Height);
@@ -623,6 +640,48 @@ namespace ExpressPackingMonitoring.ViewModels
 
             if (!HasSecondaryCameraFrame)
                 NotifySecondaryCameraFrameAvailable();
+        }
+
+        /// <summary>
+        /// 当前取景框（副画面像素坐标）。副画面没出帧时返回 false。
+        /// 取景框是正方形，边长按副画面短边占比、中心按归一化坐标定位，默认即"短边居中裁剪"。
+        /// </summary>
+        private bool TryResolveSecondaryCropRect(AppConfig config, out SecondaryCameraOverlayRect crop)
+        {
+            crop = default;
+            (int sourceWidth, int sourceHeight) = _secondaryOverlaySourceSize;
+            if (sourceWidth <= 0 || sourceHeight <= 0)
+                return false;
+
+            crop = SecondaryCameraOverlayPolicy.ResolveCropRect(
+                sourceWidth,
+                sourceHeight,
+                config.SecondaryCropSizeRatio,
+                config.SecondaryCropCenterX,
+                config.SecondaryCropCenterY);
+            return crop.Width > 0 && crop.Height > 0;
+        }
+
+        /// <summary>
+        /// 副摄识别用的取景几何：与合成用的是同一块取景框，所以"看到的就是识别的那块"。
+        /// 拿不到副帧尺寸时回退整帧 —— 宁可多解一点，也不能因为尺寸缺失就完全不识别。
+        /// </summary>
+        internal CameraBarcodeGuideGeometry GetSecondaryCameraGuideGeometry()
+        {
+            if (Config is not { } config
+                || !TryResolveSecondaryCropRect(config, out SecondaryCameraOverlayRect crop))
+            {
+                return new CameraBarcodeGuideGeometry(1.0, 1.0, 0, 0);
+            }
+
+            (int sourceWidth, int sourceHeight) = _secondaryOverlaySourceSize;
+            double widthRatio = (double)crop.Width / sourceWidth;
+            double heightRatio = (double)crop.Height / sourceHeight;
+            double marginX = (sourceWidth - crop.Width) / 2.0;
+            double marginY = (sourceHeight - crop.Height) / 2.0;
+            double offsetX = marginX > 0.5 ? (crop.X - marginX) / marginX : 0;
+            double offsetY = marginY > 0.5 ? (crop.Y - marginY) / marginY : 0;
+            return new CameraBarcodeGuideGeometry(widthRatio, heightRatio, offsetX, offsetY);
         }
 
         /// <summary>
@@ -680,19 +739,19 @@ namespace ExpressPackingMonitoring.ViewModels
                 return true;
             }
 
-            (int sourceWidth, int sourceHeight) = _secondaryOverlaySourceSize;
-            if (sourceWidth <= 0 || sourceHeight <= 0)
+            if (!TryResolveSecondaryCropRect(config, out SecondaryCameraOverlayRect crop))
                 return false;
 
             SecondaryCameraOverlayRect? resolved = SecondaryCameraOverlayPolicy.Resolve(
                 frameWidth,
                 frameHeight,
-                sourceWidth,
-                sourceHeight,
+                crop.Width,
+                crop.Height,
                 config.SecondaryCameraOverlayWidthRatio,
                 config.SecondaryCameraOverlayMargin,
                 config.SecondaryCameraOverlayLeftRatio,
-                config.SecondaryCameraOverlayTopRatio);
+                config.SecondaryCameraOverlayTopRatio,
+                config.SecondaryAllowUpscale);
 
             if (resolved is not { } value)
                 return false;

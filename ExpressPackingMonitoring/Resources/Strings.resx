@@ -1464,6 +1464,14 @@
   <data name="面单特写是静物，720P 就够；两路同时采集时规格越低越稳" xml:space="preserve"><value>A label close-up is static, so 720P is enough; lower formats keep two simultaneous captures more stable</value></data>
   <data name="副画面帧率" xml:space="preserve"><value>Secondary view frame rate</value></data>
   <data name="面单放好后不动，10 帧足够识别与取证" xml:space="preserve"><value>The label stays still, so 10 fps is enough for both recognition and evidence</value></data>
+  <data name="副画面取景大小" xml:space="preserve"><value>Secondary view crop size</value></data>
+  <data name="按副画面短边取一块居中方形，这块既是要显示的画面，也是识别范围" xml:space="preserve"><value>Takes a centered square from the short side of the secondary view; it is both the displayed picture and the recognition area</value></data>
+  <data name="取景水平位置" xml:space="preserve"><value>Crop horizontal position</value></data>
+  <data name="0 靠左、1 靠右，默认居中" xml:space="preserve"><value>0 is left, 1 is right, centered by default</value></data>
+  <data name="取景垂直位置" xml:space="preserve"><value>Crop vertical position</value></data>
+  <data name="0 靠上、1 靠下，默认居中" xml:space="preserve"><value>0 is top, 1 is bottom, centered by default</value></data>
+  <data name="允许放大副画面" xml:space="preserve"><value>Allow enlarging the secondary view</value></data>
+  <data name="关闭时副画面不会超过摄像头本身的分辨率；放大只会更糊，不会多出细节" xml:space="preserve"><value>When off, the secondary view never exceeds the camera's own resolution; enlarging only blurs it and adds no detail</value></data>
   <data name="按住拖动可调整副画面位置" xml:space="preserve"><value>Drag to move the secondary view</value></data>
   <data name="自动识别面单用哪一路" xml:space="preserve"><value>Which view auto-detects labels</value></data>
   <data name="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面" xml:space="preserve"><value>Switch to the secondary view when it is aimed at the label; falls back to the main view when it has no picture</value></data>

@@ -34,6 +34,45 @@ namespace ExpressPackingMonitoring.ViewModels
                 ? Math.Clamp(widthRatio, MinimumWidthRatio, MaximumWidthRatio)
                 : DefaultWidthRatio;
 
+        internal static double NormalizeCropSizeRatio(double sizeRatio) =>
+            double.IsFinite(sizeRatio) && sizeRatio > 0
+                ? Math.Clamp(
+                    sizeRatio,
+                    AppConfig.MinimumSecondaryCropSizeRatio,
+                    AppConfig.MaximumSecondaryCropSizeRatio)
+                : AppConfig.DefaultSecondaryCropSizeRatio;
+
+        /// <summary>
+        /// 副摄取景框：正方形，边长按画面短边乘占比，中心点按归一化坐标定位后夹在画面内。
+        ///
+        /// 默认（占比 1.0、中心 0.5/0.5）就是"按短边居中裁剪"：不管摄像头横装竖装，
+        /// 默认取到的都是一块完整居中、比例稳定的方形画面。这块同时也是识别用的 ROI，
+        /// 所以"看到的"和"识别的"永远一致。
+        /// </summary>
+        internal static SecondaryCameraOverlayRect ResolveCropRect(
+            int frameWidth,
+            int frameHeight,
+            double sizeRatio,
+            double centerX,
+            double centerY)
+        {
+            if (frameWidth <= 0 || frameHeight <= 0)
+                return default;
+
+            int shortSide = Math.Min(frameWidth, frameHeight);
+            int side = (int)Math.Round(shortSide * NormalizeCropSizeRatio(sizeRatio));
+            side = Math.Clamp(side, 32, shortSide);
+
+            double normalizedCenterX = double.IsFinite(centerX) ? Math.Clamp(centerX, 0.0, 1.0) : 0.5;
+            double normalizedCenterY = double.IsFinite(centerY) ? Math.Clamp(centerY, 0.0, 1.0) : 0.5;
+            int centerPx = (int)Math.Round(normalizedCenterX * frameWidth);
+            int centerPy = (int)Math.Round(normalizedCenterY * frameHeight);
+
+            int left = Math.Clamp(centerPx - (side / 2), 0, Math.Max(0, frameWidth - side));
+            int top = Math.Clamp(centerPy - (side / 2), 0, Math.Max(0, frameHeight - side));
+            return new SecondaryCameraOverlayRect(left, top, side, side);
+        }
+
         internal static int NormalizeMargin(int margin) =>
             margin >= 0 ? Math.Min(margin, 200) : DefaultMargin;
 
@@ -49,7 +88,8 @@ namespace ExpressPackingMonitoring.ViewModels
             double widthRatio,
             int margin,
             double leftRatio = AppConfig.UnsetOverlayPosition,
-            double topRatio = AppConfig.UnsetOverlayPosition)
+            double topRatio = AppConfig.UnsetOverlayPosition,
+            bool allowUpscale = true)
         {
             if (frameWidth <= 0 || frameHeight <= 0 || overlaySourceWidth <= 0 || overlaySourceHeight <= 0)
                 return null;
@@ -62,6 +102,11 @@ namespace ExpressPackingMonitoring.ViewModels
 
             int targetWidth = (int)Math.Round(frameWidth * NormalizeWidthRatio(widthRatio));
             targetWidth = Math.Min(targetWidth, availableWidth);
+
+            // 默认不允许把副画面拉得比它自己还大：放大只会更糊，不会多出任何细节。
+            // 用户确实想把面单看大时可以显式打开允许放大，那时才按比例超采样。
+            if (!allowUpscale)
+                targetWidth = Math.Min(targetWidth, overlaySourceWidth);
 
             double aspect = (double)overlaySourceWidth / overlaySourceHeight;
             if (!double.IsFinite(aspect) || aspect <= 0)

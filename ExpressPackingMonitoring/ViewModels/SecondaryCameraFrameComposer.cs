@@ -24,7 +24,8 @@ namespace ExpressPackingMonitoring.ViewModels
             double widthRatio,
             int margin,
             double leftRatio = Config.AppConfig.UnsetOverlayPosition,
-            double topRatio = Config.AppConfig.UnsetOverlayPosition)
+            double topRatio = Config.AppConfig.UnsetOverlayPosition,
+            bool allowUpscale = true)
         {
             if (frame == null || frame.IsDisposed || frame.Empty())
                 return false;
@@ -39,7 +40,8 @@ namespace ExpressPackingMonitoring.ViewModels
                 widthRatio,
                 margin,
                 leftRatio,
-                topRatio);
+                topRatio,
+                allowUpscale);
             if (target is not { } rect)
                 return false;
 

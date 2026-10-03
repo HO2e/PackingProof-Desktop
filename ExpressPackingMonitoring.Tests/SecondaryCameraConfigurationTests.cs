@@ -338,17 +338,23 @@ public sealed class SecondaryCameraConfigurationTests
     }
 
     /// <summary>
-    /// 副画面识别要按整帧找条码，并且跳过运动门控：
-    /// 取景框是为主画面构图调的（可能只框住一小块），套到副画面上会错位；
+    /// 副画面识别要用与 PiP 同一块取景框（所画即所识别），主画面那套比例不能直接套过来；
     /// 面单放好后副画面是静止的，不跳过门控就永远解不出静止条码。
     /// </summary>
     [Fact]
-    public void SecondaryBarcodeRecognitionDecodesWholeFrameAndSkipsMotionGate()
+    public void SecondaryBarcodeRecognitionUsesCropGeometryAndSkipsMotionGate()
     {
         string scanner = ReadProjectFile(Path.Combine("ViewModels", "MainViewModel.Scanner.cs"));
 
-        Assert.Contains("new CameraBarcodeGuideGeometry(1.0, 1.0, 0, 0)", scanner, StringComparison.Ordinal);
+        Assert.Contains("GetSecondaryCameraGuideGeometry()", scanner, StringComparison.Ordinal);
         Assert.Contains("forceDecode: fromSecondaryCamera", scanner, StringComparison.Ordinal);
+
+        string secondary = ReadProjectFile(Path.Combine("ViewModels", "MainViewModel.SecondaryCamera.cs"));
+        Assert.Contains("ResolveCropRect", secondary, StringComparison.Ordinal);
+        Assert.Contains(
+            "new CameraBarcodeGuideGeometry(widthRatio, heightRatio, offsetX, offsetY)",
+            secondary,
+            StringComparison.Ordinal);
 
         string service = ReadProjectFile(Path.Combine("Services", "CameraBarcodeRecognitionService.cs"));
         Assert.Contains("public bool TrySubmitFrame(Mat frame, bool forceDecode = false)", service, StringComparison.Ordinal);
@@ -362,6 +368,18 @@ public sealed class SecondaryCameraConfigurationTests
 
         Assert.Equal(AppConfig.UnsetOverlayPosition, config.SecondaryCameraOverlayLeftRatio);
         Assert.Equal(AppConfig.UnsetOverlayPosition, config.SecondaryCameraOverlayTopRatio);
+    }
+
+    /// <summary>取景框默认就是"短边居中 1:1"，用户不设置也能直接用；默认也不放大副画面。</summary>
+    [Fact]
+    public void SecondaryCropDefaultsToCenteredSquare()
+    {
+        var config = new AppConfig();
+
+        Assert.Equal(AppConfig.DefaultSecondaryCropSizeRatio, config.SecondaryCropSizeRatio);
+        Assert.Equal(0.5, config.SecondaryCropCenterX);
+        Assert.Equal(0.5, config.SecondaryCropCenterY);
+        Assert.False(config.SecondaryAllowUpscale);
     }
 
     /// <summary>

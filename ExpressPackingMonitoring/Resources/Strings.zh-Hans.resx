@@ -1466,6 +1466,14 @@
   <data name="面单特写是静物，720P 就够；两路同时采集时规格越低越稳" xml:space="preserve"><value>面单特写是静物，720P 就够；两路同时采集时规格越低越稳</value></data>
   <data name="副画面帧率" xml:space="preserve"><value>副画面帧率</value></data>
   <data name="面单放好后不动，10 帧足够识别与取证" xml:space="preserve"><value>面单放好后不动，10 帧足够识别与取证</value></data>
+  <data name="副画面取景大小" xml:space="preserve"><value>副画面取景大小</value></data>
+  <data name="按副画面短边取一块居中方形，这块既是要显示的画面，也是识别范围" xml:space="preserve"><value>按副画面短边取一块居中方形，这块既是要显示的画面，也是识别范围</value></data>
+  <data name="取景水平位置" xml:space="preserve"><value>取景水平位置</value></data>
+  <data name="0 靠左、1 靠右，默认居中" xml:space="preserve"><value>0 靠左、1 靠右，默认居中</value></data>
+  <data name="取景垂直位置" xml:space="preserve"><value>取景垂直位置</value></data>
+  <data name="0 靠上、1 靠下，默认居中" xml:space="preserve"><value>0 靠上、1 靠下，默认居中</value></data>
+  <data name="允许放大副画面" xml:space="preserve"><value>允许放大副画面</value></data>
+  <data name="关闭时副画面不会超过摄像头本身的分辨率；放大只会更糊，不会多出细节" xml:space="preserve"><value>关闭时副画面不会超过摄像头本身的分辨率；放大只会更糊，不会多出细节</value></data>
   <data name="按住拖动可调整副画面位置" xml:space="preserve"><value>按住拖动可调整副画面位置</value></data>
   <data name="自动识别面单用哪一路" xml:space="preserve"><value>自动识别面单用哪一路</value></data>
   <data name="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面" xml:space="preserve"><value>副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面</value></data>

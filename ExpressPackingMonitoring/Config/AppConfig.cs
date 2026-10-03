@@ -152,6 +152,11 @@ namespace ExpressPackingMonitoring.Config
         public const int MinimumSecondaryFrameFps = 1;
         public const int MaximumSecondaryFrameFps = 60;
 
+        /// <summary>副摄取景框：正方形，边长占副画面短边的比例。默认取满整块方形。</summary>
+        public const double DefaultSecondaryCropSizeRatio = 1.0;
+        public const double MinimumSecondaryCropSizeRatio = 0.25;
+        public const double MaximumSecondaryCropSizeRatio = 1.0;
+
         /// <summary>副画面宽度占主画面的默认比例</summary>
         public const double DefaultSecondaryOverlayWidthRatio = 0.25;
 
@@ -246,6 +251,13 @@ namespace ExpressPackingMonitoring.Config
         // 既保证面单清晰，又让两路同时采集的带宽、解码与合成成本都可控。
         public string SecondaryResolutionPreset { get; set; } = DefaultSecondaryResolutionPreset;
         public int SecondaryFrameFps { get; set; } = DefaultSecondaryFrameFps;
+        // 副摄取景框：正方形，边长按副画面短边占比，中心点按归一化坐标。
+        // 默认 1.0 + 居中，就是"按短边居中裁剪"；这块同时是识别用的 ROI。
+        public double SecondaryCropSizeRatio { get; set; } = DefaultSecondaryCropSizeRatio;
+        public double SecondaryCropCenterX { get; set; } = 0.5;
+        public double SecondaryCropCenterY { get; set; } = 0.5;
+        // 默认不把副画面放大到超过它自己的分辨率：放大只会更糊。用户显式打开才允许超采样。
+        public bool SecondaryAllowUpscale { get; set; }
         // 副画面宽度占主画面的比例，以及距右下角的留白。
         public double SecondaryCameraOverlayWidthRatio { get; set; } = DefaultSecondaryOverlayWidthRatio;
         public int SecondaryCameraOverlayMargin { get; set; } = DefaultSecondaryOverlayMargin;
@@ -773,6 +785,30 @@ namespace ExpressPackingMonitoring.Config
                 changed = true;
             }
 
+            double normalizedCropSize = NormalizeSecondaryCropSizeRatio(config.SecondaryCropSizeRatio);
+            if (!double.IsFinite(config.SecondaryCropSizeRatio)
+                || Math.Abs(config.SecondaryCropSizeRatio - normalizedCropSize) > 0.001)
+            {
+                config.SecondaryCropSizeRatio = normalizedCropSize;
+                changed = true;
+            }
+
+            double normalizedCropCenterX = NormalizeCropCenter(config.SecondaryCropCenterX);
+            if (!double.IsFinite(config.SecondaryCropCenterX)
+                || Math.Abs(config.SecondaryCropCenterX - normalizedCropCenterX) > 0.001)
+            {
+                config.SecondaryCropCenterX = normalizedCropCenterX;
+                changed = true;
+            }
+
+            double normalizedCropCenterY = NormalizeCropCenter(config.SecondaryCropCenterY);
+            if (!double.IsFinite(config.SecondaryCropCenterY)
+                || Math.Abs(config.SecondaryCropCenterY - normalizedCropCenterY) > 0.001)
+            {
+                config.SecondaryCropCenterY = normalizedCropCenterY;
+                changed = true;
+            }
+
             if (normalizedPreset == DeploymentPresets.RecordingWorkstation
                 && config.BackupConnectionSchemaVersion < CurrentBackupConnectionSchemaVersion)
             {
@@ -1238,6 +1274,16 @@ namespace ExpressPackingMonitoring.Config
                 "1080p" => (1920, 1080),
                 _ => (1280, 720),
             };
+
+        /// <summary>副摄取景框边长占比归一。非法值回到默认（取满整块方形）。</summary>
+        internal static double NormalizeSecondaryCropSizeRatio(double value) =>
+            double.IsFinite(value) && value > 0
+                ? Math.Clamp(value, MinimumSecondaryCropSizeRatio, MaximumSecondaryCropSizeRatio)
+                : DefaultSecondaryCropSizeRatio;
+
+        /// <summary>副摄取景框中心点归一。非法值回到画面中心。</summary>
+        internal static double NormalizeCropCenter(double value) =>
+            double.IsFinite(value) ? Math.Clamp(value, 0.0, 1.0) : 0.5;
 
         internal static string NormalizeCameraSourceKind(string? kind, string? networkCameraUrl)
         {
