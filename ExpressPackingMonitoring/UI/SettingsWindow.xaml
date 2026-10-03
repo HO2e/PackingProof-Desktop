@@ -1117,17 +1117,20 @@
                                             <ColumnDefinition Width="260"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="画面旋转 180°" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="摄像头倒装时开启，预览、识别和录像会同步旋转"
+                                            <TextBlock Text="摄像头画面方向" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="摄像头横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转"
                                                        Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
-                                        <CheckBox x:Name="CameraRotate180CheckBox"
+                                        <ComboBox x:Name="CameraRotationComboBox"
                                                   Grid.Column="2"
-                                                  IsChecked="{Binding Config.CameraRotate180, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  VerticalAlignment="Center"
-                                                  HorizontalAlignment="Left"
-                                                  Style="{StaticResource ToggleSwitchStyle}"
-                                                  AutomationProperties.Name="画面旋转 180 度"/>
+                                                  SelectedValuePath="Tag"
+                                                  SelectedValue="{Binding Config.CameraRotationDegrees, Mode=TwoWay}"
+                                                  AutomationProperties.Name="摄像头画面方向">
+                                            <ComboBoxItem Tag="0" Content="正装（0°）"/>
+                                            <ComboBoxItem Tag="90" Content="顺时针 90°"/>
+                                            <ComboBoxItem Tag="180" Content="倒装（180°）"/>
+                                            <ComboBoxItem Tag="270" Content="顺时针 270°"/>
+                                        </ComboBox>
                                     </Grid>
 
                                     <Grid Style="{StaticResource SettingRowStyle}"
@@ -1359,6 +1362,28 @@
                                             <ComboBoxItem Tag="10" Content="10 帧/秒"/>
                                             <ComboBoxItem Tag="15" Content="15 帧/秒"/>
                                             <ComboBoxItem Tag="30" Content="30 帧/秒"/>
+                                        </ComboBox>
+                                    </Grid>
+
+                                    <Grid Style="{StaticResource SettingRowStyle}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="260"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Text="副画面方向" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="面单摄像头横装或竖装时按 90° 一档调整，副画面与识别同步旋转"
+                                                       Style="{StaticResource FieldHintStyle}"/>
+                                        </StackPanel>
+                                        <ComboBox x:Name="SecondaryCameraRotationComboBox"
+                                                  Grid.Column="2"
+                                                  SelectedValuePath="Tag"
+                                                  SelectedValue="{Binding Config.SecondaryCameraRotationDegrees, Mode=TwoWay}">
+                                            <ComboBoxItem Tag="0" Content="正装（0°）"/>
+                                            <ComboBoxItem Tag="90" Content="顺时针 90°"/>
+                                            <ComboBoxItem Tag="180" Content="倒装（180°）"/>
+                                            <ComboBoxItem Tag="270" Content="顺时针 270°"/>
                                         </ComboBox>
                                     </Grid>
 

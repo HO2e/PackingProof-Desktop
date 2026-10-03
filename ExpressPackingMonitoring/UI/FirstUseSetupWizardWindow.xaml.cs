@@ -467,7 +467,10 @@ public partial class FirstUseSetupWizardWindow : Window
 
         private void RotateCameraButton_Click(object sender, RoutedEventArgs e)
     {
-        _config.CameraRotate180 = !_config.CameraRotate180;
+        // 每点一次顺时针转 90 度：0 → 90 → 180 → 270 → 0。
+        // 摄像头横装、竖装、倒装都能在向导里直接摆正，不必退回设置页。
+        _config.CameraRotationDegrees = CameraFrameOrientation.NormalizeDegrees(
+            _config.CameraRotationDegrees + 90);
         SaveSelectedCameraRotation();
         UpdateRotateCameraButtonText();
     }
@@ -475,9 +478,11 @@ public partial class FirstUseSetupWizardWindow : Window
     private void LoadSelectedCameraRotation()
     {
         string key = GetSelectedCameraConfigKey();
-        _config.CameraRotate180 = !string.IsNullOrWhiteSpace(key)
+        _config.CameraRotationDegrees =
+            !string.IsNullOrWhiteSpace(key)
             && _config.CameraConfigs.TryGetValue(key, out CameraSettings settings)
-            && settings.Rotate180;
+                ? AppConfig.ResolveRotationDegrees(settings.RotationDegrees, settings.Rotate180)
+                : 0;
         UpdateRotateCameraButtonText();
     }
 
@@ -501,7 +506,8 @@ public partial class FirstUseSetupWizardWindow : Window
             _config.CameraConfigs[key] = settings;
         }
 
-        settings.Rotate180 = _config.CameraRotate180;
+        settings.RotationDegrees = _config.CameraRotationDegrees;
+        settings.Rotate180 = _config.CameraRotationDegrees == 180;
     }
 
     private string GetSelectedCameraConfigKey()
@@ -514,7 +520,9 @@ public partial class FirstUseSetupWizardWindow : Window
     private void UpdateRotateCameraButtonText()
     {
         if (RotateCameraButtonText != null)
-            RotateCameraButtonText.Text = _config.CameraRotate180 ? "已旋转 180°" : "旋转 180°";
+            RotateCameraButtonText.Text = _config.CameraRotationDegrees == 0
+                ? "旋转 90°"
+                : $"已旋转 {_config.CameraRotationDegrees}°";
     }
 
     private void CameraRecognitionChoice_Changed(
@@ -888,6 +896,7 @@ public partial class FirstUseSetupWizardWindow : Window
 
     private void NetworkPreviewSource_FrameReady(object sender, NetworkCameraFrameEventArgs e)
     {
+        Mat ownedFrame = e.Frame;
         try
         {
             if (DateTime.UtcNow - _lastPreviewUpdateAt < TimeSpan.FromMilliseconds(100))
@@ -897,9 +906,10 @@ public partial class FirstUseSetupWizardWindow : Window
             }
             _lastPreviewUpdateAt = DateTime.UtcNow;
 
-            using Mat frame = e.Frame;
-            if (_config.CameraRotate180)
-                OpenCvSharp.Cv2.Flip(frame, frame, OpenCvSharp.FlipMode.XY);
+            // 90/270 会返回新的 Mat 并在内部释放旧帧，所以不再用 using 声明；
+            // 由下面的 finally 统一释放"当前这一帧"，旋转前后都只释放一次。
+            Mat frame = CameraFrameOrientation.Apply(e.Frame, _config.CameraRotationDegrees);
+            ownedFrame = frame;
 
             bool recognitionPreview = _isRecognitionPreview;
             if (recognitionPreview)
@@ -942,6 +952,10 @@ public partial class FirstUseSetupWizardWindow : Window
         catch
         {
             e.Frame.Dispose();
+        }
+        finally
+        {
+            ownedFrame.Dispose();
         }
     }
 
@@ -1020,8 +1034,18 @@ public partial class FirstUseSetupWizardWindow : Window
         try
         {
             using var bitmap = (Bitmap)eventArgs.Frame.Clone();
-            if (_config.CameraRotate180)
-                bitmap.RotateFlip(RotateFlipType.Rotate180FlipNone);
+            switch (CameraFrameOrientation.NormalizeDegrees(_config.CameraRotationDegrees))
+            {
+                case 90:
+                    bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                    break;
+                case 180:
+                    bitmap.RotateFlip(RotateFlipType.Rotate180FlipNone);
+                    break;
+                case 270:
+                    bitmap.RotateFlip(RotateFlipType.Rotate270FlipNone);
+                    break;
+            }
             bool recognitionPreview = _isRecognitionPreview;
             if (recognitionPreview)
             {
@@ -1407,7 +1431,8 @@ public partial class FirstUseSetupWizardWindow : Window
                     AudioDeviceName = _config.AudioDeviceName,
                     AudioDeviceMoniker = _config.AudioDeviceMoniker,
                     AudioSyncOffsetMs = _config.AudioSyncOffsetMs,
-                    Rotate180 = _config.CameraRotate180
+                    Rotate180 = _config.CameraRotationDegrees == 180,
+                    RotationDegrees = _config.CameraRotationDegrees
                 };
             }
         }
@@ -1428,7 +1453,8 @@ public partial class FirstUseSetupWizardWindow : Window
                 AudioDeviceName = _config.AudioDeviceName,
                 AudioDeviceMoniker = _config.AudioDeviceMoniker,
                 AudioSyncOffsetMs = _config.AudioSyncOffsetMs,
-                Rotate180 = _config.CameraRotate180
+                Rotate180 = _config.CameraRotationDegrees == 180,
+                RotationDegrees = _config.CameraRotationDegrees
             };
         }
     }

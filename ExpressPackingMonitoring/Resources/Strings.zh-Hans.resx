@@ -915,7 +915,6 @@
   <data name="使用本机录像摄像头扫描手机上的临时连接码" xml:space="preserve"><value>使用本机录像摄像头扫描手机上的临时连接码</value></data>
   <data name="摄像头扫码" xml:space="preserve"><value>摄像头扫码</value></data>
   <data name="旋转 180°" xml:space="preserve"><value>旋转 180°</value></data>
-  <data name="摄像头画面方向" xml:space="preserve"><value>摄像头画面方向</value></data>
   <data name="摄像头倒装时，将预览和录像旋转 180°" xml:space="preserve"><value>摄像头倒装时，将预览和录像旋转 180°</value></data>
   <data name="仅支持 MP4。请先放入录像文件夹；导入后不要自行移动或删除，由程序统一管理" xml:space="preserve"><value>仅支持 MP4。请先放入录像文件夹；导入后不要自行移动或删除，由程序统一管理</value></data>
   <data name="导入发货" xml:space="preserve"><value>导入发货</value></data>
@@ -1474,6 +1473,18 @@
   <data name="0 靠上、1 靠下，默认居中" xml:space="preserve"><value>0 靠上、1 靠下，默认居中</value></data>
   <data name="允许放大副画面" xml:space="preserve"><value>允许放大副画面</value></data>
   <data name="关闭时副画面不会超过摄像头本身的分辨率；放大只会更糊，不会多出细节" xml:space="preserve"><value>关闭时副画面不会超过摄像头本身的分辨率；放大只会更糊，不会多出细节</value></data>
+  <data name="摄像头画面方向" xml:space="preserve"><value>摄像头画面方向</value></data>
+  <data name="摄像头横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转" xml:space="preserve"><value>摄像头横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转</value></data>
+  <data name="副画面方向" xml:space="preserve"><value>副画面方向</value></data>
+  <data name="面单摄像头横装或竖装时按 90° 一档调整，副画面与识别同步旋转" xml:space="preserve"><value>面单摄像头横装或竖装时按 90° 一档调整，副画面与识别同步旋转</value></data>
+  <data name="正装（0°）" xml:space="preserve"><value>正装（0°）</value></data>
+  <data name="顺时针 90°" xml:space="preserve"><value>顺时针 90°</value></data>
+  <data name="倒装（180°）" xml:space="preserve"><value>倒装（180°）</value></data>
+  <data name="顺时针 270°" xml:space="preserve"><value>顺时针 270°</value></data>
+  <data name="5 帧/秒" xml:space="preserve"><value>5 帧/秒</value></data>
+  <data name="10 帧/秒" xml:space="preserve"><value>10 帧/秒</value></data>
+  <data name="15 帧/秒" xml:space="preserve"><value>15 帧/秒</value></data>
+  <data name="30 帧/秒" xml:space="preserve"><value>30 帧/秒</value></data>
   <data name="按住拖动可调整副画面位置" xml:space="preserve"><value>按住拖动可调整副画面位置</value></data>
   <data name="自动识别面单用哪一路" xml:space="preserve"><value>自动识别面单用哪一路</value></data>
   <data name="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面" xml:space="preserve"><value>副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面</value></data>

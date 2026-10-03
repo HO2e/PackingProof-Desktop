@@ -85,6 +85,8 @@ namespace ExpressPackingMonitoring.Config
         public string AudioDeviceMoniker { get; set; } = "";
         public int AudioSyncOffsetMs { get; set; } = 0;
         public bool Rotate180 { get; set; }
+        /// <summary>每台设备记住的旋转角度；-1 表示旧配置里只有 Rotate180 开关。</summary>
+        public int RotationDegrees { get; set; } = AppConfig.UnsetRotationDegrees;
     }
 
     public sealed class RecordingBenchmarkCacheEntry
@@ -156,6 +158,12 @@ namespace ExpressPackingMonitoring.Config
         public const double DefaultSecondaryCropSizeRatio = 1.0;
         public const double MinimumSecondaryCropSizeRatio = 0.25;
         public const double MaximumSecondaryCropSizeRatio = 1.0;
+
+        /// <summary>
+        /// 旋转角度未设置：老配置里只有"旋转 180°"开关，加载时按它推导出实际角度，
+        /// 之后一律以角度字段为准。
+        /// </summary>
+        public const int UnsetRotationDegrees = -1;
 
         /// <summary>副画面宽度占主画面的默认比例</summary>
         public const double DefaultSecondaryOverlayWidthRatio = 0.25;
@@ -232,6 +240,9 @@ namespace ExpressPackingMonitoring.Config
         public string CameraMonikerString { get; set; } = "";
         public int CameraIndex { get; set; } = 0; // 保留作为回退
         public bool CameraRotate180 { get; set; }
+        // 主摄旋转角度（0/90/180/270）。历史字段 CameraRotate180 继续保留：
+        // 加载时按它推导角度，保存时同步写回，降级回旧版本时至少不会把画面转丢。
+        public int CameraRotationDegrees { get; set; } = UnsetRotationDegrees;
         // 摄像头来源："usb"=本地 USB/内置摄像头，"network"=网络摄像头（RTSP/RTMP/HTTP 流）。
         public string CameraSourceKind { get; set; } = "usb";
         public string NetworkCameraUrl { get; set; } = "";
@@ -247,6 +258,8 @@ namespace ExpressPackingMonitoring.Config
         public string SecondaryNetworkCameraUrl { get; set; } = "";
         public string SecondaryNetworkCameraRtspTransport { get; set; } = "tcp";
         public bool SecondaryCameraRotate180 { get; set; }
+        /// <summary>副摄旋转角度（0/90/180/270），与主摄同一套口径。</summary>
+        public int SecondaryCameraRotationDegrees { get; set; } = UnsetRotationDegrees;
         // 副画面（第二路摄像头）的采集规格。面单特写是静物，默认 720p@10：
         // 既保证面单清晰，又让两路同时采集的带宽、解码与合成成本都可控。
         public string SecondaryResolutionPreset { get; set; } = DefaultSecondaryResolutionPreset;
@@ -683,6 +696,23 @@ namespace ExpressPackingMonitoring.Config
                 changed = true;
             }
 
+            int resolvedCameraRotation = ResolveRotationDegrees(
+                config.CameraRotationDegrees,
+                config.CameraRotate180);
+            if (config.CameraRotationDegrees != resolvedCameraRotation)
+            {
+                config.CameraRotationDegrees = resolvedCameraRotation;
+                changed = true;
+            }
+
+            // 旧版本只认 180：同步这个字段，降级回旧版本时至少保留"倒装"这一种常见情况。
+            bool legacyCameraRotate180 = resolvedCameraRotation == 180;
+            if (config.CameraRotate180 != legacyCameraRotate180)
+            {
+                config.CameraRotate180 = legacyCameraRotate180;
+                changed = true;
+            }
+
             // 第二路摄像头与主路同口径归一：来源判定、URL 去空白、传输方式、副画面比例与留白。
             string normalizedSecondaryCameraSourceKind = NormalizeCameraSourceKind(
                 config.SecondaryCameraSourceKind,
@@ -714,6 +744,22 @@ namespace ExpressPackingMonitoring.Config
                     StringComparison.Ordinal))
             {
                 config.SecondaryNetworkCameraRtspTransport = normalizedSecondaryNetworkCameraTransport;
+                changed = true;
+            }
+
+            int resolvedSecondaryRotation = ResolveRotationDegrees(
+                config.SecondaryCameraRotationDegrees,
+                config.SecondaryCameraRotate180);
+            if (config.SecondaryCameraRotationDegrees != resolvedSecondaryRotation)
+            {
+                config.SecondaryCameraRotationDegrees = resolvedSecondaryRotation;
+                changed = true;
+            }
+
+            bool legacySecondaryRotate180 = resolvedSecondaryRotation == 180;
+            if (config.SecondaryCameraRotate180 != legacySecondaryRotate180)
+            {
+                config.SecondaryCameraRotate180 = legacySecondaryRotate180;
                 changed = true;
             }
 
@@ -1285,6 +1331,31 @@ namespace ExpressPackingMonitoring.Config
         internal static double NormalizeCropCenter(double value) =>
             double.IsFinite(value) ? Math.Clamp(value, 0.0, 1.0) : 0.5;
 
+        /// <summary>
+        /// 旋转角度归一：未设置（老配置）时按旧的"旋转 180°"开关推导；
+        /// 其余非法值一律回到不旋转，绝不让一个手改坏的配置把画面转歪。
+        /// </summary>
+        internal static int ResolveRotationDegrees(int degrees, bool legacyRotate180) =>
+            degrees == UnsetRotationDegrees
+                ? (legacyRotate180 ? 180 : 0)
+                : degrees switch
+                {
+                    90 => 90,
+                    180 => 180,
+                    270 => 270,
+                    _ => 0,
+                };
+
+        /// <summary>把某台设备记忆的旋转角度写回运行配置；老配置里只有 180° 开关。</summary>
+        internal static void ApplyRotation(AppConfig config, CameraSettings settings)
+        {
+            ArgumentNullException.ThrowIfNull(config);
+            ArgumentNullException.ThrowIfNull(settings);
+            config.CameraRotationDegrees = ResolveRotationDegrees(
+                settings.RotationDegrees,
+                settings.Rotate180);
+        }
+
         internal static string NormalizeCameraSourceKind(string? kind, string? networkCameraUrl)
         {
             if (string.Equals(kind, "network", StringComparison.OrdinalIgnoreCase))
@@ -1338,7 +1409,8 @@ namespace ExpressPackingMonitoring.Config
                 || current.FrameWidth != next.FrameWidth
                 || current.FrameHeight != next.FrameHeight
                 || current.Fps != next.Fps
-                || current.CameraRotate180 != next.CameraRotate180
+                || ResolveRotationDegrees(current.CameraRotationDegrees, current.CameraRotate180)
+                    != ResolveRotationDegrees(next.CameraRotationDegrees, next.CameraRotate180)
                 || !string.Equals(currentKind, nextKind, StringComparison.Ordinal)
                 || !string.Equals(currentUrl, nextUrl, StringComparison.Ordinal)
                 || (currentKind == "network"
@@ -1350,7 +1422,12 @@ namespace ExpressPackingMonitoring.Config
                     current.SecondaryCameraMonikerString,
                     next.SecondaryCameraMonikerString,
                     StringComparison.Ordinal)
-                || current.SecondaryCameraRotate180 != next.SecondaryCameraRotate180
+                || ResolveRotationDegrees(
+                    current.SecondaryCameraRotationDegrees,
+                    current.SecondaryCameraRotate180)
+                    != ResolveRotationDegrees(
+                        next.SecondaryCameraRotationDegrees,
+                        next.SecondaryCameraRotate180)
                 || !string.Equals(
                     NormalizeSecondaryResolutionPreset(current.SecondaryResolutionPreset),
                     NormalizeSecondaryResolutionPreset(next.SecondaryResolutionPreset),

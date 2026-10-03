@@ -288,7 +288,11 @@ public sealed class DeploymentStartupTests
         Assert.True(injectionStart >= 0, "找不到预录帧注入段");
 
         int rotateIndex = source.IndexOf(
-            "CameraFrameOrientation.Apply(preFrame, Config.CameraRotate180)",
+            "CameraFrameOrientation.Apply(",
+            injectionStart,
+            StringComparison.Ordinal);
+        int rotateDegreesIndex = source.IndexOf(
+            "Config.CameraRotationDegrees",
             injectionStart,
             StringComparison.Ordinal);
         int watermarkIndex = source.IndexOf(
@@ -296,7 +300,8 @@ public sealed class DeploymentStartupTests
             injectionStart,
             StringComparison.Ordinal);
 
-        Assert.True(rotateIndex > 0, "注入预录帧时没有补 180° 旋转");
+        Assert.True(rotateIndex > 0, "注入预录帧时没有补旋转");
+        Assert.True(rotateDegreesIndex > rotateIndex, "预录帧旋转没有使用配置角度");
         Assert.True(watermarkIndex > 0, "找不到预录帧水印调用");
         Assert.True(rotateIndex < watermarkIndex, "预录帧必须先旋转再画水印");
     }

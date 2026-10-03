@@ -733,7 +733,7 @@ namespace ExpressPackingMonitoring.UI
                     Config.AudioDeviceName = settings.AudioDeviceName ?? "";
                     Config.AudioDeviceMoniker = settings.AudioDeviceMoniker ?? "";
                     Config.AudioSyncOffsetMs = settings.AudioSyncOffsetMs;
-                    Config.CameraRotate180 = settings.Rotate180;
+                    AppConfig.ApplyRotation(Config, settings);
 
                     // 切换麦克风 UI 选中项
                     if (MicComboBox.ItemsSource is List<MicInfo> mics)
@@ -764,7 +764,7 @@ namespace ExpressPackingMonitoring.UI
                 Config.AudioDeviceName = networkSettings.AudioDeviceName ?? "";
                 Config.AudioDeviceMoniker = networkSettings.AudioDeviceMoniker ?? "";
                 Config.AudioSyncOffsetMs = networkSettings.AudioSyncOffsetMs;
-                Config.CameraRotate180 = networkSettings.Rotate180;
+                AppConfig.ApplyRotation(Config, networkSettings);
             }
 
             ResComboBox.IsEnabled = false;
@@ -1842,7 +1842,7 @@ namespace ExpressPackingMonitoring.UI
                         AudioDeviceName = Config.AudioDeviceName,
                         AudioDeviceMoniker = Config.AudioDeviceMoniker,
                         AudioSyncOffsetMs = Config.AudioSyncOffsetMs,
-                        Rotate180 = Config.CameraRotate180
+                        RotationDegrees = Config.CameraRotationDegrees
                     };
                 }
                 else
@@ -1873,7 +1873,7 @@ namespace ExpressPackingMonitoring.UI
                             AudioDeviceName = Config.AudioDeviceName,
                             AudioDeviceMoniker = Config.AudioDeviceMoniker,
                             AudioSyncOffsetMs = Config.AudioSyncOffsetMs,
-                            Rotate180 = Config.CameraRotate180
+                            RotationDegrees = Config.CameraRotationDegrees
                         };
                     }
                 }

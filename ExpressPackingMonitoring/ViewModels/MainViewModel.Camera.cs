@@ -487,7 +487,9 @@ namespace ExpressPackingMonitoring.ViewModels
                     Config.Fps = settings.Fps;
                     Config.AudioDeviceName = settings.AudioDeviceName ?? "";
                     Config.AudioSyncOffsetMs = settings.AudioSyncOffsetMs;
-                    Config.CameraRotate180 = settings.Rotate180;
+                    Config.CameraRotationDegrees = AppConfig.ResolveRotationDegrees(
+                        settings.RotationDegrees,
+                        settings.Rotate180);
                 }
 
                 // 先试新采集后端：它直接拿摄像头原生 YUY2/NV12 自己转 BGR，
@@ -560,8 +562,7 @@ namespace ExpressPackingMonitoring.ViewModels
                         }
                     }
                     _videoSource.VideoResolution = best;
-                    _actualCameraWidth = best.FrameSize.Width;
-                    _actualCameraHeight = best.FrameSize.Height;
+                    SetActualCameraSize(best.FrameSize.Width, best.FrameSize.Height);
                     _actualCameraFps = best.AverageFrameRate > 0 ? best.AverageFrameRate : Config.Fps;
                     RuntimeLog.Info(
                         "Camera",
@@ -569,8 +570,7 @@ namespace ExpressPackingMonitoring.ViewModels
                 }
                 else
                 {
-                    _actualCameraWidth = Config.FrameWidth;
-                    _actualCameraHeight = Config.FrameHeight;
+                    SetActualCameraSize(Config.FrameWidth, Config.FrameHeight);
                     _actualCameraFps = Config.Fps > 0 ? Config.Fps : 15;
                 }
                 _videoSource.NewFrame += VideoSource_NewFrame;
@@ -652,8 +652,7 @@ namespace ExpressPackingMonitoring.ViewModels
                 }
 
                 _mfCameraSource = source;
-                _actualCameraWidth = source.ActualWidth;
-                _actualCameraHeight = source.ActualHeight;
+                SetActualCameraSize(source.ActualWidth, source.ActualHeight);
                 _actualCameraFps = source.ActualFps > 0
                     ? (int)Math.Round(source.ActualFps)
                     : (Config.Fps > 0 ? Config.Fps : 15);
@@ -793,8 +792,7 @@ namespace ExpressPackingMonitoring.ViewModels
 
         private void NetworkCameraSource_StreamInfoReady(object sender, NetworkCameraStreamInfoEventArgs e)
         {
-            _actualCameraWidth = e.Width;
-            _actualCameraHeight = e.Height;
+            SetActualCameraSize(e.Width, e.Height);
             _actualCameraFps = e.Fps;
             RuntimeLog.Info("Camera", $"Network camera stream ready {e.Width}x{e.Height}@{e.Fps}");
         }
@@ -1015,7 +1013,9 @@ namespace ExpressPackingMonitoring.ViewModels
             bool published = false;
             try
             {
-                CameraFrameOrientation.Apply(frame, Config.CameraRotate180);
+                // 90/270 会交换宽高：Apply 会返回新的 Mat，必须用返回值。
+                frame = CameraFrameOrientation.Apply(frame, Config.CameraRotationDegrees);
+                SyncActualCameraSizeToFrame(frame);
                 lock (_frameLock)
                 {
                     // 整帧所有权交给处理循环：它取走后自己释放，不再逐帧克隆。

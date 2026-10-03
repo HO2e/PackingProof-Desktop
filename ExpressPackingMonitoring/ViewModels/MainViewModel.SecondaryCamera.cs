@@ -435,8 +435,8 @@ namespace ExpressPackingMonitoring.ViewModels
                     return;
                 }
 
-                if (Config is { SecondaryCameraRotate180: true })
-                    CameraFrameOrientation.Apply(frame, true);
+                if (Config is { } config)
+                    frame = CameraFrameOrientation.Apply(frame, config.SecondaryCameraRotationDegrees);
                 TrySubmitCameraBarcodeFrame(frame, fromSecondaryCamera: true);
                 PublishSecondaryCameraFrame(frame);
             }
@@ -498,8 +498,8 @@ namespace ExpressPackingMonitoring.ViewModels
             try
             {
                 frame = CameraFrameConverter.ConvertToBgrMat(eventArgs.Frame);
-                if (Config is { SecondaryCameraRotate180: true })
-                    CameraFrameOrientation.Apply(frame, true);
+                if (Config is { } config)
+                    frame = CameraFrameOrientation.Apply(frame, config.SecondaryCameraRotationDegrees);
                 // 识别来源选了副画面时，这一帧就是面单识别输入（识别服务内部会自己克隆）。
                 TrySubmitCameraBarcodeFrame(frame, fromSecondaryCamera: true);
                 PublishSecondaryCameraFrame(frame);
@@ -523,8 +523,8 @@ namespace ExpressPackingMonitoring.ViewModels
                     return;
                 }
 
-                if (Config is { SecondaryCameraRotate180: true })
-                    CameraFrameOrientation.Apply(frame, true);
+                if (Config is { } config)
+                    frame = CameraFrameOrientation.Apply(frame, config.SecondaryCameraRotationDegrees);
                 TrySubmitCameraBarcodeFrame(frame, fromSecondaryCamera: true);
                 PublishSecondaryCameraFrame(frame);
             }
