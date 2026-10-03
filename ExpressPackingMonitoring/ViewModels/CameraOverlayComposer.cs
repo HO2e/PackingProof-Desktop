@@ -15,34 +15,28 @@ namespace ExpressPackingMonitoring.ViewModels
         private const int BorderThickness = 2;
 
         /// <summary>
-        /// 叠加成功返回 true。任何一路帧缺失、尺寸非法或放不下都返回 false 且不改动主帧，
-        /// 调用方按"这一帧没有副画面"处理。
+        /// 按给定的落位把副画面贴进主帧，成功返回 true。
+        ///
+        /// 落位由调用方用 <see cref="CameraOverlayLayout.Resolve"/> 算好再传进来：
+        /// 界面上的拖动框、识别框反馈和真正画进帧里的位置必须是**同一个矩形**，
+        /// 所以这里不再自己算一份，免得两边的贴角规则（右下/左下/右上/左上）走岔。
+        /// 任何一路帧缺失、矩形非法或越出主帧都返回 false 且不改动主帧。
         /// </summary>
         internal static bool TryCompose(
             Mat frame,
             Mat secondaryFrame,
-            double widthRatio,
-            int margin,
-            double leftRatio = Config.AppConfig.UnsetOverlayPosition,
-            double topRatio = Config.AppConfig.UnsetOverlayPosition,
-            bool allowUpscale = true)
+            CameraOverlayRect rect)
         {
             if (frame == null || frame.IsDisposed || frame.Empty())
                 return false;
             if (secondaryFrame == null || secondaryFrame.IsDisposed || secondaryFrame.Empty())
                 return false;
-
-            CameraOverlayRect? target = CameraOverlayLayout.Resolve(
-                frame.Width,
-                frame.Height,
-                secondaryFrame.Width,
-                secondaryFrame.Height,
-                widthRatio,
-                margin,
-                leftRatio,
-                topRatio,
-                allowUpscale);
-            if (target is not { } rect)
+            if (rect.Width <= 0
+                || rect.Height <= 0
+                || rect.X < 0
+                || rect.Y < 0
+                || rect.X + rect.Width > frame.Width
+                || rect.Y + rect.Height > frame.Height)
                 return false;
 
             using var scaled = new Mat();

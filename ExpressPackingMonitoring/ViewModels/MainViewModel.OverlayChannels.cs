@@ -793,8 +793,9 @@ namespace ExpressPackingMonitoring.ViewModels
 
                     using var cropped = new Mat(overlay, cropRect);
 
-                    // 与下面的合成用同一套输入算一次，用来记录"这一帧把叠加画面画在哪"；
-                    // 界面拖动框据此换算，不再自己另算一份。
+                    // 先算好"这一帧把叠加画面画在哪"，再把这**同一个矩形**交给合成：
+                    // 画进去的位置和界面拖动框据此换算的位置必须完全一致，
+                    // 两边各算一份就会在贴角规则上走岔（新增的第三、第四路贴上面两角时最明显）。
                     CameraOverlayRect? composedRect = CameraOverlayLayout.Resolve(
                         frame.Width,
                         frame.Height,
@@ -807,14 +808,8 @@ namespace ExpressPackingMonitoring.ViewModels
                         allowUpscale: false,
                         anchor: OverlayAnchorFor(channel));
 
-                    if (CameraOverlayComposer.TryCompose(
-                            frame,
-                            cropped,
-                            channel.Config.OverlayWidthRatio,
-                            channel.Config.OverlayMargin,
-                            channel.Config.OverlayLeftRatio,
-                            channel.Config.OverlayTopRatio,
-                            allowUpscale: false))
+                    if (composedRect is { } targetRect
+                        && CameraOverlayComposer.TryCompose(frame, cropped, targetRect))
                     {
                         bool placementChanged = channel.LastComposedRect != composedRect
                             || channel.LastComposedFrameSize != (frame.Width, frame.Height);

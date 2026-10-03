@@ -19,10 +19,10 @@ public sealed class CameraOverlayComposerTests
         using var main = new Mat(1080, 1920, MatType.CV_8UC3, new Scalar(0, 0, 0));
         using var secondary = new Mat(480, 640, MatType.CV_8UC3, new Scalar(255, 255, 255));
 
-        Assert.True(CameraOverlayComposer.TryCompose(main, secondary, WidthRatio, Margin));
-
         CameraOverlayRect rect = CameraOverlayLayout
             .Resolve(1920, 1080, 640, 480, WidthRatio, Margin)!.Value;
+
+        Assert.True(CameraOverlayComposer.TryCompose(main, secondary, rect));
 
         using var inside = new Mat(main, new Rect(rect.X + 12, rect.Y + 12, 24, 24));
         Assert.True(Cv2.Mean(inside).Val0 > 200, "副画面没有画到右下角");
@@ -42,10 +42,10 @@ public sealed class CameraOverlayComposerTests
         // 4:3 副画面
         using var secondary = new Mat(480, 640, MatType.CV_8UC3, new Scalar(255, 255, 255));
 
-        Assert.True(CameraOverlayComposer.TryCompose(main, secondary, WidthRatio, Margin));
-
         CameraOverlayRect rect = CameraOverlayLayout
             .Resolve(1920, 1080, 640, 480, WidthRatio, Margin)!.Value;
+
+        Assert.True(CameraOverlayComposer.TryCompose(main, secondary, rect));
 
         Assert.Equal(4.0 / 3.0, (double)rect.Width / rect.Height, precision: 2);
     }
@@ -61,10 +61,10 @@ public sealed class CameraOverlayComposerTests
         // 小窗用纯白，方便区分"贴上去的内容"和"被圆角裁掉后露出的主画面"
         using var secondary = new Mat(400, 600, MatType.CV_8UC3, new Scalar(255, 255, 255));
 
-        Assert.True(CameraOverlayComposer.TryCompose(main, secondary, widthRatio: 0.5, margin: 16));
-
         CameraOverlayRect rect = CameraOverlayLayout
             .Resolve(1280, 800, 600, 400, widthRatio: 0.5, margin: 16)!.Value;
+
+        Assert.True(CameraOverlayComposer.TryCompose(main, secondary, rect));
 
         // 顶边中段：小窗内容 + 内侧边框，必须是白的
         int middleX = rect.X + (rect.Width / 2);
@@ -96,7 +96,10 @@ public sealed class CameraOverlayComposerTests
         using var main = new Mat(720, 1280, MatType.CV_8UC3, new Scalar(0, 0, 0));
         using var gray = new Mat(480, 640, MatType.CV_8UC1, new Scalar(255));
 
-        Assert.True(CameraOverlayComposer.TryCompose(main, gray, WidthRatio, Margin));
+        CameraOverlayRect rect = CameraOverlayLayout
+            .Resolve(1280, 720, 640, 480, WidthRatio, Margin)!.Value;
+
+        Assert.True(CameraOverlayComposer.TryCompose(main, gray, rect));
     }
 
     [Fact]
@@ -104,21 +107,49 @@ public sealed class CameraOverlayComposerTests
     {
         using var main = new Mat(1080, 1920, MatType.CV_8UC3, new Scalar(10, 20, 30));
         using var empty = new Mat();
+        var rect = new CameraOverlayRect(100, 100, 320, 240);
 
-        Assert.False(CameraOverlayComposer.TryCompose(main, empty, WidthRatio, Margin));
-        Assert.False(CameraOverlayComposer.TryCompose(empty, main, WidthRatio, Margin));
+        Assert.False(CameraOverlayComposer.TryCompose(main, empty, rect));
+        Assert.False(CameraOverlayComposer.TryCompose(empty, main, rect));
 
         // 主帧仍保持原样（没有副画面没有任何副作用）
         Assert.Equal(10, Cv2.Mean(main).Val0, precision: 3);
     }
 
-    /// <summary>主画面小到放不下副画面时返回 false，不能画出一个越界或 0 宽的矩形。</summary>
+    /// <summary>
+    /// 贴角规则必须作用到真正的合成上：第三路按右上角算出来，就必须画在右上角。
+    /// 合并前这里会画回右下角，界面拖动框按右上摆、画面却在右下，看起来就是"框和画面对不上"。
+    /// </summary>
     [Fact]
-    public void TinyMainFrameIsRejected()
+    public void ComposesOverlayIntoTheAnchoredCorner()
+    {
+        using var main = new Mat(1080, 1920, MatType.CV_8UC3, new Scalar(0, 0, 0));
+        using var secondary = new Mat(480, 640, MatType.CV_8UC3, new Scalar(255, 255, 255));
+
+        CameraOverlayRect rect = CameraOverlayLayout.Resolve(
+            1920, 1080, 640, 480, WidthRatio, Margin,
+            anchor: CameraOverlayAnchor.TopRight)!.Value;
+
+        Assert.True(CameraOverlayComposer.TryCompose(main, secondary, rect));
+
+        using var inside = new Mat(main, new Rect(rect.X + 12, rect.Y + 12, 24, 24));
+        Assert.True(Cv2.Mean(inside).Val0 > 200, "副画面没有画到右上角");
+
+        using var bottomRight = new Mat(main, new Rect(1920 - 60, 1080 - 60, 24, 24));
+        Assert.True(Cv2.Mean(bottomRight).Val0 < 40, "画面仍然画在右下角：贴角规则没有作用到合成上");
+    }
+
+    /// <summary>落位越界或宽高非法时返回 false，不能画出一个越界或 0 宽的矩形。</summary>
+    [Fact]
+    public void InvalidRectIsRejected()
     {
         using var main = new Mat(80, 120, MatType.CV_8UC3, new Scalar(0, 0, 0));
         using var secondary = new Mat(480, 640, MatType.CV_8UC3, new Scalar(255, 255, 255));
 
-        Assert.False(CameraOverlayComposer.TryCompose(main, secondary, WidthRatio, Margin));
+        Assert.False(CameraOverlayComposer.TryCompose(main, secondary, new CameraOverlayRect(0, 0, 0, 0)));
+        Assert.False(CameraOverlayComposer.TryCompose(main, secondary, new CameraOverlayRect(100, 60, 40, 40)));
+
+        // 主帧仍保持原样
+        Assert.Equal(0, Cv2.Mean(main).Val0, precision: 3);
     }
 }

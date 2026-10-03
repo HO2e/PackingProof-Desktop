@@ -96,14 +96,6 @@ public sealed class IriunCameraProbeTests
         // 副画面用竖屏尺寸的纯红色块：贴合"面单摄像头竖装"的常见形态，也能精确断言像素。
         using var secondaryFrame = new Mat(720, 480, MatType.CV_8UC3, new Scalar(0, 0, 255));
 
-        bool composedOk = CameraOverlayComposer.TryCompose(
-            composed,
-            secondaryFrame,
-            widthRatio: 0.4,
-            margin: 16,
-            allowUpscale: false);
-        Assert.True(composedOk, "合成失败");
-
         CameraOverlayRect? overlay = CameraOverlayLayout.Resolve(
             mainFrame.Width,
             mainFrame.Height,
@@ -113,6 +105,9 @@ public sealed class IriunCameraProbeTests
             margin: 16,
             allowUpscale: false);
         Assert.NotNull(overlay);
+
+        bool composedOk = CameraOverlayComposer.TryCompose(composed, secondaryFrame, overlay!.Value);
+        Assert.True(composedOk, "合成失败");
 
         // 小窗之外必须与主摄原帧逐像素一致：一个像素都不许被副画面碰到。
         using Mat outsideMask = new Mat(mainFrame.Size(), MatType.CV_8UC1, Scalar.All(255));
