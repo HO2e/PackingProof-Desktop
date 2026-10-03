@@ -306,8 +306,8 @@ public sealed class CameraChannelConfigurationTests
         Assert.Equal(0, AppConfig.NormalizeBarcodeRecognitionChannel(-1, channels));
         Assert.Equal(0, AppConfig.NormalizeBarcodeRecognitionChannel(0, channels));
         Assert.Equal(1, AppConfig.NormalizeBarcodeRecognitionChannel(1, channels));
-        // 第二路还没接设备也允许先选着：运行时会自动回退主画面，等接上就直接生效
-        Assert.Equal(2, AppConfig.NormalizeBarcodeRecognitionChannel(2, channels));
+        // 第二路已经被设成"无"：不能还把它当识别来源，回到主摄
+        Assert.Equal(0, AppConfig.NormalizeBarcodeRecognitionChannel(2, channels));
         // 超出路数 → 回主摄
         Assert.Equal(0, AppConfig.NormalizeBarcodeRecognitionChannel(9, channels));
     }

@@ -311,12 +311,8 @@ namespace ExpressPackingMonitoring.UI
                 };
                 for (int i = 0; i < config.CameraChannels.Count; i++)
                 {
-                    int number = i + 1;
-                    if (config.CameraChannels[i].IsConfigured
-                        || config.CameraBarcodeRecognitionChannel == number)
-                    {
-                        choices.Add(new BarcodeRecognitionChannelOption(number, $"副摄像头 {number}"));
-                    }
+                    if (config.CameraChannels[i].IsConfigured)
+                        choices.Add(new BarcodeRecognitionChannelOption(i + 1, $"副摄像头 {i + 1}"));
                 }
 
                 return choices;
@@ -575,15 +571,21 @@ namespace ExpressPackingMonitoring.UI
         private void NotifyBarcodeChannelChoices()
         {
             if (Config is { } config
-                && config.CameraBarcodeRecognitionChannel > config.CameraChannels.Count)
+                && !IsBarcodeChannelUsable(config, config.CameraBarcodeRecognitionChannel))
             {
-                // 识别来源指到了不存在的通道（手改配置才会出现）：回到主摄。
+                // 识别来源指到了不存在、或者已经被设成"无"的那一路：回到主摄。
                 config.CameraBarcodeRecognitionChannel = 0;
             }
 
             Raise(nameof(BarcodeRecognitionChannelChoices));
             Raise(nameof(SelectedBarcodeRecognitionChannel));
         }
+
+        /// <summary>识别来源是不是指向一路真的接了设备的通道。</summary>
+        private static bool IsBarcodeChannelUsable(AppConfig config, int channelNumber) =>
+            channelNumber > 0
+            && channelNumber <= config.CameraChannels.Count
+            && config.CameraChannels[channelNumber - 1].IsConfigured;
 
         /// <summary>
         /// 下拉第一次显示时把卡片与档位填好，并盯住主摄下拉：主摄换设备 → 所有下拉都重算。

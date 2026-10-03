@@ -281,6 +281,32 @@ public sealed class CameraChannelChoiceUiTests
         });
     }
 
+    /// <summary>
+    /// 识别来源正选着某一副摄像头时，把这一路设成"无"：下拉里立刻不再有它，
+    /// 识别来源回到主摄像头（不能留着一条选不了、也用不上的来源）。
+    /// </summary>
+    [Fact]
+    public void ClearingTheSelectedOverlayChannel_DropsItFromBarcodeChoices()
+    {
+        RunOnStaThread(() =>
+        {
+            AppConfig config = CreateConfig(mainMoniker: "moniker-a", channelMoniker: "moniker-b");
+            SettingsWindow window = CreateWindow(config);
+            PrepareWindow(window);
+
+            window.SelectedBarcodeRecognitionChannel =
+                window.BarcodeRecognitionChannelChoices.First(option => option.Number == 1);
+            Assert.Equal(1, config.CameraBarcodeRecognitionChannel);
+
+            OverlayChannelCard card = window.OverlayCameraCards[0];
+            card.SelectedDevice = card.DeviceChoices.First(choice => choice.Kind == "none");
+
+            Assert.Equal(0, config.CameraBarcodeRecognitionChannel);
+            Assert.Equal(["主摄像头"], window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
+            Assert.Equal(0, window.SelectedBarcodeRecognitionChannel?.Number);
+        });
+    }
+
     /// <summary>配置里的通道数决定卡片数：两路就是两张卡，界面不写死"副摄"。</summary>
     [Fact]
     public void CardsFollowTheConfiguredChannelCount()
