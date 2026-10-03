@@ -157,6 +157,9 @@ namespace ExpressPackingMonitoring.Config
         public const int MinimumSecondaryFrameFps = 1;
         public const int MaximumSecondaryFrameFps = 60;
 
+        /// <summary>副摄默认旋转角度：副摄（手机/竖装摄像头）常见是竖装，默认转 90° 摆正。</summary>
+        public const int DefaultSecondaryRotationDegrees = 90;
+
         /// <summary>副摄识别框默认尺寸，与主摄同一套口径：占画面宽高的比例，偏移 0 表示居中。</summary>
         public const double DefaultSecondaryGuideRatio = 0.85;
         public const double MinimumSecondaryGuideRatio = 0.1;
@@ -268,8 +271,8 @@ namespace ExpressPackingMonitoring.Config
         public string SecondaryNetworkCameraUrl { get; set; } = "";
         public string SecondaryNetworkCameraRtspTransport { get; set; } = "tcp";
         public bool SecondaryCameraRotate180 { get; set; }
-        /// <summary>副摄旋转角度（0/90/180/270），与主摄同一套口径。</summary>
-        public int SecondaryCameraRotationDegrees { get; set; } = UnsetRotationDegrees;
+        /// <summary>副摄旋转角度（0/90/180/270），与主摄同一套口径。默认 90°（副摄常见竖装）。</summary>
+        public int SecondaryCameraRotationDegrees { get; set; } = DefaultSecondaryRotationDegrees;
         // 副画面（第二路摄像头）的采集规格。面单特写是静物，默认 720p@10：
         // 既保证面单清晰，又让两路同时采集的带宽、解码与合成成本都可控。
         public string SecondaryResolutionPreset { get; set; } = DefaultSecondaryResolutionPreset;
@@ -771,7 +774,7 @@ namespace ExpressPackingMonitoring.Config
                 changed = true;
             }
 
-            int resolvedSecondaryRotation = ResolveRotationDegrees(
+            int resolvedSecondaryRotation = ResolveSecondaryRotationDegrees(
                 config.SecondaryCameraRotationDegrees,
                 config.SecondaryCameraRotate180);
             if (config.SecondaryCameraRotationDegrees != resolvedSecondaryRotation)
@@ -1424,6 +1427,15 @@ namespace ExpressPackingMonitoring.Config
                     _ => 0,
                 };
 
+        /// <summary>
+        /// 副摄旋转角度归一：主摄默认不旋转，副摄（手机/竖装）默认 90°；
+        /// 老配置里只有"旋转 180°"开关时仍然认那个开关。
+        /// </summary>
+        internal static int ResolveSecondaryRotationDegrees(int degrees, bool legacyRotate180) =>
+            degrees == UnsetRotationDegrees
+                ? (legacyRotate180 ? 180 : DefaultSecondaryRotationDegrees)
+                : ResolveRotationDegrees(degrees, legacyRotate180);
+
         /// <summary>把某台设备记忆的旋转角度写回运行配置；老配置里只有 180° 开关。</summary>
         internal static void ApplyRotation(AppConfig config, CameraSettings settings)
         {
@@ -1503,10 +1515,10 @@ namespace ExpressPackingMonitoring.Config
                     current.SecondaryCameraMonikerString,
                     next.SecondaryCameraMonikerString,
                     StringComparison.Ordinal)
-                || ResolveRotationDegrees(
+                || ResolveSecondaryRotationDegrees(
                     current.SecondaryCameraRotationDegrees,
                     current.SecondaryCameraRotate180)
-                    != ResolveRotationDegrees(
+                    != ResolveSecondaryRotationDegrees(
                         next.SecondaryCameraRotationDegrees,
                         next.SecondaryCameraRotate180)
                 || !string.Equals(

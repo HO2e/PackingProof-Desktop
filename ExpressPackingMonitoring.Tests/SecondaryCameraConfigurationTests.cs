@@ -137,9 +137,10 @@ public sealed class SecondaryCameraConfigurationTests
         Assert.True(AppConfig.RequiresCameraRestart(
             current,
             new AppConfig { SecondaryCameraSourceKind = "network", SecondaryNetworkCameraUrl = "rtsp://x/y" }));
+        // 副摄默认已是 90°，这里显式改成 180 才算"旋转变了"
         Assert.True(AppConfig.RequiresCameraRestart(
             current,
-            new AppConfig { SecondaryCameraRotate180 = true }));
+            new AppConfig { SecondaryCameraRotationDegrees = 180 }));
 
         // 与采集无关的字段不能引起重启。
         Assert.False(AppConfig.RequiresCameraRestart(

@@ -58,9 +58,34 @@ namespace ExpressPackingMonitoring.UI
             }
         }
 
-        /// <summary>下拉第一次显示时按当前设备档位填一次（在 XAML 挂 Loaded，避免动冻结文件）。</summary>
-        internal void SecondaryCameraFormats_Loaded(object sender, System.Windows.RoutedEventArgs e) =>
+        /// <summary>
+        /// 下拉第一次显示时按当前设备档位填一次（在 XAML 挂 Loaded，避免动冻结文件）；
+        /// 同时盯住主摄下拉——主摄换了设备，副摄的候选列表要立刻重算。
+        /// </summary>
+        internal void SecondaryCameraFormats_Loaded(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (CameraComboBox != null)
+            {
+                CameraComboBox.SelectionChanged -= MainCameraSelectionChangedForSecondary;
+                CameraComboBox.SelectionChanged += MainCameraSelectionChangedForSecondary;
+            }
+
             LoadSecondaryCameraFormats();
+        }
+
+        /// <summary>
+        /// 主摄换了设备：副摄候选列表重新枚举（同一台设备不能被两路同时打开，
+        /// 主摄刚占用的那台要从副摄列表里去掉、腾出来的那台要重新出现）。
+        /// </summary>
+        private void MainCameraSelectionChangedForSecondary(
+            object sender,
+            System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            _secondaryCameraChoices = null;
+            Raise(nameof(SecondaryCameraChoices));
+            Raise(nameof(SelectedSecondaryCameraChoice));
+            LoadSecondaryCameraFormats();
+        }
 
         /// <summary>选了"无"之外的值就显示其余副摄选项。</summary>
         public bool IsSecondaryCameraConfigured =>
