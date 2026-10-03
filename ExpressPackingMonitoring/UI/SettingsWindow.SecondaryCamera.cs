@@ -122,8 +122,14 @@ namespace ExpressPackingMonitoring.UI
             if (!takenByMain && stillPresent)
                 return;
 
-            SelectedSecondaryCameraChoice = SecondaryCameraChoices
-                .FirstOrDefault(choice => choice.Kind == AppConfig.SecondaryCameraSourceNone);
+            // 注意：这里不能走 SelectedSecondaryCameraChoice 的 setter —— 它带同步守卫，
+            // 而本方法正是在同步过程中调用的，会被守卫直接挡掉（这就是"还能选成同一台"的来源）。
+            config.SecondaryCameraSourceKind = AppConfig.SecondaryCameraSourceNone;
+            config.SecondaryCameraIndex = -1;
+            config.SecondaryCameraMonikerString = "";
+            Raise(nameof(SelectedSecondaryCameraChoice));
+            Raise(nameof(IsSecondaryCameraConfigured));
+            Raise(nameof(IsSecondaryNetworkCameraSelected));
         }
 
         public CameraDeviceChoice? SelectedSecondaryCameraChoice
