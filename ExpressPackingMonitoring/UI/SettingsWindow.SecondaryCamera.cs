@@ -66,9 +66,29 @@ namespace ExpressPackingMonitoring.UI
                 ? config.SecondaryCameraMonikerString
                 : "";
 
-        /// <summary>副摄下拉：完整清单按"排除主摄占用的那台"投影；每次取值都重算，不缓存。</summary>
-        public IReadOnlyList<CameraDeviceChoice> SecondaryCameraChoices =>
-            CameraDeviceSelectionPolicy.Project(AllCameraChoices, SecondaryMoniker, [MainMoniker]);
+        /// <summary>
+        /// 副摄下拉：无 + （完整清单按"排除主摄占用的那台"投影）+ 网络摄像头。
+        /// 主摄那份清单本身没有"无"、也没有副摄的"网络摄像头"入口，这里补齐；
+        /// 每次取值都重算，不缓存过期副本。
+        /// </summary>
+        public IReadOnlyList<CameraDeviceChoice> SecondaryCameraChoices
+        {
+            get
+            {
+                var choices = new List<CameraDeviceChoice>
+                {
+                    new("无", AppConfig.SecondaryCameraSourceNone, "", -1)
+                };
+
+                choices.AddRange(
+                    CameraDeviceSelectionPolicy
+                        .Project(AllCameraChoices, SecondaryMoniker, [MainMoniker])
+                        .Where(choice => choice.Kind != "network"));
+
+                choices.Add(new CameraDeviceChoice("网络摄像头", "network", "", -1));
+                return choices;
+            }
+        }
 
         /// <summary>
         /// 主摄/副摄两个下拉互相排除：任一边换了设备，两边都用新的占用关系重新投影一次。
@@ -113,14 +133,14 @@ namespace ExpressPackingMonitoring.UI
                 return;
             }
 
-            bool takenByMain = string.Equals(
-                config.SecondaryCameraMonikerString,
-                config.CameraMonikerString,
-                StringComparison.Ordinal);
-            bool stillPresent = AllCameraChoices.Any(
-                c => string.Equals(c.Moniker, config.SecondaryCameraMonikerString, StringComparison.Ordinal));
-            if (!takenByMain && stillPresent)
+            // 判断本身也在公共服务里（与主摄共用同一套），这里只负责"不能用就退回无"
+            if (CameraDeviceSelectionPolicy.CanKeepSelection(
+                    config.SecondaryCameraMonikerString,
+                    [config.CameraMonikerString],
+                    AllCameraChoices))
+            {
                 return;
+            }
 
             // 注意：这里不能走 SelectedSecondaryCameraChoice 的 setter —— 它带同步守卫，
             // 而本方法正是在同步过程中调用的，会被守卫直接挡掉（这就是"还能选成同一台"的来源）。

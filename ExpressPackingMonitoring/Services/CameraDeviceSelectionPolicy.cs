@@ -47,4 +47,23 @@ internal static class CameraDeviceSelectionPolicy
 
         return list;
     }
+
+    /// <summary>
+    /// 某一路当前选中的设备还能不能用：被其它路占用了、或设备已经不在清单里，就不能用，
+    /// 调用方应把它退回"无"。
+    /// </summary>
+    internal static bool CanKeepSelection(
+        string? selfMoniker,
+        IEnumerable<string?> otherMonikers,
+        IReadOnlyList<CameraDeviceChoice> allDevices)
+    {
+        if (string.IsNullOrEmpty(selfMoniker))
+            return true;
+
+        if (otherMonikers.Any(m => string.Equals(m, selfMoniker, StringComparison.Ordinal)))
+            return false;
+
+        return allDevices.Any(d =>
+            d.Kind == "usb" && string.Equals(d.Moniker, selfMoniker, StringComparison.Ordinal));
+    }
 }
