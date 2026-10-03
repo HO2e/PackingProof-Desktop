@@ -417,6 +417,24 @@ public sealed class SecondaryCameraConfigurationTests
         Assert.Contains("ClickMode=\"Press\"", xaml, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// 识别来源是副画面时，框只是画中画上的状态反馈，不该出现小锁；
+    /// 只有主摄取景、或副摄取景编辑屏（框能编辑）时才显示锁。
+    /// </summary>
+    [Fact]
+    public void SecondaryGuideHasNoLockWhenRecognitionComesFromSecondary()
+    {
+        string secondary = ReadProjectFile(Path.Combine("ViewModels", "MainViewModel.SecondaryCamera.cs"));
+        Assert.Contains("IsCameraBarcodeGuideLockVisible", secondary, StringComparison.Ordinal);
+        Assert.Contains(
+            "!ShouldUseSecondaryCameraForBarcode || IsEditingSecondaryCameraPreview",
+            secondary,
+            StringComparison.Ordinal);
+
+        string xaml = ReadProjectFile(Path.Combine("UI", "MainWindow.xaml"));
+        Assert.Contains("{Binding IsCameraBarcodeGuideLockVisible}", xaml, StringComparison.Ordinal);
+    }
+
     /// <summary>默认必须是"还没拖动过"，否则首次启动副画面就会跑到左上角。</summary>
     [Fact]
     public void SecondaryOverlayPositionStartsUnset()

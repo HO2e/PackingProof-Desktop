@@ -702,6 +702,10 @@
                                                 <DataTrigger Binding="{Binding IsCameraBarcodeGuideLocked}" Value="False">
                                                     <Setter Property="Background" Value="{StaticResource AccentOrange}"/>
                                                 </DataTrigger>
+                                                <!-- 识别来源是副画面时框只是画中画上的状态反馈，不出现小锁 -->
+                                                <DataTrigger Binding="{Binding IsCameraBarcodeGuideLockVisible}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Button.Style>

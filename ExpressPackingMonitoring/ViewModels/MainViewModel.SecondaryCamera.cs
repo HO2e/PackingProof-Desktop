@@ -77,6 +77,7 @@ namespace ExpressPackingMonitoring.ViewModels
                 if (SetProperty(ref _hasSecondaryCameraFrame, value))
                 {
                     OnPropertyChanged(nameof(IsBarcodeGuideVisible));
+                    OnPropertyChanged(nameof(IsCameraBarcodeGuideLockVisible));
                     OnPropertyChanged(nameof(IsCameraBarcodeGuideEditable));
                 }
             }
@@ -173,6 +174,7 @@ namespace ExpressPackingMonitoring.ViewModels
                 OnPropertyChanged(nameof(IsSecondaryCameraConfigured));
                 OnPropertyChanged(nameof(IsSecondaryCameraOverlayVisible));
                 OnPropertyChanged(nameof(IsBarcodeGuideVisible));
+                OnPropertyChanged(nameof(IsCameraBarcodeGuideLockVisible));
                 OnPropertyChanged(nameof(IsCameraBarcodeGuideEditable));
                 SaveConfig();
                 RestartSecondaryCamera();
@@ -191,6 +193,13 @@ namespace ExpressPackingMonitoring.ViewModels
         /// 这样绿/黄识别状态与提示文字才有地方显示 —— 不能再像之前那样整条反馈都收掉。
         /// </summary>
         public bool IsBarcodeGuideVisible => true;
+
+        /// <summary>
+        /// 框上的小锁只在"这个框能编辑"的时候出现：主摄取景、或副摄取景编辑屏。
+        /// 识别来源是副画面时，框只是画中画上的状态反馈（取景在"点画中画"的编辑屏里改），不显示锁。
+        /// </summary>
+        public bool IsCameraBarcodeGuideLockVisible =>
+            !ShouldUseSecondaryCameraForBarcode || IsEditingSecondaryCameraPreview;
 
 
         /// <summary>
@@ -819,6 +828,7 @@ namespace ExpressPackingMonitoring.ViewModels
                 OnPropertyChanged(nameof(PreviewImageSource));
                 // 框只在识别来源那一路出现：进出编辑态会改变它的显隐。
                 OnPropertyChanged(nameof(IsBarcodeGuideVisible));
+                OnPropertyChanged(nameof(IsCameraBarcodeGuideLockVisible));
                 OnPropertyChanged(nameof(IsCameraBarcodeGuideEditable));
                 // 编辑态的提示文案与识别态不同，进出编辑态要重新取一次。
                 OnPropertyChanged(nameof(CameraBarcodeStatusText));
