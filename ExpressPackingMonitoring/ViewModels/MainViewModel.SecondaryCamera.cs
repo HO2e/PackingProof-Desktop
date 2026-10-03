@@ -943,7 +943,7 @@ namespace ExpressPackingMonitoring.ViewModels
         }
 
         /// <summary>副画面是否正在显示，供主界面的拖动框显隐使用。</summary>
-        internal bool IsSecondaryCameraOverlayVisible => Config is { EnableSecondaryCamera: true };
+        internal bool IsSecondaryCameraOverlayVisible => IsSecondaryCameraComposeEnabled;
 
         /// <summary>
         /// 按当前配置与最新副帧尺寸算出副画面在主帧里的落位。

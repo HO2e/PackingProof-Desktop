@@ -1068,6 +1068,7 @@
                                                   Grid.Column="2"
                                                   SelectedValuePath="Index"
                                                   DisplayMemberPath="Name"
+                                                  Loaded="SecondaryCameraFormats_Loaded"
                                                   SelectedValue="{Binding Config.CameraIndex}"
                                                   SelectionChanged="CameraComboBox_SelectionChanged"/>
                                     </Grid>
@@ -1191,7 +1192,6 @@
                                                   Grid.Column="2"
                                                   ItemsSource="{Binding SecondaryCameraChoices}"
                                                   DisplayMemberPath="Name"
-                                                  Loaded="SecondaryCameraFormats_Loaded"
                                                   SelectedItem="{Binding SelectedSecondaryCameraChoice, Mode=TwoWay}"/>
                                     </Grid>
 

@@ -19,14 +19,46 @@ namespace ExpressPackingMonitoring.UI
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        private List<CameraDeviceChoice>? _secondaryCameraChoices;
-
         /// <summary>
-        /// 副摄下拉列表：与主画面使用同一份 <see cref="CameraDeviceCatalog"/> 构造逻辑，
-        /// 只把主摄已经选走的那台剔除（同一台设备不能被两路同时打开）。
+        /// 副摄下拉列表：**直接复用主摄下拉那份设备清单**（无 + 主摄没占用的那些设备 + 网络摄像头），
+        /// 不再自己枚举一遍设备。主摄一换设备，主摄下拉的选中项变了 → 这里重新算一次即可。
         /// </summary>
         public IReadOnlyList<CameraDeviceChoice> SecondaryCameraChoices =>
-            _secondaryCameraChoices ??= CameraDeviceCatalog.BuildChoices(Config?.CameraMonikerString).ToList();
+            BuildChoicesFromMainCameraList();
+
+        private List<CameraDeviceChoice> BuildChoicesFromMainCameraList()
+        {
+            var choices = new List<CameraDeviceChoice>
+            {
+                new("无", AppConfig.SecondaryCameraSourceNone, "", -1)
+            };
+
+            string mainMoniker = Config?.CameraMonikerString ?? "";
+            if (CameraComboBox?.ItemsSource is System.Collections.IEnumerable items)
+            {
+                foreach (object? item in items)
+                {
+                    if (item is not CameraInfo camera)
+                        continue;
+
+                    // 主摄清单末尾的"网络摄像头（手动地址）"只是主摄的入口，副摄自己带一项，不重复列。
+                    if (string.Equals(camera.Moniker, "network:", StringComparison.Ordinal))
+                        continue;
+
+                    // 主摄已经占用的那台不能再被副摄选（同一台设备不能被两路同时打开）。
+                    if (!string.IsNullOrEmpty(mainMoniker)
+                        && string.Equals(camera.Moniker, mainMoniker, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    choices.Add(new CameraDeviceChoice(camera.Name, "usb", camera.Moniker, camera.Index));
+                }
+            }
+
+            choices.Add(new CameraDeviceChoice("网络摄像头", "network", "", -1));
+            return choices;
+        }
 
         public CameraDeviceChoice? SelectedSecondaryCameraChoice
         {
@@ -81,7 +113,19 @@ namespace ExpressPackingMonitoring.UI
             object sender,
             System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            _secondaryCameraChoices = null;
+            // 主摄占用了副摄当前选的那台设备：副摄自动回到"无"，不允许两路选同一台
+            if (Config is { } config
+                && string.Equals(config.SecondaryCameraSourceKind, "usb", StringComparison.Ordinal)
+                && !string.IsNullOrEmpty(config.SecondaryCameraMonikerString)
+                && string.Equals(
+                    config.SecondaryCameraMonikerString,
+                    config.CameraMonikerString,
+                    StringComparison.Ordinal))
+            {
+                SelectedSecondaryCameraChoice = SecondaryCameraChoices
+                    .FirstOrDefault(choice => choice.Kind == AppConfig.SecondaryCameraSourceNone);
+            }
+
             Raise(nameof(SecondaryCameraChoices));
             Raise(nameof(SelectedSecondaryCameraChoice));
             LoadSecondaryCameraFormats();
