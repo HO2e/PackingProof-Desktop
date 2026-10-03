@@ -434,12 +434,17 @@ namespace ExpressPackingMonitoring.UI
             // 只裁框体本身，别裁到四角把手和拖动命中层（它们要留在框外一点）。
             CameraBarcodeGuideBox.Clip = BuildGuideClip(guideRect, ResolveOverlayOccluders(vm, actualW, actualH));
 
-            // 小锁与提示是独立的一层（铺满整块预览、在最顶层）：面板自己按取景框的位置摆，
-            // 不再挂在"和取景框一样大"的层里 —— 框再小也不会把提示裁掉。
-            CameraBarcodeGuideHintPanel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            double hintWidth = CameraBarcodeGuideHintPanel.DesiredSize.Width;
-            Canvas.SetLeft(CameraBarcodeGuideHintPanel, guideRect.X + ((guideRect.Width - hintWidth) / 2));
-            Canvas.SetTop(CameraBarcodeGuideHintPanel, Math.Max(0, guideRect.Y + 10));
+            // 小锁与提示是独立的一层（铺满整块预览、在最顶层）：直接锚在取景框内侧左上角。
+            // 这里刻意不去量面板宽度再居中 —— 量出来的宽度一旦不对，面板就会被推到框外很远；
+            // 靠左上角定位只跟取景框有关，框再小也不会被挤掉或跑到外面。
+            Canvas.SetLeft(CameraBarcodeGuideHintPanel, guideRect.X + 10);
+            Canvas.SetTop(CameraBarcodeGuideHintPanel, guideRect.Y + 10);
+            Logging.RuntimeLog.Info(
+                "OverlayUi",
+                $"取景框提示定位 guide=({guideRect.X:F0},{guideRect.Y:F0},{guideRect.Width:F0}x{guideRect.Height:F0}) "
+                    + $"video=({videoRect.X:F0},{videoRect.Y:F0},{videoRect.Width:F0}x{videoRect.Height:F0}) "
+                    + $"preview={actualW:F0}x{actualH:F0} "
+                    + $"layer={CameraBarcodeGuideHintLayer.ActualWidth:F0}x{CameraBarcodeGuideHintLayer.ActualHeight:F0}");
         }
 
         /// <summary>
