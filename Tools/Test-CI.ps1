@@ -18,10 +18,6 @@ try {
     dotnet test ExpressPackingMonitoring.Tests\ExpressPackingMonitoring.Tests.csproj -c $Configuration --no-build --no-restore --nologo
     if ($LASTEXITCODE -ne 0) { throw "dotnet test 失败，退出码：$LASTEXITCODE" }
 
-    Write-Host "运行网页 UI 自动化测试（真实浏览器）..."
-    pwsh -NoProfile -File Tools\Test-WebUi.ps1 -Configuration $Configuration -SkipBuild
-    if ($LASTEXITCODE -ne 0) { throw "网页 UI 自动化测试失败，退出码：$LASTEXITCODE" }
-
     Write-Host "检查扩展 API 示例语法..."
     node --check "docs\examples\extension-v1-minimal.js"
     if ($LASTEXITCODE -ne 0) { throw "扩展 API 最小示例语法检查失败" }

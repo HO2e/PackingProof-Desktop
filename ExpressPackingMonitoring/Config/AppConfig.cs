@@ -143,6 +143,42 @@ namespace ExpressPackingMonitoring.Config
         /// <summary>智能特写停留时间的当前默认值（秒）</summary>
         public const double DefaultZoomDurationSeconds = 2.5;
 
+        /// <summary>悬浮小窗的默认宽度，与 FloatingPreviewWindow.xaml 的 Width 保持一致</summary>
+        public const double DefaultFloatingPreviewWidth = 340;
+
+        /// <summary>小窗宽度下限，不能小于 FloatingPreviewWindow.xaml 的 MinWidth</summary>
+        public const double MinimumFloatingPreviewWidth = 260;
+
+        /// <summary>小窗宽度上限，再大就不如直接看主界面了</summary>
+        public const double MaximumFloatingPreviewWidth = 960;
+
+        public const double DefaultFloatingPreviewOpacity = 1.0;
+
+        /// <summary>再淡就看不清画面了，下限留 0.3</summary>
+        public const double MinimumFloatingPreviewOpacity = 0.3;
+
+        public const double MaximumFloatingPreviewOpacity = 1.0;
+
+        /// <summary>副画面宽度占主画面的默认比例</summary>
+        public const double DefaultSecondaryOverlayWidthRatio = 0.25;
+
+        public const double MinimumSecondaryOverlayWidthRatio = 0.1;
+        public const double MaximumSecondaryOverlayWidthRatio = 0.5;
+
+        /// <summary>副画面距主画面右下角的默认留白（像素）</summary>
+        public const int DefaultSecondaryOverlayMargin = 16;
+
+        public const int MaximumSecondaryOverlayMargin = 200;
+
+        /// <summary>副画面位置未自定义的哨兵值：小于 0 一律按右下角自动摆放</summary>
+        public const double UnsetOverlayPosition = -1;
+
+        /// <summary>面单识别用主画面（默认）</summary>
+        public const string CameraBarcodeSourcePrimary = "primary";
+
+        /// <summary>面单识别改用副画面</summary>
+        public const string CameraBarcodeSourceSecondary = "secondary";
+
         /// <summary>历史默认值：老版本写过 3 秒，中间版本写过 1 秒，都会落进用户配置</summary>
         private static readonly double[] LegacyZoomDurationSeconds = [3.0, 1.0];
 
@@ -202,6 +238,28 @@ namespace ExpressPackingMonitoring.Config
         public string CameraSourceKind { get; set; } = "usb";
         public string NetworkCameraUrl { get; set; } = "";
         public string NetworkCameraRtspTransport { get; set; } = "tcp";
+
+        // 第二路摄像头：叠在主画面右下角的副画面，预览与录像共用同一帧，默认关闭。
+        // 必须是**另一台**物理设备：同一台 USB 摄像头被两路同时打开时设备是独占的，
+        // 会有一路拿不到画面甚至被判掉线。
+        public bool EnableSecondaryCamera { get; set; } = false;
+        public string SecondaryCameraSourceKind { get; set; } = "usb";
+        public string SecondaryCameraMonikerString { get; set; } = "";
+        public int SecondaryCameraIndex { get; set; } = 1;
+        public string SecondaryNetworkCameraUrl { get; set; } = "";
+        public string SecondaryNetworkCameraRtspTransport { get; set; } = "tcp";
+        public bool SecondaryCameraRotate180 { get; set; }
+        // 副画面宽度占主画面的比例，以及距右下角的留白。
+        public double SecondaryCameraOverlayWidthRatio { get; set; } = DefaultSecondaryOverlayWidthRatio;
+        public int SecondaryCameraOverlayMargin { get; set; } = DefaultSecondaryOverlayMargin;
+        // 副画面左上角在主画面里的比例位置（0=贴左边/上边）。
+        // 未自定义时是 UnsetOverlayPosition，按右下角自动摆；用户拖动过就记这里。
+        public double SecondaryCameraOverlayLeftRatio { get; set; } = UnsetOverlayPosition;
+        public double SecondaryCameraOverlayTopRatio { get; set; } = UnsetOverlayPosition;
+        // 「摄像头自动识别面单」读哪一路画面："primary"=主画面（默认，行为与从前一致），
+        // "secondary"=改用副画面识别（副画面专门对准面单时的用法）。
+        // 副画面没出帧时会自动回退主画面，避免选了副路又连不上就完全无法识别。
+        public string CameraBarcodeRecognitionSource { get; set; } = CameraBarcodeSourcePrimary;
 
         // 存储不同摄像头的配置：Key 为 MonikerString
         public Dictionary<string, CameraSettings> CameraConfigs { get; set; } = new();
@@ -288,6 +346,10 @@ namespace ExpressPackingMonitoring.Config
         public int AudioSyncOffsetMs { get; set; } = 0;
         // 悬浮小窗上次停靠的角落名，只记角落不记坐标，换分辨率或换显示器也不会跑到屏幕外。
         public string FloatingPreviewCorner { get; set; } = "BottomRight";
+        // 小窗上次被拖动过的宽度（逻辑像素）。高度跟随画面比例自动算，所以只记宽度。
+        public double FloatingPreviewWidth { get; set; } = DefaultFloatingPreviewWidth;
+        // 小窗不透明度。调低后仍能在悬停时临时恢复不透明，方便看清画面。
+        public double FloatingPreviewOpacity { get; set; } = DefaultFloatingPreviewOpacity;
         public double BarcodeCooldownSeconds { get; set; } = 2.0;
         public string GpuEncoder { get; set; } = "auto";
         public string VideoCodec { get; set; } = "h265"; // "h264" or "h265"
@@ -615,6 +677,89 @@ namespace ExpressPackingMonitoring.Config
                 config.NetworkCameraRtspTransport = normalizedNetworkCameraTransport;
                 changed = true;
             }
+
+            // 第二路摄像头与主路同口径归一：来源判定、URL 去空白、传输方式、副画面比例与留白。
+            string normalizedSecondaryCameraSourceKind = NormalizeCameraSourceKind(
+                config.SecondaryCameraSourceKind,
+                config.SecondaryNetworkCameraUrl);
+            if (!string.Equals(
+                    config.SecondaryCameraSourceKind,
+                    normalizedSecondaryCameraSourceKind,
+                    StringComparison.Ordinal))
+            {
+                config.SecondaryCameraSourceKind = normalizedSecondaryCameraSourceKind;
+                changed = true;
+            }
+
+            string normalizedSecondaryNetworkCameraUrl = config.SecondaryNetworkCameraUrl?.Trim() ?? "";
+            if (!string.Equals(
+                    config.SecondaryNetworkCameraUrl,
+                    normalizedSecondaryNetworkCameraUrl,
+                    StringComparison.Ordinal))
+            {
+                config.SecondaryNetworkCameraUrl = normalizedSecondaryNetworkCameraUrl;
+                changed = true;
+            }
+
+            string normalizedSecondaryNetworkCameraTransport =
+                NormalizeNetworkTransport(config.SecondaryNetworkCameraRtspTransport);
+            if (!string.Equals(
+                    config.SecondaryNetworkCameraRtspTransport,
+                    normalizedSecondaryNetworkCameraTransport,
+                    StringComparison.Ordinal))
+            {
+                config.SecondaryNetworkCameraRtspTransport = normalizedSecondaryNetworkCameraTransport;
+                changed = true;
+            }
+
+            double normalizedSecondaryOverlayRatio =
+                double.IsFinite(config.SecondaryCameraOverlayWidthRatio) && config.SecondaryCameraOverlayWidthRatio > 0
+                    ? Math.Clamp(
+                        config.SecondaryCameraOverlayWidthRatio,
+                        MinimumSecondaryOverlayWidthRatio,
+                        MaximumSecondaryOverlayWidthRatio)
+                    : DefaultSecondaryOverlayWidthRatio;
+            if (!double.IsFinite(config.SecondaryCameraOverlayWidthRatio)
+                || Math.Abs(config.SecondaryCameraOverlayWidthRatio - normalizedSecondaryOverlayRatio) > 0.001)
+            {
+                config.SecondaryCameraOverlayWidthRatio = normalizedSecondaryOverlayRatio;
+                changed = true;
+            }
+
+            int normalizedSecondaryOverlayMargin = config.SecondaryCameraOverlayMargin >= 0
+                ? Math.Min(config.SecondaryCameraOverlayMargin, MaximumSecondaryOverlayMargin)
+                : DefaultSecondaryOverlayMargin;
+            if (config.SecondaryCameraOverlayMargin != normalizedSecondaryOverlayMargin)
+            {
+                config.SecondaryCameraOverlayMargin = normalizedSecondaryOverlayMargin;
+                changed = true;
+            }
+
+            // 副画面位置：只有拖动过才是一个 0~1 的比例，其余（含 NaN、负数）都回到"自动右下角"。
+            double normalizedSecondaryOverlayLeft = NormalizeOverlayPosition(config.SecondaryCameraOverlayLeftRatio);
+            if (config.SecondaryCameraOverlayLeftRatio != normalizedSecondaryOverlayLeft)
+            {
+                config.SecondaryCameraOverlayLeftRatio = normalizedSecondaryOverlayLeft;
+                changed = true;
+            }
+
+            double normalizedSecondaryOverlayTop = NormalizeOverlayPosition(config.SecondaryCameraOverlayTopRatio);
+            if (config.SecondaryCameraOverlayTopRatio != normalizedSecondaryOverlayTop)
+            {
+                config.SecondaryCameraOverlayTopRatio = normalizedSecondaryOverlayTop;
+                changed = true;
+            }
+
+            string normalizedBarcodeSource = NormalizeCameraBarcodeSource(config.CameraBarcodeRecognitionSource);
+            if (!string.Equals(
+                    config.CameraBarcodeRecognitionSource,
+                    normalizedBarcodeSource,
+                    StringComparison.Ordinal))
+            {
+                config.CameraBarcodeRecognitionSource = normalizedBarcodeSource;
+                changed = true;
+            }
+
             if (normalizedPreset == DeploymentPresets.RecordingWorkstation
                 && config.BackupConnectionSchemaVersion < CurrentBackupConnectionSchemaVersion)
             {
@@ -1020,6 +1165,29 @@ namespace ExpressPackingMonitoring.Config
                 changed = true;
             }
 
+            double normalizedFloatingWidth = Math.Clamp(
+                config.FloatingPreviewWidth > 0 ? config.FloatingPreviewWidth : DefaultFloatingPreviewWidth,
+                MinimumFloatingPreviewWidth,
+                MaximumFloatingPreviewWidth);
+            // NaN/Infinity 必须显式判定：Math.Abs(NaN - x) > eps 恒为 false，否则非法值会原样留在配置里。
+            if (!double.IsFinite(config.FloatingPreviewWidth)
+                || Math.Abs(config.FloatingPreviewWidth - normalizedFloatingWidth) > 0.5)
+            {
+                config.FloatingPreviewWidth = normalizedFloatingWidth;
+                changed = true;
+            }
+
+            double normalizedFloatingOpacity = Math.Clamp(
+                config.FloatingPreviewOpacity > 0 ? config.FloatingPreviewOpacity : DefaultFloatingPreviewOpacity,
+                MinimumFloatingPreviewOpacity,
+                MaximumFloatingPreviewOpacity);
+            if (!double.IsFinite(config.FloatingPreviewOpacity)
+                || Math.Abs(config.FloatingPreviewOpacity - normalizedFloatingOpacity) > 0.01)
+            {
+                config.FloatingPreviewOpacity = normalizedFloatingOpacity;
+                changed = true;
+            }
+
             return changed;
         }
 
@@ -1041,6 +1209,24 @@ namespace ExpressPackingMonitoring.Config
                 && int.TryParse(name["电脑".Length..], out int number)
                 && number > 0;
         }
+
+        /// <summary>
+        /// 副画面位置归一：拖动过就是一个 0~1 的比例，未拖动/非法值统一回到"自动右下角"。
+        /// 用哨兵而不是 0，是为了让"贴左上角"和"还没动过"区分开。
+        /// </summary>
+        internal static double NormalizeOverlayPosition(double value) =>
+            double.IsFinite(value) && value >= 0
+                ? Math.Clamp(value, 0.0, 1.0)
+                : UnsetOverlayPosition;
+
+        /// <summary>
+        /// 面单识别来源归一：只认 secondary，其余（缺失、拼错、旧配置）一律回到主画面。
+        /// 识别来源是"能不能扫到面单"的关键开关，写错不能变成两边都不识别。
+        /// </summary>
+        internal static string NormalizeCameraBarcodeSource(string? source) =>
+            string.Equals(source, CameraBarcodeSourceSecondary, StringComparison.OrdinalIgnoreCase)
+                ? CameraBarcodeSourceSecondary
+                : CameraBarcodeSourcePrimary;
 
         internal static string NormalizeCameraSourceKind(string? kind, string? networkCameraUrl)
         {
@@ -1079,6 +1265,17 @@ namespace ExpressPackingMonitoring.Config
             string currentTransport = NormalizeNetworkTransport(current.NetworkCameraRtspTransport);
             string nextTransport = NormalizeNetworkTransport(next.NetworkCameraRtspTransport);
 
+            string currentSecondaryKind =
+                NormalizeCameraSourceKind(current.SecondaryCameraSourceKind, current.SecondaryNetworkCameraUrl);
+            string nextSecondaryKind =
+                NormalizeCameraSourceKind(next.SecondaryCameraSourceKind, next.SecondaryNetworkCameraUrl);
+            string currentSecondaryUrl = current.SecondaryNetworkCameraUrl?.Trim() ?? "";
+            string nextSecondaryUrl = next.SecondaryNetworkCameraUrl?.Trim() ?? "";
+            string currentSecondaryTransport =
+                NormalizeNetworkTransport(current.SecondaryNetworkCameraRtspTransport);
+            string nextSecondaryTransport =
+                NormalizeNetworkTransport(next.SecondaryNetworkCameraRtspTransport);
+
             return current.CameraIndex != next.CameraIndex
                 || !string.Equals(current.CameraMonikerString, next.CameraMonikerString, StringComparison.Ordinal)
                 || current.FrameWidth != next.FrameWidth
@@ -1089,7 +1286,19 @@ namespace ExpressPackingMonitoring.Config
                 || !string.Equals(currentUrl, nextUrl, StringComparison.Ordinal)
                 || (currentKind == "network"
                     && nextKind == "network"
-                    && !string.Equals(currentTransport, nextTransport, StringComparison.Ordinal));
+                    && !string.Equals(currentTransport, nextTransport, StringComparison.Ordinal))
+                || current.EnableSecondaryCamera != next.EnableSecondaryCamera
+                || current.SecondaryCameraIndex != next.SecondaryCameraIndex
+                || !string.Equals(
+                    current.SecondaryCameraMonikerString,
+                    next.SecondaryCameraMonikerString,
+                    StringComparison.Ordinal)
+                || current.SecondaryCameraRotate180 != next.SecondaryCameraRotate180
+                || !string.Equals(currentSecondaryKind, nextSecondaryKind, StringComparison.Ordinal)
+                || !string.Equals(currentSecondaryUrl, nextSecondaryUrl, StringComparison.Ordinal)
+                || (currentSecondaryKind == "network"
+                    && nextSecondaryKind == "network"
+                    && !string.Equals(currentSecondaryTransport, nextSecondaryTransport, StringComparison.Ordinal));
         }
 
         /// <summary>

@@ -1452,4 +1452,22 @@
   <data name="FFmpeg 要求 NVIDIA 驱动版本不低于 {config.EncoderDriverMinimumVersion}" xml:space="preserve"><value>FFmpeg 要求 NVIDIA 驱动版本不低于 {config.EncoderDriverMinimumVersion}</value></data>
   <data name="H.264 (兼容性好)" xml:space="preserve"><value>H.264 (兼容性好)</value></data>
   <data name="H.265 / HEVC (体积更小)" xml:space="preserve"><value>H.265 / HEVC (体积更小)</value></data>
+  <data name="悬浮预览" xml:space="preserve"><value>悬浮预览</value></data>
+  <data name="悬浮窗不透明度" xml:space="preserve"><value>悬浮窗不透明度</value></data>
+  <data name="不透明" xml:space="preserve"><value>不透明</value></data>
+  <data name="副画面（第二路摄像头）" xml:space="preserve"><value>副画面（第二路摄像头）</value></data>
+  <data name="再选一台摄像头叠在主画面右下角，预览和录像里都有" xml:space="preserve"><value>再选一台摄像头叠在主画面右下角，预览和录像里都有</value></data>
+  <data name="副画面来源" xml:space="preserve"><value>副画面来源</value></data>
+  <data name="不能和主画面选同一台摄像头，同一台设备无法被两路同时打开" xml:space="preserve"><value>不能和主画面选同一台摄像头，同一台设备无法被两路同时打开</value></data>
+  <data name="本地 USB 摄像头" xml:space="preserve"><value>本地 USB 摄像头</value></data>
+  <data name="网络摄像头流" xml:space="preserve"><value>网络摄像头流</value></data>
+  <data name="副网络摄像头地址" xml:space="preserve"><value>副网络摄像头地址</value></data>
+  <data name="来源选网络时填这里的地址，与主画面地址不能相同" xml:space="preserve"><value>来源选网络时填这里的地址，与主画面地址不能相同</value></data>
+  <data name="副画面大小" xml:space="preserve"><value>副画面大小</value></data>
+  <data name="副画面宽度占主画面的比例，越大越占画面" xml:space="preserve"><value>副画面宽度占主画面的比例，越大越占画面</value></data>
+  <data name="按住拖动可调整副画面位置" xml:space="preserve"><value>按住拖动可调整副画面位置</value></data>
+  <data name="自动识别面单用哪一路" xml:space="preserve"><value>自动识别面单用哪一路</value></data>
+  <data name="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面" xml:space="preserve"><value>副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面</value></data>
+  <data name="主画面" xml:space="preserve"><value>主画面</value></data>
+  <data name="副画面" xml:space="preserve"><value>副画面</value></data>
 </root>

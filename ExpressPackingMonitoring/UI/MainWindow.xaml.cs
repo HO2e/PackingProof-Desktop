@@ -14,6 +14,7 @@ using ExpressPackingMonitoring.Localization;
 using ExpressPackingMonitoring.ViewModels;
 using ExpressPackingMonitoring.Services;
 using System.IO;
+using System.Globalization;
 using System.Windows.Media.Imaging;
 
 namespace ExpressPackingMonitoring.UI
@@ -223,7 +224,7 @@ namespace ExpressPackingMonitoring.UI
             IsVisibleChanged += (s, e) =>
                 (DataContext as MainViewModel)?.ReportMainPreviewVisibility(
                     IsVisible && WindowState != WindowState.Minimized);
-            // 小窗只由最小化触发，主界面不新增按钮，所以控制器必须在这里提前挂好。
+            // 小窗由最小化自动弹出，也能从预览区右键菜单手动常驻；控制器必须在这里提前挂好。
             if (DataContext is MainViewModel floatingPreviewViewModel)
                 _floatingPreviewController = new FloatingPreviewController(this, floatingPreviewViewModel);
             // 全局鼠标/键盘活跃检测，用于摄像头空闲休眠唤醒
@@ -245,6 +246,12 @@ namespace ExpressPackingMonitoring.UI
                             args.PropertyName == nameof(MainViewModel.IsCameraBarcodeRecognitionEnabled))
                         {
                             Dispatcher.BeginInvoke(new Action(() => UpdateCameraOverlays(vm)));
+                        }
+                        else if (args.PropertyName == nameof(MainViewModel.IsSecondaryCameraOverlayVisible)
+                            || args.PropertyName == nameof(MainViewModel.HasSecondaryCameraFrame))
+                        {
+                            // 开关副画面、或副路刚出第一帧时，拖动框要立刻摆好。
+                            Dispatcher.BeginInvoke(new Action(() => UpdateSecondaryOverlayThumb(vm)));
                         }
                     };
                     // 窗口/视频区域大小变化时重新计算边框位置
@@ -309,9 +316,146 @@ namespace ExpressPackingMonitoring.UI
             vm.ReportMainPreviewVisibility(true);
         }
 
+        /// <summary>
+        /// 预览区右键菜单：主界面不新增小窗入口按钮（架构守卫钉住），
+        /// 手动开小窗与悬浮窗不透明度统一收在这里。
+        /// 菜单在每次弹出时刷新勾选状态，不额外维护一份状态。
+        /// </summary>
+        private void PreviewContextMenu_Opened(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is not MainViewModel vm)
+                return;
+
+            MiFloatingPreview.IsChecked = _floatingPreviewController?.IsFloatingWindowOpen == true;
+
+            double opacity = vm.FloatingPreviewOpacity;
+            MiFloatingOpacity100.IsChecked = opacity > 0.95;
+            MiFloatingOpacity90.IsChecked = Math.Abs(opacity - 0.9) < 0.01;
+            MiFloatingOpacity80.IsChecked = Math.Abs(opacity - 0.8) < 0.01;
+            MiFloatingOpacity70.IsChecked = Math.Abs(opacity - 0.7) < 0.01;
+        }
+
+        /// <summary>手动开关悬浮小窗：主窗口不最小化也能一直看着画面。</summary>
+        private void MiFloatingPreview_Click(object sender, RoutedEventArgs e) =>
+            _floatingPreviewController?.ToggleFromUser();
+
+        private void MiFloatingOpacity_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is not MainViewModel vm || sender is not MenuItem item)
+                return;
+
+            if (!double.TryParse(
+                    item.Tag?.ToString(),
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out double opacity))
+            {
+                return;
+            }
+
+            vm.SaveFloatingPreviewOpacity(opacity);
+            _floatingPreviewController?.ApplyFloatingPreviewOpacity();
+        }
+
         private void UpdateCameraOverlays(MainViewModel vm)
         {
             UpdateCameraBarcodeGuide(vm);
+            UpdateSecondaryOverlayThumb(vm);
+        }
+
+        /// <summary>
+        /// 把副画面拖动框摆到副画面当前所在的位置。
+        /// 位置和尺寸都来自 <see cref="MainViewModel.TryResolveSecondaryOverlayRect"/>，
+        /// 与合成用的是同一套策略，所以框住哪里、画面就画在哪里。
+        /// </summary>
+        private void UpdateSecondaryOverlayThumb(MainViewModel vm)
+        {
+            if (!vm.IsSecondaryCameraOverlayVisible
+                || vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
+            {
+                SecondaryOverlayDragThumb.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(
+                frame.PixelWidth,
+                frame.PixelHeight,
+                VideoImage.ActualWidth,
+                VideoImage.ActualHeight);
+            if (videoRect.IsEmpty || videoRect.Width <= 0 || videoRect.Height <= 0)
+            {
+                SecondaryOverlayDragThumb.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            if (!vm.TryResolveSecondaryOverlayRect(frame.PixelWidth, frame.PixelHeight, out SecondaryCameraOverlayRect rect))
+            {
+                SecondaryOverlayDragThumb.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            // 帧坐标 → 预览控件坐标（Uniform 缩放，两边黑边已由 videoRect 扣掉）。
+            double scale = videoRect.Width / frame.PixelWidth;
+            SecondaryOverlayDragThumb.Width = rect.Width * scale;
+            SecondaryOverlayDragThumb.Height = rect.Height * scale;
+            SecondaryOverlayDragThumb.Margin = new Thickness(
+                videoRect.X + (rect.X * scale),
+                videoRect.Y + (rect.Y * scale),
+                0,
+                0);
+            SecondaryOverlayDragThumb.Visibility = Visibility.Visible;
+        }
+
+        /// <summary>拖动中实时改变合成位置：预览下一帧就跟着动，松手才落盘。</summary>
+        private void SecondaryOverlayDragThumb_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            if (DataContext is not MainViewModel vm)
+                return;
+            if (vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
+                return;
+
+            Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(
+                frame.PixelWidth,
+                frame.PixelHeight,
+                VideoImage.ActualWidth,
+                VideoImage.ActualHeight);
+            if (videoRect.IsEmpty || videoRect.Width <= 0)
+                return;
+            if (!vm.TryResolveSecondaryOverlayRect(frame.PixelWidth, frame.PixelHeight, out SecondaryCameraOverlayRect current))
+                return;
+
+            // 控件像素增量 → 帧像素增量，再交给 ViewModel 夹紧落位。
+            double scale = videoRect.Width / frame.PixelWidth;
+            double frameX = current.X + (e.HorizontalChange / scale);
+            double frameY = current.Y + (e.VerticalChange / scale);
+
+            vm.SetSecondaryCameraOverlayPosition(frameX, frameY, frame.PixelWidth, frame.PixelHeight);
+            UpdateSecondaryOverlayThumb(vm);
+        }
+
+        private void SecondaryOverlayDragCompleted(object sender, DragCompletedEventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+                vm.SaveSecondaryCameraOverlayPosition();
+        }
+
+        private void SecondaryOverlayDragThumb_MouseEnter(object sender, MouseEventArgs e) =>
+            SetSecondaryOverlayThumbBorderVisible(true);
+
+        private void SecondaryOverlayDragThumb_MouseLeave(object sender, MouseEventArgs e) =>
+            SetSecondaryOverlayThumbBorderVisible(false);
+
+        /// <summary>拖动框平时不画边框，鼠标移上来才显形。</summary>
+        private void SetSecondaryOverlayThumbBorderVisible(bool visible)
+        {
+            if (SecondaryOverlayDragThumb.Template?.FindName(
+                    "SecondaryOverlayFrameBorder",
+                    SecondaryOverlayDragThumb) is not Border border)
+            {
+                return;
+            }
+
+            border.BorderBrush = TryFindResource(visible ? "AccentBlue" : "TransparentBrush") as Brush;
         }
 
         private void UpdateCameraBarcodeGuide(MainViewModel vm)

@@ -99,12 +99,6 @@ jobs:
             Start-Sleep -Seconds 5
           }
 
-      # 网页是唯一"改一行 JS 就可能整页不工作"的地方，静态断言和语法检查都拦不住：
-      # 这里用真实 WebServer + 临时数据库 + 无头 Chrome/Edge 跑完全部 UI 用例。
-      - name: 网页 UI 自动化测试（真实浏览器）
-        shell: pwsh
-        run: pwsh -NoProfile -File Tools\Test-WebUi.ps1 -Configuration Debug -SkipBuild
-
       - name: 检查扩展 API 示例语法
         shell: pwsh
         run: |

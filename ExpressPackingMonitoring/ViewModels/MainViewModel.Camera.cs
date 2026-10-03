@@ -1274,6 +1274,9 @@ namespace ExpressPackingMonitoring.ViewModels
                             catch { }
                         }
 
+                        // 第二路摄像头画面叠到右下角：预览与录像共用这一帧，合成就此一次完成。
+                        ComposeSecondaryCameraOverlayIfNeeded(processedFrame, previewPublishDue);
+
                         if (previewPublishDue)
                         {
                             MarkRecordingFramePipelineStage(RecordingFramePipelineStage.PreviewPublish, currentFrameSequence);

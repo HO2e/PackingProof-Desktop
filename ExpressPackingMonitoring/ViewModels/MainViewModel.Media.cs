@@ -427,6 +427,8 @@ namespace ExpressPackingMonitoring.ViewModels
             _lastActivityTime = DateTime.Now;
             RuntimeLog.Info("System", "InitializeSystem");
             StartCamera();
+            // 主路先起：副路要靠主路写回的 Moniker 判断"是不是同一台设备"。
+            StartSecondaryCamera();
             _videoTask = Task.Run(() => VideoProcessLoop(_cts.Token), _cts.Token);
             Task.Run(CheckDiskAndCleanup);
             _cameraIdleWatchdogTask = Task.Run(

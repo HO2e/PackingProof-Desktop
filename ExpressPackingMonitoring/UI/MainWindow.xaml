@@ -309,6 +309,22 @@
                 </Border>
 
                 <Border Grid.Row="1" Background="{DynamicResource VideoPlaceholder}" CornerRadius="10" ClipToBounds="True">
+                    <!--
+                        预览区右键菜单。主界面底部按钮行是固定的（架构守卫钉住不新增小窗入口按钮），
+                        所以手动开小窗和悬浮窗不透明度统一收在这里，不占任何常驻界面。
+                    -->
+                    <Border.ContextMenu>
+                        <ContextMenu Style="{StaticResource AppContextMenuStyle}" Opened="PreviewContextMenu_Opened">
+                            <MenuItem x:Name="MiFloatingPreview" Header="悬浮预览" IsCheckable="True" Style="{StaticResource AppMenuItemStyle}" Click="MiFloatingPreview_Click"/>
+                            <Separator Style="{StaticResource AppSeparatorStyle}"/>
+                            <MenuItem Header="悬浮窗不透明度" Style="{StaticResource AppMenuItemStyle}">
+                                <MenuItem x:Name="MiFloatingOpacity100" Header="不透明" Tag="1" IsCheckable="True" Style="{StaticResource AppMenuItemStyle}" Click="MiFloatingOpacity_Click"/>
+                                <MenuItem x:Name="MiFloatingOpacity90" Header="90%" Tag="0.9" IsCheckable="True" Style="{StaticResource AppMenuItemStyle}" Click="MiFloatingOpacity_Click"/>
+                                <MenuItem x:Name="MiFloatingOpacity80" Header="80%" Tag="0.8" IsCheckable="True" Style="{StaticResource AppMenuItemStyle}" Click="MiFloatingOpacity_Click"/>
+                                <MenuItem x:Name="MiFloatingOpacity70" Header="70%" Tag="0.7" IsCheckable="True" Style="{StaticResource AppMenuItemStyle}" Click="MiFloatingOpacity_Click"/>
+                            </MenuItem>
+                        </ContextMenu>
+                    </Border.ContextMenu>
                     <!-- ClipToBounds 只按矩形裁剪，铺满时视频会从圆角处溢出直角，所以额外套圆角裁剪 -->
                     <Grid ui:RoundedClip.Radius="10">
                         <Image x:Name="VideoImage" Source="{Binding VideoFrame}" Stretch="Uniform"
@@ -326,6 +342,13 @@
                                             <Setter Property="Visibility" Value="Visible"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding IsCameraSleeping, Mode=OneWay}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                        <!--
+                                            识别改用副画面时收起来：这时是按副画面整帧解码的，
+                                            主画面取景框既不起作用，又会叠在副画面上造成"框不对位"的错觉。
+                                        -->
+                                        <DataTrigger Binding="{Binding IsBarcodeGuideVisible}" Value="False">
                                             <Setter Property="Visibility" Value="Collapsed"/>
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -634,6 +657,38 @@
                                            Margin="0,8,0,0"/>
                             </StackPanel>
                         </Grid>
+
+                        <!--
+                            副画面拖动框：副画面是直接画进帧里的，没有可拖的控件，
+                            这里用一个透明 Thumb 代表它的位置，拖动即改变合成落位，
+                            预览与录像同步跟着走。位置和大小由代码按同一套策略计算。
+                        -->
+                        <Thumb x:Name="SecondaryOverlayDragThumb"
+                               Panel.ZIndex="15"
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Top"
+                               Cursor="SizeAll"
+                               Visibility="Collapsed"
+                               DragDelta="SecondaryOverlayDragThumb_DragDelta"
+                               DragCompleted="SecondaryOverlayDragCompleted"
+                               MouseEnter="SecondaryOverlayDragThumb_MouseEnter"
+                               MouseLeave="SecondaryOverlayDragThumb_MouseLeave"
+                               ToolTip="按住拖动可调整副画面位置">
+                            <Thumb.Template>
+                                <ControlTemplate TargetType="Thumb">
+                                    <!--
+                                        平时不画边框：拖动框正好压在副画面上，
+                                        一直显形会被当成"画面被这个框框住了"。
+                                        鼠标移上来才出现，此时才看得出可以拖。
+                                    -->
+                                    <Border x:Name="SecondaryOverlayFrameBorder"
+                                            BorderBrush="{StaticResource TransparentBrush}"
+                                            BorderThickness="2"
+                                            CornerRadius="6"
+                                            Background="{StaticResource TransparentBrush}"/>
+                                </ControlTemplate>
+                            </Thumb.Template>
+                        </Thumb>
                     </Grid>
                 </Border>
 
