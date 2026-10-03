@@ -1191,6 +1191,7 @@
                                                   Grid.Column="2"
                                                   ItemsSource="{Binding SecondaryCameraChoices}"
                                                   DisplayMemberPath="Name"
+                                                  Loaded="SecondaryCameraFormats_Loaded"
                                                   SelectedItem="{Binding SelectedSecondaryCameraChoice, Mode=TwoWay}"/>
                                     </Grid>
 
@@ -1226,8 +1227,7 @@
                                         <ComboBox x:Name="SecondaryResolutionComboBox"
                                                   Grid.Column="2"
                                                   DisplayMemberPath="Name"
-                                                  Cursor="Hand"
-                                                  Loaded="SecondaryCameraFormats_Loaded"/>
+                                                  Cursor="Hand"/>
                                     </Grid>
 
                                     <Grid Style="{StaticResource SettingRowStyle}"
