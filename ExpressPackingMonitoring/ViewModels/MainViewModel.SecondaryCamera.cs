@@ -641,7 +641,12 @@ namespace ExpressPackingMonitoring.ViewModels
         }
 
         /// <summary>整帧所有权交给槽：被顶掉的旧帧由槽自己释放。</summary>
-        private void PublishSecondaryCameraFrame(Mat frame) => _latestSecondaryCameraFrame.Publish(frame);
+        private void PublishSecondaryCameraFrame(Mat frame)
+        {
+            // 编辑态下顺便出一张预览位图；三路采集回调都经过这里，不必各自处理。
+            PublishSecondaryPreviewFrameIfDue(frame);
+            _latestSecondaryCameraFrame.Publish(frame);
+        }
 
         /// <summary>
         /// 处理循环里调用：把副画面叠进这一帧。
@@ -752,6 +757,93 @@ namespace ExpressPackingMonitoring.ViewModels
         /// <summary>副摄识别框当前几何（与主摄同一套语义）。</summary>
         internal CameraBarcodeGuideGeometry CurrentSecondaryCameraBarcodeGuideGeometry =>
             GetSecondaryCameraGuideGeometry();
+
+        private bool _isEditingSecondaryCameraPreview;
+        private System.Windows.Media.Imaging.BitmapSource? _secondaryPreviewFrame;
+        private DateTime _lastSecondaryPreviewPublishedAt = DateTime.MinValue;
+
+        /// <summary>
+        /// 是否正在编辑副摄取景：主预览区切成副摄整幅画面，识别框（含小锁）复用主摄那一套，
+        /// 框内就是将来画中画显示与识别的内容。点画中画进入，点"完成"退出。
+        /// </summary>
+        public bool IsEditingSecondaryCameraPreview
+        {
+            get => _isEditingSecondaryCameraPreview;
+            private set
+            {
+                if (!SetProperty(ref _isEditingSecondaryCameraPreview, value))
+                    return;
+
+                OnPropertyChanged(nameof(IsSecondaryPreviewEditing));
+                OnPropertyChanged(nameof(PreviewImageSource));
+                // 编辑态由副摄画面接管预览，别让主画面的帧把它冲掉。
+                SuppressVideoPreviewUpdates = value;
+            }
+        }
+
+        /// <summary>供界面按钮显隐使用。</summary>
+        public bool IsSecondaryPreviewEditing => IsEditingSecondaryCameraPreview;
+
+        /// <summary>副摄整幅画面（编辑态下由主预览区显示）。</summary>
+        public System.Windows.Media.Imaging.BitmapSource? SecondaryPreviewFrame
+        {
+            get => _secondaryPreviewFrame;
+            private set
+            {
+                if (SetProperty(ref _secondaryPreviewFrame, value))
+                    OnPropertyChanged(nameof(PreviewImageSource));
+            }
+        }
+
+        /// <summary>
+        /// 主预览区当前该显示的帧：平常是主画面，进入副摄取景编辑后是副摄整幅画面。
+        /// 界面只绑这一个属性，不必在代码里抢 Image.Source（抢了会被帧刷新冲掉）。
+        /// </summary>
+        public System.Windows.Media.Imaging.BitmapSource? PreviewImageSource =>
+            IsEditingSecondaryCameraPreview ? SecondaryPreviewFrame : VideoFrame;
+
+        /// <summary>点画中画进入取景编辑；副摄没在跑时不进（进去也没画面）。</summary>
+        internal void EnterSecondaryCameraPreviewEdit()
+        {
+            if (!IsSecondaryCameraComposeEnabled)
+                return;
+
+            IsEditingSecondaryCameraPreview = true;
+        }
+
+        internal void ExitSecondaryCameraPreviewEdit()
+        {
+            IsEditingSecondaryCameraPreview = false;
+            SecondaryPreviewFrame = null;
+        }
+
+        /// <summary>编辑态下把副摄帧转成预览位图，节流到 10fps，避免每帧都做一次转换。</summary>
+        private void PublishSecondaryPreviewFrameIfDue(Mat frame)
+        {
+            if (!IsEditingSecondaryCameraPreview || frame == null || frame.Empty())
+                return;
+
+            DateTime now = DateTime.Now;
+            if (now - _lastSecondaryPreviewPublishedAt < TimeSpan.FromMilliseconds(100))
+                return;
+            _lastSecondaryPreviewPublishedAt = now;
+
+            int width = frame.Width;
+            int height = frame.Height;
+            byte[] pixels = new byte[width * height * 3];
+            System.Runtime.InteropServices.Marshal.Copy(frame.Data, pixels, 0, pixels.Length);
+            var bitmap = System.Windows.Media.Imaging.BitmapSource.Create(
+                width,
+                height,
+                96,
+                96,
+                System.Windows.Media.PixelFormats.Bgr24,
+                null,
+                pixels,
+                width * 3);
+            bitmap.Freeze();
+            SecondaryPreviewFrame = bitmap;
+        }
 
         /// <summary>
         /// 在预览里拖动副摄识别框时写回配置：拖动过程只改内存，松手才落盘。

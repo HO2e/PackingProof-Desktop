@@ -527,7 +527,15 @@ namespace ExpressPackingMonitoring.ViewModels
 
         private volatile bool _suppressVideoPreviewUpdates;
         public bool SuppressVideoPreviewUpdates { get => _suppressVideoPreviewUpdates; set => _suppressVideoPreviewUpdates = value; }
-        public BitmapSource VideoFrame { get => _videoFrame; set => SetProperty(ref _videoFrame, value); }
+        public BitmapSource VideoFrame
+        {
+            get => _videoFrame;
+            set
+            {
+                if (SetProperty(ref _videoFrame, value))
+                    OnPropertyChanged(nameof(PreviewImageSource));
+            }
+        }
         public string CurrentMode
         {
             get => _currentMode;

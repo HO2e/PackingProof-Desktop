@@ -331,6 +331,13 @@ namespace ExpressPackingMonitoring.UI
             // 先收起把手：下面任何一条提前返回（没有副帧、没有预览）都不该留下一个悬空的把手。
             SecondaryOverlayResizeThumb.Visibility = Visibility.Collapsed;
 
+            // 副摄取景编辑态下预览显示的是副摄整幅画面，画中画的位置/大小框这时候没有意义。
+            if (vm.IsEditingSecondaryCameraPreview)
+            {
+                SecondaryOverlayDragThumb.Visibility = Visibility.Collapsed;
+                return;
+            }
+
             if (!vm.IsSecondaryCameraOverlayVisible
                 || vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
             {
@@ -434,8 +441,30 @@ namespace ExpressPackingMonitoring.UI
 
         private void SecondaryOverlayDragCompleted(object sender, DragCompletedEventArgs e)
         {
-            if (DataContext is MainViewModel vm)
-                vm.SaveSecondaryCameraOverlayPosition();
+            if (DataContext is not MainViewModel vm)
+                return;
+
+            // 没有实际位移 = 单击画中画：进入副摄取景编辑（就像点图片进裁剪）。
+            if (Math.Abs(e.HorizontalChange) < 2 && Math.Abs(e.VerticalChange) < 2)
+            {
+                vm.EnterSecondaryCameraPreviewEdit();
+                UpdateSecondaryOverlayThumb(vm);
+                UpdateCameraBarcodeGuide(vm);
+                return;
+            }
+
+            vm.SaveSecondaryCameraOverlayPosition();
+        }
+
+        /// <summary>退出副摄取景编辑，回到正常预览。</summary>
+        private void BtnSecondaryPreviewDone_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is not MainViewModel vm)
+                return;
+
+            vm.ExitSecondaryCameraPreviewEdit();
+            UpdateSecondaryOverlayThumb(vm);
+            UpdateCameraBarcodeGuide(vm);
         }
 
         private void SecondaryOverlayDragThumb_MouseEnter(object sender, MouseEventArgs e) =>
@@ -471,15 +500,21 @@ namespace ExpressPackingMonitoring.UI
                 return;
             }
 
-            // 识别改用副画面时，同一个识别框画到画中画上：几何与参考矩形都换成副摄那一套，
-            // 拖动/缩放/夹紧仍然复用主摄的换算，所以两边的操作手感一致。
-            bool onSecondary = vm.ShouldUseSecondaryCameraForBarcode;
+            // 副摄取景编辑态：预览区显示的是副摄整幅画面，识别框就按整幅画面摆放。
+            // 几何换成副摄那一组，拖动/缩放/夹紧仍复用主摄的换算，所以位置必然对得上。
+            bool onSecondary = vm.IsEditingSecondaryCameraPreview;
             CameraBarcodeGuideGeometry geometry = onSecondary
                 ? vm.CurrentSecondaryCameraBarcodeGuideGeometry
                 : vm.CurrentCameraBarcodeGuideGeometry;
-            Rect videoRect = onSecondary
-                ? GetSecondaryOverlayDisplayRect(vm)
-                : CameraBarcodeGuideLayout.GetVideoRect(sourceW, sourceH, actualW, actualH);
+            // 画面比例要按"当前显示的那一路"算：副摄可能是竖屏，用主摄的尺寸摆框必然偏。
+            if (onSecondary
+                && vm.SecondaryPreviewFrame is { PixelWidth: > 0, PixelHeight: > 0 } secondaryFrame)
+            {
+                sourceW = secondaryFrame.PixelWidth;
+                sourceH = secondaryFrame.PixelHeight;
+            }
+
+            Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(sourceW, sourceH, actualW, actualH);
             Rect guideRect = CameraBarcodeGuideLayout.ToDisplayRect(geometry, videoRect);
             if (guideRect.IsEmpty)
             {
@@ -530,7 +565,7 @@ namespace ExpressPackingMonitoring.UI
             if (DataContext is not MainViewModel vm)
                 return;
 
-            if (vm.ShouldUseSecondaryCameraForBarcode)
+            if (vm.IsEditingSecondaryCameraPreview)
             {
                 vm.ApplySecondaryCameraBarcodeGuideGeometry(
                     vm.CurrentSecondaryCameraBarcodeGuideGeometry,
@@ -555,7 +590,7 @@ namespace ExpressPackingMonitoring.UI
             if (DataContext is not MainViewModel vm)
                 return;
 
-            if (vm.ShouldUseSecondaryCameraForBarcode)
+            if (vm.IsEditingSecondaryCameraPreview)
             {
                 vm.ApplySecondaryCameraBarcodeGuideGeometry(
                     adjust(vm.CurrentSecondaryCameraBarcodeGuideGeometry),
@@ -575,43 +610,21 @@ namespace ExpressPackingMonitoring.UI
             if (DataContext is not MainViewModel vm)
                 return Rect.Empty;
 
-            // 识别来源是副摄时，拖动参考矩形是画中画那块，而不是整个预览。
-            if (vm.ShouldUseSecondaryCameraForBarcode)
+            // 与 UpdateCameraBarcodeGuide 用同一套尺寸来源：编辑副摄时按副摄画面算比例。
+            double frameWidth = vm.CameraFrameSize.Width;
+            double frameHeight = vm.CameraFrameSize.Height;
+            if (vm.IsEditingSecondaryCameraPreview
+                && vm.SecondaryPreviewFrame is { PixelWidth: > 0, PixelHeight: > 0 } secondaryFrame)
             {
-                Rect overlayRect = GetSecondaryOverlayDisplayRect(vm);
-                if (!overlayRect.IsEmpty)
-                    return overlayRect;
+                frameWidth = secondaryFrame.PixelWidth;
+                frameHeight = secondaryFrame.PixelHeight;
             }
 
             return CameraBarcodeGuideLayout.GetVideoRect(
-                vm.CameraFrameSize.Width,
-                vm.CameraFrameSize.Height,
+                frameWidth,
+                frameHeight,
                 VideoImage.ActualWidth,
                 VideoImage.ActualHeight);
-        }
-
-        /// <summary>画中画在预览控件里的矩形；识别框画在它上面、拖动也以它为参考。</summary>
-        private Rect GetSecondaryOverlayDisplayRect(MainViewModel vm)
-        {
-            if (vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
-                return Rect.Empty;
-
-            Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(
-                frame.PixelWidth,
-                frame.PixelHeight,
-                VideoImage.ActualWidth,
-                VideoImage.ActualHeight);
-            if (videoRect.IsEmpty || videoRect.Width <= 0)
-                return Rect.Empty;
-            if (!vm.TryResolveSecondaryOverlayRect(frame.PixelWidth, frame.PixelHeight, out SecondaryCameraOverlayRect rect))
-                return Rect.Empty;
-
-            double scale = videoRect.Width / frame.PixelWidth;
-            return new Rect(
-                videoRect.X + (rect.X * scale),
-                videoRect.Y + (rect.Y * scale),
-                rect.Width * scale,
-                rect.Height * scale);
         }
 
         /// <summary>
