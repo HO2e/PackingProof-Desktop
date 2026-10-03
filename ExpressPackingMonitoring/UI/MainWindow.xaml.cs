@@ -426,25 +426,34 @@ namespace ExpressPackingMonitoring.UI
 
             CameraBarcodeGuide.Width = guideRect.Width;
             CameraBarcodeGuide.Height = guideRect.Height;
-            // 识别框在预览里居中摆放，再按几何偏移平移，与取景矩形用的是同一套换算
+            // 取景框的位置是在"画面"（VideoImage）坐标系里算出来的，而框是挂在预览容器上的：
+            // 画面按 Uniform 居中时两个原点并不重合（上下会差出一段留白），必须先换算过去，
+            // 否则框会整体偏移。容器的实际尺寸也不能拿画面的尺寸代替。
+            if (CameraBarcodeGuide.Parent is not FrameworkElement guideHost)
+                return;
+
+            Point videoOriginInHost = VideoImage.TranslatePoint(new Point(0, 0), guideHost);
             CameraBarcodeGuide.RenderTransform = new TranslateTransform(
-                guideRect.X - (actualW - guideRect.Width) / 2.0,
-                guideRect.Y - (actualH - guideRect.Height) / 2.0);
+                videoOriginInHost.X + guideRect.X - ((guideHost.ActualWidth - guideRect.Width) / 2.0),
+                videoOriginInHost.Y + guideRect.Y - ((guideHost.ActualHeight - guideRect.Height) / 2.0));
             // 画中画在主摄识别框之上：被小窗盖住的那段框线要真的被遮掉，不能透出来。
             // 只裁框体本身，别裁到四角把手和拖动命中层（它们要留在框外一点）。
             CameraBarcodeGuideBox.Clip = BuildGuideClip(guideRect, ResolveOverlayOccluders(vm, actualW, actualH));
 
-            // 小锁与提示是独立的一层（铺满整块预览、在最顶层）：直接锚在取景框内侧左上角。
-            // 这里刻意不去量面板宽度再居中 —— 量出来的宽度一旦不对，面板就会被推到框外很远；
-            // 靠左上角定位只跟取景框有关，框再小也不会被挤掉或跑到外面。
-            Canvas.SetLeft(CameraBarcodeGuideHintPanel, guideRect.X + 10);
-            Canvas.SetTop(CameraBarcodeGuideHintPanel, guideRect.Y + 10);
+            // 小锁与提示是独立的一层（铺满整块预览、在最顶层）：锚在取景框内侧左上角。
+            // 这里刻意不去量面板宽度再居中 —— 宽度一旦量成 0，面板就会被推到框外很远。
+            // 坐标同样要先从"画面坐标系"换算到提示层的坐标系（两者原点不重合）。
+            Point hintOriginInLayer = VideoImage.TranslatePoint(new Point(0, 0), CameraBarcodeGuideHintLayer);
+            Canvas.SetLeft(CameraBarcodeGuideHintPanel, hintOriginInLayer.X + guideRect.X + 10);
+            Canvas.SetTop(CameraBarcodeGuideHintPanel, hintOriginInLayer.Y + guideRect.Y + 10);
             Logging.RuntimeLog.Info(
                 "OverlayUi",
                 $"取景框提示定位 guide=({guideRect.X:F0},{guideRect.Y:F0},{guideRect.Width:F0}x{guideRect.Height:F0}) "
                     + $"video=({videoRect.X:F0},{videoRect.Y:F0},{videoRect.Width:F0}x{videoRect.Height:F0}) "
                     + $"preview={actualW:F0}x{actualH:F0} "
-                    + $"layer={CameraBarcodeGuideHintLayer.ActualWidth:F0}x{CameraBarcodeGuideHintLayer.ActualHeight:F0}");
+                    + $"host={guideHost.ActualWidth:F0}x{guideHost.ActualHeight:F0} "
+                    + $"videoInHost=({videoOriginInHost.X:F0},{videoOriginInHost.Y:F0}) "
+                    + $"videoInHint=({hintOriginInLayer.X:F0},{hintOriginInLayer.Y:F0})");
         }
 
         /// <summary>
