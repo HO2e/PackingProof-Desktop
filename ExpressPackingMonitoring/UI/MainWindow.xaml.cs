@@ -459,13 +459,10 @@ namespace ExpressPackingMonitoring.UI
             if (panelWidth <= 0)
                 panelWidth = hostWidth;
 
+            // 提示文字按框宽换行（下面给状态条限宽），于是整块提示永远不会比框宽：
+            // 居中放就必然落在框里，也就不会被框或预览边界裁掉。
+            CameraBarcodeGuideStatusBorder.MaxWidth = Math.Max(80, guideRect.Width - 38);
             double panelLeft = hintOriginInLayer.X + guideRect.X + ((guideRect.Width - panelWidth) / 2);
-            double layerWidth = CameraBarcodeGuideHintLayer.ActualWidth;
-            if (layerWidth > 0)
-            {
-                double maxLeft = Math.Max(hintOriginInLayer.X, layerWidth - panelWidth - 2);
-                panelLeft = Math.Min(Math.Max(panelLeft, hintOriginInLayer.X + 2), maxLeft);
-            }
 
             // 宿主与取景框同宽、面板在宿主里居中：面板左边界 = 宿主左边界 + (宿主宽 - 面板宽)/2
             CameraBarcodeGuideHintHost.Width = hostWidth;

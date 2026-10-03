@@ -686,7 +686,8 @@
                                         </Style>
                                     </Button.Style>
                                 </Button>
-                                <Border Padding="12,6"
+                                <Border x:Name="CameraBarcodeGuideStatusBorder"
+                                        Padding="12,6"
                                         CornerRadius="6"
                                         IsHitTestVisible="False">
                                     <Border.Style>
@@ -705,7 +706,8 @@
                                     <TextBlock Text="{Binding CameraBarcodeStatusText}"
                                                Foreground="{StaticResource TextOnAccent}"
                                                FontSize="13"
-                                               FontWeight="SemiBold"/>
+                                               FontWeight="SemiBold"
+                                               TextWrapping="Wrap"/>
                                 </Border>
                             </StackPanel>
                             </Grid>
