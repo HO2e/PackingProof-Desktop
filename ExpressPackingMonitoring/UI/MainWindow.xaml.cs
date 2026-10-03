@@ -434,13 +434,12 @@ namespace ExpressPackingMonitoring.UI
             // 只裁框体本身，别裁到四角把手和拖动命中层（它们要留在框外一点）。
             CameraBarcodeGuideBox.Clip = BuildGuideClip(guideRect, ResolveOverlayOccluders(vm, actualW, actualH));
 
-            // 小锁与提示是独立的一层（在画中画之上），用与识别框完全相同的摆法：
-            // 同样大小的居中层 + 同一套平移，面板停在框的顶部中点，不依赖测量时机。
-            CameraBarcodeGuideHintLayer.Width = guideRect.Width;
-            CameraBarcodeGuideHintLayer.Height = guideRect.Height;
-            CameraBarcodeGuideHintLayer.RenderTransform = new TranslateTransform(
-                guideRect.X - (actualW - guideRect.Width) / 2.0,
-                guideRect.Y - (actualH - guideRect.Height) / 2.0);
+            // 小锁与提示是独立的一层（铺满整块预览、在最顶层）：面板自己按取景框的位置摆，
+            // 不再挂在"和取景框一样大"的层里 —— 框再小也不会把提示裁掉。
+            CameraBarcodeGuideHintPanel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            double hintWidth = CameraBarcodeGuideHintPanel.DesiredSize.Width;
+            Canvas.SetLeft(CameraBarcodeGuideHintPanel, guideRect.X + ((guideRect.Width - hintWidth) / 2));
+            Canvas.SetTop(CameraBarcodeGuideHintPanel, Math.Max(0, guideRect.Y + 10));
         }
 
         /// <summary>

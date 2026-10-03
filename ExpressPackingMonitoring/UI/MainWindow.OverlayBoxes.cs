@@ -25,7 +25,6 @@ namespace ExpressPackingMonitoring.UI
         private sealed class OverlayBoxControls
         {
             internal required int ChannelNumber { get; init; }
-            internal required Border Frame { get; init; }
             internal required Thumb Drag { get; init; }
             internal required Thumb Resize { get; init; }
         }
@@ -53,7 +52,6 @@ namespace ExpressPackingMonitoring.UI
                 if (alive.Contains(entry.Key))
                     continue;
 
-                entry.Value.Frame.Visibility = Visibility.Collapsed;
                 entry.Value.Drag.Visibility = Visibility.Collapsed;
                 entry.Value.Resize.Visibility = Visibility.Collapsed;
             }
@@ -61,25 +59,16 @@ namespace ExpressPackingMonitoring.UI
 
         private OverlayBoxControls CreateOverlayBoxControls(int channelNumber)
         {
-            var frame = new Border
-            {
-                BorderThickness = new Thickness(2),
-                CornerRadius = new CornerRadius(6),
-                BorderBrush = FindBrush("TransparentBrush"),
-                Background = FindBrush("TransparentBrush"),
-                IsHitTestVisible = false,
-                Visibility = Visibility.Collapsed
-            };
-
-            // 命中区域用透明 Thumb：框体本身不画边框（压在画面上会被当成"画面被框住了"），
-            // 鼠标移上来才由 frame 显示一圈描边，此时才看得出可以拖。
+            // 框体就是一个完全透明的 Thumb：平时不画任何东西（压在画面上会被当成"画面被框住了"），
+            // 鼠标移上来才由样式里的描边显示出来，此时才看得出可以拖。
+            // 模板固定在 OverlayBoxDragThumbStyle 里，避免吃到系统默认 Thumb 外观画出一块底色。
             var drag = new Thumb
             {
                 Tag = channelNumber,
                 Cursor = Cursors.SizeAll,
-                Background = FindBrush("TransparentBrush"),
                 Visibility = Visibility.Collapsed,
-                ToolTip = "按住拖动可调整副画面位置"
+                ToolTip = "按住拖动可调整副画面位置",
+                Style = TryFindResource("OverlayBoxDragThumbStyle") as Style
             };
             drag.DragDelta += OverlayBox_DragDelta;
             drag.DragCompleted += OverlayBox_DragCompleted;
@@ -100,13 +89,11 @@ namespace ExpressPackingMonitoring.UI
             resize.DragDelta += OverlayResize_DragDelta;
             resize.DragCompleted += OverlayResize_DragCompleted;
 
-            SecondaryOverlayBoxLayer.Children.Add(frame);
             SecondaryOverlayBoxLayer.Children.Add(drag);
             SecondaryOverlayBoxLayer.Children.Add(resize);
             return new OverlayBoxControls
             {
                 ChannelNumber = channelNumber,
-                Frame = frame,
                 Drag = drag,
                 Resize = resize
             };
@@ -114,7 +101,6 @@ namespace ExpressPackingMonitoring.UI
 
         private void UpdateOverlayBox(MainViewModel vm, OverlayBoxControls controls)
         {
-            controls.Frame.Visibility = Visibility.Collapsed;
             controls.Resize.Visibility = Visibility.Collapsed;
 
             // 取景编辑态下预览显示的是那一路的整幅画面，画中画的位置/大小框这时候没有意义。
@@ -166,7 +152,6 @@ namespace ExpressPackingMonitoring.UI
             double width = rect.Width * scale;
             double height = rect.Height * scale;
 
-            Place(controls.Frame, left, top, width, height);
             Place(controls.Drag, left, top, width, height);
             Place(
                 controls.Resize,
@@ -175,13 +160,9 @@ namespace ExpressPackingMonitoring.UI
                 controls.Resize.Width,
                 controls.Resize.Height);
 
-            controls.Frame.Visibility = Visibility.Visible;
             controls.Drag.Visibility = Visibility.Visible;
             controls.Resize.Visibility = Visibility.Visible;
         }
-
-        /// <summary>取主题画刷；颜色只允许定义在 ColorTokens 里，这里一律按 key 取。</summary>
-        private Brush FindBrush(string key) => (Brush)FindResource(key);
 
         private static void Place(FrameworkElement element, double left, double top, double width, double height)
         {
@@ -274,7 +255,7 @@ namespace ExpressPackingMonitoring.UI
             if (sender is Thumb { Tag: int channelNumber }
                 && _overlayBoxControls.TryGetValue(channelNumber, out OverlayBoxControls? controls))
             {
-                controls.Frame.BorderBrush = TryFindResource("AccentBlue") as Brush;
+                controls.Drag.BorderBrush = TryFindResource("AccentBlue") as Brush;
             }
         }
 
@@ -283,7 +264,7 @@ namespace ExpressPackingMonitoring.UI
             if (sender is Thumb { Tag: int channelNumber }
                 && _overlayBoxControls.TryGetValue(channelNumber, out OverlayBoxControls? controls))
             {
-                controls.Frame.BorderBrush = TryFindResource("TransparentBrush") as Brush;
+                controls.Drag.BorderBrush = TryFindResource("TransparentBrush") as Brush;
             }
         }
     }
