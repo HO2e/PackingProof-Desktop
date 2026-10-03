@@ -1160,7 +1160,8 @@ namespace ExpressPackingMonitoring.Config
                 : UnsetOverlayPosition;
 
         /// <summary>
-        /// 识别来源通道号归一：0 = 主摄像头；超出当前路数或那一路上没接设备，一律回到主摄。
+        /// 识别来源通道号归一：0 = 主摄像头，1..n = 第 n 路副摄像头；超出当前路数一律回到主摄。
+        /// 那一路上没接设备也允许先选着：运行时会自动回退主画面，等接上设备就直接生效。
         /// 识别来源是"能不能扫到面单"的关键开关，写错不能变成两边都不识别。
         /// </summary>
         internal static int NormalizeBarcodeRecognitionChannel(
@@ -1170,8 +1171,7 @@ namespace ExpressPackingMonitoring.Config
             if (channelNumber <= 0 || channels == null)
                 return 0;
 
-            int index = channelNumber - 1;
-            return index < channels.Count && channels[index].IsConfigured ? channelNumber : 0;
+            return channelNumber <= channels.Count ? channelNumber : 0;
         }
 
         /// <summary>

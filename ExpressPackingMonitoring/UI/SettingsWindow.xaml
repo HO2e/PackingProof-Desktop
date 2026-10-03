@@ -1187,30 +1187,6 @@
                                                     </Grid.ColumnDefinitions>
                                                     <StackPanel Margin="0,0,16,0">
                                                         <TextBlock Text="{Binding Title}" Style="{StaticResource FieldLabelStyle}"/>
-                                                        <TextBlock Text="叠加在主画面上的另一路摄像头"
-                                                                   Style="{StaticResource FieldHintStyle}"/>
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="2"
-                                                                Orientation="Horizontal"
-                                                                HorizontalAlignment="Right"
-                                                                VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding DeviceSummary}"
-                                                                   MaxWidth="150"
-                                                                   Margin="0,0,10,0"
-                                                                   VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                   Foreground="{DynamicResource TextSecondary}"/>
-                                                    </StackPanel>
-                                                </Grid>
-
-                                                <Grid Style="{StaticResource SettingRowStyle}">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="24"/>
-                                                        <ColumnDefinition Width="260"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel Margin="0,0,16,0">
-                                                        <TextBlock Text="摄像头" Style="{StaticResource FieldLabelStyle}"/>
                                                         <TextBlock Text="这一路不接就选“无”"
                                                                    Style="{StaticResource FieldHintStyle}"/>
                                                     </StackPanel>

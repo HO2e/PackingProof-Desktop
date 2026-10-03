@@ -39,15 +39,7 @@ namespace ExpressPackingMonitoring.UI
         /// <summary>通道号：1 = 副画面 1。与识别来源、日志里的通道号同一套编号。</summary>
         public int Number => _index + 1;
 
-        public string Title => $"副画面 {Number}";
-
-        /// <summary>卡头显示的当前画面来源。</summary>
-        public string DeviceSummary =>
-            !IsConfigured
-                ? "未添加"
-                : IsNetworkSelected
-                    ? "网络摄像头"
-                    : SelectedDevice?.Name ?? "未添加";
+        public string Title => $"副摄像头 {Number}";
 
         internal CameraChannelConfig? Config =>
             _owner.Config is { } config && _index >= 0 && _index < config.CameraChannels.Count
@@ -126,7 +118,6 @@ namespace ExpressPackingMonitoring.UI
 
                 config.RotationDegrees = value;
                 Raise();
-                Raise(nameof(DeviceSummary));
             }
         }
 
@@ -170,7 +161,6 @@ namespace ExpressPackingMonitoring.UI
             _deviceChoices = choices;
             Raise(nameof(DeviceChoices));
             Raise(nameof(SelectedDevice));
-            Raise(nameof(DeviceSummary));
         }
 
         /// <summary>窗口枚举出这一路支持的档位后调用。</summary>
@@ -239,7 +229,6 @@ namespace ExpressPackingMonitoring.UI
         {
             Raise(nameof(IsConfigured));
             Raise(nameof(IsNetworkSelected));
-            Raise(nameof(DeviceSummary));
             Raise(nameof(SelectedDevice));
             Raise(nameof(NetworkUrl));
             Raise(nameof(RotationDegrees));
@@ -283,24 +272,51 @@ namespace ExpressPackingMonitoring.UI
         /// <summary>盯住主摄下拉 ItemsSource 的监听器（清单是异步填的，得知道它什么时候到位）。</summary>
         private EventHandler? _cameraItemsSourceWatcher;
 
-        private List<BarcodeRecognitionChannelOption> _barcodeChannelChoices = new();
 
         internal bool IsSyncingCameraChoices => _syncingCameraChoices;
 
         /// <summary>每一路叠加画面一张卡；没接设备的那一路也留着，用户才能"添加"。</summary>
         public ObservableCollection<OverlayChannelCard> OverlayCameraCards { get; } = new();
 
-        /// <summary>面单识别来源可选项：主摄像头 + 已经接了设备的叠加画面。</summary>
-        public IReadOnlyList<BarcodeRecognitionChannelOption> BarcodeRecognitionChannelChoices =>
-            _barcodeChannelChoices;
+        /// <summary>
+        /// 面单识别来源可选项：主摄像头 + 已经接了设备的副摄像头。
+        ///
+        /// **按当前配置现算，不做缓存**：用户在"设备与外观"里刚接上一路、还没点保存时，
+        /// 这里也要立刻能看到（否则就会出现"设置里改了画面，识别来源却选不了这一路"）。
+        /// 没接设备的那一路不列出来 —— 选了也用不上；如果之前选的正是它，仍然保留这一项。
+        /// </summary>
+        public IReadOnlyList<BarcodeRecognitionChannelOption> BarcodeRecognitionChannelChoices
+        {
+            get
+            {
+                if (Config is not { } config)
+                    return Array.Empty<BarcodeRecognitionChannelOption>();
+
+                var choices = new List<BarcodeRecognitionChannelOption>
+                {
+                    new(0, "主摄像头")
+                };
+                for (int i = 0; i < config.CameraChannels.Count; i++)
+                {
+                    int number = i + 1;
+                    if (config.CameraChannels[i].IsConfigured
+                        || config.CameraBarcodeRecognitionChannel == number)
+                    {
+                        choices.Add(new BarcodeRecognitionChannelOption(number, $"副摄像头 {number}"));
+                    }
+                }
+
+                return choices;
+            }
+        }
 
         public BarcodeRecognitionChannelOption? SelectedBarcodeRecognitionChannel
         {
             get
             {
                 int number = Config?.CameraBarcodeRecognitionChannel ?? 0;
-                return _barcodeChannelChoices.FirstOrDefault(option => option.Number == number)
-                    ?? _barcodeChannelChoices.FirstOrDefault();
+                return BarcodeRecognitionChannelChoices.FirstOrDefault(option => option.Number == number)
+                    ?? BarcodeRecognitionChannelChoices.FirstOrDefault();
             }
             set
             {
@@ -413,6 +429,9 @@ namespace ExpressPackingMonitoring.UI
             if (_syncingCameraChoices || CameraComboBox == null || Config is not { } config)
                 return;
 
+            // 识别来源选项只跟配置有关，先刷新：设备清单还没到位也不该让它停在旧的一份。
+            NotifyBarcodeChannelChoices();
+
             List<CameraDeviceChoice> all = AllCameraChoices();
             if (all.Count == 0)
                 return;
@@ -440,7 +459,6 @@ namespace ExpressPackingMonitoring.UI
 
                 ApplyMainCameraChoices(all, requested);
                 ApplyCardChoices(all, requested);
-                RaiseBarcodeChannelChoices();
 
                 // 只有真的被让位（设备变成"无"）的那一路才需要重算档位；
                 // 其它路重新枚举会把用户选好的分辨率/帧率冲掉。
@@ -536,27 +554,20 @@ namespace ExpressPackingMonitoring.UI
             return true;
         }
 
-        /// <summary>识别来源下拉只列"主摄 + 已接设备的叠加画面"：没接的那一路选了也认不出来。</summary>
-        private void RaiseBarcodeChannelChoices()
+        /// <summary>
+        /// 通知界面重取识别来源选项。选项本身是按当前配置现算的（见
+        /// <see cref="BarcodeRecognitionChannelChoices"/>），这里只负责让下拉立刻刷新 ——
+        /// 用户在"设备与外观"里改了画面、还没点保存时也要马上反映出来。
+        /// </summary>
+        private void NotifyBarcodeChannelChoices()
         {
-            List<BarcodeRecognitionChannelOption> choices = new()
-            {
-                new BarcodeRecognitionChannelOption(0, "主摄像头")
-            };
-            foreach (OverlayChannelCard card in OverlayCameraCards)
-            {
-                if (card.IsConfigured)
-                    choices.Add(new BarcodeRecognitionChannelOption(card.Number, card.Title));
-            }
-
             if (Config is { } config
-                && !choices.Any(option => option.Number == config.CameraBarcodeRecognitionChannel))
+                && config.CameraBarcodeRecognitionChannel > config.CameraChannels.Count)
             {
-                // 识别来源指到了没接设备的那一路：回到主摄，别让识别静默失效。
+                // 识别来源指到了不存在的通道（手改配置才会出现）：回到主摄。
                 config.CameraBarcodeRecognitionChannel = 0;
             }
 
-            _barcodeChannelChoices = choices;
             Raise(nameof(BarcodeRecognitionChannelChoices));
             Raise(nameof(SelectedBarcodeRecognitionChannel));
         }

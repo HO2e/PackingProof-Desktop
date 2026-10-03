@@ -125,6 +125,60 @@ public sealed class CameraChannelChoiceUiTests
     }
 
     /// <summary>
+    /// 识别来源下拉跟"配置里刚改、还没保存"的画面改动联动：现场反馈"设置里改了画面，
+    /// 识别摄像头却选不到这一路"就是这里没及时更新。
+    /// 下拉的 ItemsSource/SelectedItem 跟 XAML 用同一对绑定，这里用探针 ComboBox 走一遍。
+    /// </summary>
+    [Fact]
+    public void BarcodeSourceOptions_FollowUnsavedCameraChanges()
+    {
+        RunOnStaThread(() =>
+        {
+            AppConfig config = CreateConfig(mainMoniker: "moniker-a", channelMoniker: "");
+            SettingsWindow window = CreateWindow(config);
+            ComboBox main = PrepareWindow(window);
+            OverlayChannelCard first = window.OverlayCameraCards[0];
+
+            var probe = new ComboBox { DisplayMemberPath = "Name" };
+            probe.SetBinding(
+                ItemsControl.ItemsSourceProperty,
+                new Binding(nameof(SettingsWindow.BarcodeRecognitionChannelChoices)) { Source = window });
+            probe.SetBinding(
+                Selector.SelectedItemProperty,
+                new Binding(nameof(SettingsWindow.SelectedBarcodeRecognitionChannel))
+                {
+                    Source = window,
+                    Mode = BindingMode.TwoWay
+                });
+
+            // 两路都没接设备：只能选主摄像头。
+            Assert.Equal(["主摄像头"], BarcodeNames(probe));
+            Assert.Equal(0, window.SelectedBarcodeRecognitionChannel?.Number);
+
+            // 关键：用户在这一刻接上一路，还没点保存，下拉就要立刻能选到它。
+            first.SelectedDevice = first.DeviceChoices.First(choice => choice.Moniker == "moniker-b");
+
+            Assert.Equal(["主摄像头", "副摄像头 1"], BarcodeNames(probe));
+
+            probe.SelectedItem = BarcodeOptions(probe).First(option => option.Number == 1);
+            Assert.Equal(1, config.CameraBarcodeRecognitionChannel);
+            Assert.Equal(1, window.SelectedBarcodeRecognitionChannel?.Number);
+
+            // 主摄换设备（同步会重算一遍清单）以后，选择不能被冲回主摄。
+            main.SelectedItem = ItemOf(main, "moniker-c");
+            Assert.Equal(1, config.CameraBarcodeRecognitionChannel);
+            Assert.Equal(1, window.SelectedBarcodeRecognitionChannel?.Number);
+            Assert.Equal(["主摄像头", "副摄像头 1"], BarcodeNames(probe));
+        });
+    }
+
+    private static List<BarcodeRecognitionChannelOption> BarcodeOptions(ComboBox combo) =>
+        combo.Items.OfType<BarcodeRecognitionChannelOption>().ToList();
+
+    private static string[] BarcodeNames(ComboBox combo) =>
+        BarcodeOptions(combo).Select(option => option.Name).ToArray();
+
+    /// <summary>
     /// 设备这次枚举出来的档位未必包含用户存的那一档（设备被本程序占用、换了采集后端都会这样）。
     /// 这时必须保留用户存的值，不能默默换成列表第一项 —— 现场表现就是
     /// "每次进设置页帧率/分辨率就被清掉，要重新点一次"。
@@ -162,7 +216,7 @@ public sealed class CameraChannelChoiceUiTests
 
     /// <summary>
     /// 路数是固定的：设置页永远两张卡（默认都是"无"），不加删除入口；
-    /// 识别来源只列真的接了设备的那几路。
+    /// 识别来源只列真的接了设备的那几路 —— 没接的选了也用不上。
     /// </summary>
     [Fact]
     public void CardsAreFixedAndBarcodeChoicesOnlyListConfiguredOnes()
@@ -174,14 +228,14 @@ public sealed class CameraChannelChoiceUiTests
             PrepareWindow(window);
 
             Assert.Equal(AppConfig.MaxOverlayChannels, window.OverlayCameraCards.Count);
-            Assert.Equal(["主摄像头", "副画面 1"], window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
+            Assert.Equal(["主摄像头", "副摄像头 1"], window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
 
             // 第二路默认是"无"，接上设备后识别来源里才会出现它
             OverlayChannelCard second = window.OverlayCameraCards[1];
             Assert.Equal("无", second.SelectedDevice?.Name);
             second.SelectedDevice = second.DeviceChoices.First(choice => choice.Moniker == "moniker-c");
 
-            Assert.Equal(["主摄像头", "副画面 1", "副画面 2"], window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
+            Assert.Equal(["主摄像头", "副摄像头 1", "副摄像头 2"], window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
             Assert.Equal(2, second.Number);
             // 两路各自排除别人占用的设备，但自己那台一定还在自己的清单里
             Assert.Contains(second.DeviceChoices, choice => choice.Moniker == "moniker-c");
@@ -189,7 +243,7 @@ public sealed class CameraChannelChoiceUiTests
 
             // 取消这一路（选回"无"）后识别来源也要收回这一项
             second.SelectedDevice = second.DeviceChoices.First(choice => choice.Kind == "none");
-            Assert.Equal(["主摄像头", "副画面 1"], window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
+            Assert.Equal(["主摄像头", "副摄像头 1"], window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
         });
     }
 
@@ -209,8 +263,8 @@ public sealed class CameraChannelChoiceUiTests
             PrepareWindow(window);
 
             Assert.Equal(2, window.OverlayCameraCards.Count);
-            Assert.Equal("副画面 1", window.OverlayCameraCards[0].Title);
-            Assert.Equal("副画面 2", window.OverlayCameraCards[1].Title);
+            Assert.Equal("副摄像头 1", window.OverlayCameraCards[0].Title);
+            Assert.Equal("副摄像头 2", window.OverlayCameraCards[1].Title);
             Assert.Equal("moniker-b", window.OverlayCameraCards[0].SelectedDevice?.Moniker);
             Assert.Equal("moniker-c", window.OverlayCameraCards[1].SelectedDevice?.Moniker);
             // 两路各自排除别人占用的设备，但自己那台一定还在自己的清单里
@@ -287,6 +341,10 @@ public sealed class CameraChannelChoiceUiTests
         Assert.Contains("SelectedItem=\"{Binding SelectedBarcodeRecognitionChannel, Mode=TwoWay}\"", xaml, StringComparison.Ordinal);
         Assert.DoesNotContain("Tag=\"secondary\"", xaml, StringComparison.Ordinal);
         Assert.DoesNotContain("x:Name=\"SecondaryCameraDeviceComboBox\"", xaml, StringComparison.Ordinal);
+        // 卡片标题行已经去掉，靠"副摄像头 N"这一行说明这是哪一路，也不再显示设备摘要。
+        Assert.Contains("Text=\"{Binding Title}\"", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("DeviceSummary", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("叠加在主画面上的另一路摄像头", xaml, StringComparison.Ordinal);
     }
 
     private static string FindRepositoryRoot()

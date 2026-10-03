@@ -304,8 +304,8 @@ public sealed class CameraChannelConfigurationTests
         Assert.Equal(0, AppConfig.NormalizeBarcodeRecognitionChannel(-1, channels));
         Assert.Equal(0, AppConfig.NormalizeBarcodeRecognitionChannel(0, channels));
         Assert.Equal(1, AppConfig.NormalizeBarcodeRecognitionChannel(1, channels));
-        // 第二路没接设备 → 回主摄
-        Assert.Equal(0, AppConfig.NormalizeBarcodeRecognitionChannel(2, channels));
+        // 第二路还没接设备也允许先选着：运行时会自动回退主画面，等接上就直接生效
+        Assert.Equal(2, AppConfig.NormalizeBarcodeRecognitionChannel(2, channels));
         // 超出路数 → 回主摄
         Assert.Equal(0, AppConfig.NormalizeBarcodeRecognitionChannel(9, channels));
     }
@@ -493,6 +493,9 @@ public sealed class CameraChannelConfigurationTests
         // 叠加画面规格与主摄共用同一套档位枚举：分辨率/帧率下拉由 CameraFormatCatalog 填
         Assert.Contains("ItemsSource=\"{Binding Resolutions}\"", settings, StringComparison.Ordinal);
         Assert.Contains("ItemsSource=\"{Binding FpsOptions}\"", settings, StringComparison.Ordinal);
+        // 卡片不再有单独的标题行，靠"副摄像头 N"这一行说明是哪一路。
+        Assert.Contains("Text=\"{Binding Title}\"", settings, StringComparison.Ordinal);
+        Assert.DoesNotContain("DeviceSummary", settings, StringComparison.Ordinal);
         Assert.Contains("Loaded=\"CameraChannelCards_Loaded\"", settings, StringComparison.Ordinal);
     }
 
