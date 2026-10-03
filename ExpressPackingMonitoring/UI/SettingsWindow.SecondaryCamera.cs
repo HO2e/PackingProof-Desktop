@@ -35,6 +35,11 @@ namespace ExpressPackingMonitoring.UI
         {
             get
             {
+                // 拿到过一份非空完整清单就锁定，绝不再回读主摄下拉 ——
+                // 主摄下拉的 ItemsSource 会被换成"过滤后的列表"，回读会让清单每同步一次少一台。
+                if (_allCameraChoices is { Count: > 0 } cached)
+                    return cached;
+
                 List<CameraDeviceChoice> current = (CameraComboBox?.ItemsSource as System.Collections.IEnumerable)?
                     .OfType<CameraInfo>()
                     .Select(ToChoice)
