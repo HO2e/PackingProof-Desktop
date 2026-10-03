@@ -3,6 +3,7 @@ using AForge.Video.DirectShow;
 using ExpressPackingMonitoring.Config;
 using ExpressPackingMonitoring.Logging;
 using ExpressPackingMonitoring.Services;
+using ExpressPackingMonitoring.Services.MediaFoundation;
 using OpenCvSharp;
 
 namespace ExpressPackingMonitoring.ViewModels
@@ -17,9 +18,16 @@ namespace ExpressPackingMonitoring.ViewModels
     public partial class MainViewModel
     {
         private VideoCaptureDevice? _secondaryVideoSource;
+        private MfCameraSource? _secondaryMfCameraSource;
         private NetworkCameraSource? _secondaryNetworkCameraSource;
         private readonly LatestFrameHandoffSlot<Mat> _latestSecondaryCameraFrame = new();
         private readonly object _secondaryCameraLock = new();
+
+        /// <summary>
+        /// 启动后"到底有没有画面"的观察令牌。每次启动/停止都换一个，
+        /// 迟到的旧观察直接失效，不会对已经换过的设备报错。
+        /// </summary>
+        private CancellationTokenSource? _secondaryFrameWatchCts;
 
         /// <summary>
         /// 副帧取用锁：实时帧由 VideoProcessLoop 合成、预录帧由录像写线程合成，
@@ -62,7 +70,9 @@ namespace ExpressPackingMonitoring.ViewModels
 
         /// <summary>副摄像头当前是否已启动。</summary>
         internal bool IsSecondaryCameraRunning =>
-            _secondaryVideoSource != null || _secondaryNetworkCameraSource != null;
+            _secondaryVideoSource != null
+            || _secondaryMfCameraSource != null
+            || _secondaryNetworkCameraSource != null;
 
         /// <summary>
         /// 主画面取景框是否该显示。识别改用副画面时它是按副画面整帧解码的，
@@ -98,7 +108,7 @@ namespace ExpressPackingMonitoring.ViewModels
 
             lock (_secondaryCameraLock)
             {
-                if (_secondaryVideoSource != null || _secondaryNetworkCameraSource != null)
+                if (IsSecondaryCameraRunning)
                     return;
 
                 try
@@ -107,6 +117,10 @@ namespace ExpressPackingMonitoring.ViewModels
                         StartSecondaryNetworkCamera(config);
                     else
                         StartSecondaryUsbCamera(config);
+                    // 打开设备不代表有画面：USB 摄像头被别的程序占用、两路选了同一台设备、
+                    // 网络地址挂着一台不存在的相机，都会"启动成功但一帧都不给"。
+                    // 最终以出帧为准，所以启动后观察一段时间。
+                    ScheduleSecondaryCameraFrameWatch();
                 }
                 catch (Exception ex)
                 {
@@ -135,9 +149,19 @@ namespace ExpressPackingMonitoring.ViewModels
         private void StopSecondaryCameraCore()
         {
             VideoCaptureDevice? usb = _secondaryVideoSource;
+            MfCameraSource? mf = _secondaryMfCameraSource;
             NetworkCameraSource? network = _secondaryNetworkCameraSource;
             _secondaryVideoSource = null;
+            _secondaryMfCameraSource = null;
             _secondaryNetworkCameraSource = null;
+
+            CancellationTokenSource? watch = _secondaryFrameWatchCts;
+            _secondaryFrameWatchCts = null;
+            if (watch != null)
+            {
+                try { watch.Cancel(); } catch { }
+                try { watch.Dispose(); } catch { }
+            }
 
             if (usb != null)
             {
@@ -167,6 +191,21 @@ namespace ExpressPackingMonitoring.ViewModels
                 catch (Exception ex)
                 {
                     RuntimeLog.Warn("SecondaryCamera", $"停止副网络摄像头失败：{ex.Message}");
+                }
+            }
+
+            if (mf != null)
+            {
+                try
+                {
+                    mf.FrameReady -= SecondaryMfCameraSource_FrameReady;
+                    mf.SourceError -= SecondaryMfCameraSource_SourceError;
+                    mf.Stop();
+                    mf.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    RuntimeLog.Warn("SecondaryCamera", $"停止副 Media Foundation 摄像头失败：{ex.Message}");
                 }
             }
 
@@ -213,7 +252,7 @@ namespace ExpressPackingMonitoring.ViewModels
             var source = new NetworkCameraSource(
                 url,
                 config.SecondaryNetworkCameraRtspTransport,
-                config.Fps > 0 ? config.Fps : 15);
+                config.SecondaryFrameFps > 0 ? config.SecondaryFrameFps : AppConfig.DefaultSecondaryFrameFps);
             source.FrameReady += SecondaryNetworkCameraSource_FrameReady;
             source.SourceError += (_, e) =>
                 RuntimeLog.Warn("SecondaryCamera", $"副网络摄像头错误：{e.Description}");
@@ -246,13 +285,24 @@ namespace ExpressPackingMonitoring.ViewModels
             if (selectedMoniker.Length == 0)
                 return;
 
-            // 同一台 USB 摄像头是独占设备：两路同时打开必然有一路拿不到画面。
-            // 主路走网络流时不占用本地设备，这时不该因为残留的 Moniker 把副路挡掉。
+            // 同一台 USB 摄像头是独占设备，两路同时打开必然有一路拿不到画面。但"标识相同"
+            // 不等于"真的是同一台"：没有序列号的廉价摄像头，实例路径跟着 USB 端口走，换插口
+            // 就会换标识；而两台同型号设备同时插着时标识本来就不同。所以这里只提示、不拦截，
+            // 最终以"有没有出帧"为准（见 ScheduleSecondaryCameraFrameWatch）。
+            // 主路走网络流时不占用本地设备，这时更不该因为残留的 Moniker 把副路挡掉。
             if (!IsNetworkCameraConfigured()
                 && string.Equals(selectedMoniker, config.CameraMonikerString, StringComparison.Ordinal))
             {
-                RuntimeLog.Warn("SecondaryCamera", "副摄像头与主摄像头是同一台设备，已跳过");
-                ShowToast("副画面不能和主画面用同一台摄像头", ToastSeverity.Warning);
+                RuntimeLog.Warn("SecondaryCamera", "副摄像头与主摄像头配置为同一台设备，仍尝试启动，以实际出帧为准");
+                ShowToast("副摄像头与主摄像头是同一台设备，可能只有一路能出画面", ToastSeverity.Warning);
+            }
+
+            // 先走新后端：原生格式协商 + GPU 解码与色彩校正，与主摄同一条路径。
+            // 软件虚拟摄像头（MF 枚举不到）、驱动异常或探测不通过时再回退 DirectShow。
+            if (TryStartMediaFoundationSecondaryCamera(selectedMoniker))
+            {
+                if (!string.Equals(config.SecondaryCameraMonikerString, selectedMoniker, StringComparison.Ordinal))
+                    config.SecondaryCameraMonikerString = selectedMoniker;
                 return;
             }
 
@@ -266,7 +316,7 @@ namespace ExpressPackingMonitoring.ViewModels
             if (!string.Equals(config.SecondaryCameraMonikerString, selectedMoniker, StringComparison.Ordinal))
                 config.SecondaryCameraMonikerString = selectedMoniker;
 
-            RuntimeLog.Info("SecondaryCamera", "副摄像头已启动");
+            RuntimeLog.Info("SecondaryCamera", "副摄像头已启动（DirectShow）");
         }
 
         /// <summary>
@@ -293,6 +343,153 @@ namespace ExpressPackingMonitoring.ViewModels
             if (index < 0 || index >= devices.Count)
                 index = devices.Count > 1 ? 1 : 0;
             return devices[index].MonikerString;
+        }
+
+        /// <summary>
+        /// 副摄的 Media Foundation 启动路径，与主摄同一套：直接协商原生 YUY2/NV12，
+        /// 交给 GPU 做解码、色彩校正与缩放，不走 DirectShow 的系统转换器。
+        /// 任何一步不成立都返回 false，由调用方回退 DirectShow —— 副画面是增强项，
+        /// 绝不能因为后端问题让两路都录不了。
+        /// </summary>
+        private bool TryStartMediaFoundationSecondaryCamera(string monikerString)
+        {
+            if (Config is not { } config)
+                return false;
+            if (CameraBackendPolicy.IsMediaFoundationDisabled(config.CameraBackend))
+                return false;
+
+            try
+            {
+                using MfPlatform? platform = MfPlatform.TryStart();
+                if (platform == null)
+                    return false;
+
+                MfCaptureDevice? device = MfDeviceMatcher.FindByMoniker(
+                    monikerString,
+                    MfCaptureDevice.Enumerate());
+                if (device == null)
+                    return false;
+
+                (int width, int height) = AppConfig.ResolveSecondaryFrameSize(config.SecondaryResolutionPreset);
+                int fps = config.SecondaryFrameFps > 0
+                    ? config.SecondaryFrameFps
+                    : AppConfig.DefaultSecondaryFrameFps;
+
+                MfCaptureProbe.Result probe = MfCaptureProbe.Probe(
+                    device.SymbolicLink,
+                    width,
+                    height,
+                    fps,
+                    config.CameraColorMatrix);
+                if (CameraBackendPolicy.Decide(config.CameraBackend, probe.Usable)
+                    != CameraBackendKind.MediaFoundation)
+                {
+                    RuntimeLog.Info(
+                        "SecondaryCamera",
+                        $"副摄 Media Foundation 后端不可用（{probe.Failure}），改用 DirectShow 后端");
+                    return false;
+                }
+
+                var source = new MfCameraSource(device.SymbolicLink, width, height, fps, config.CameraColorMatrix);
+                source.FrameReady += SecondaryMfCameraSource_FrameReady;
+                source.SourceError += SecondaryMfCameraSource_SourceError;
+                if (!source.Start())
+                {
+                    source.FrameReady -= SecondaryMfCameraSource_FrameReady;
+                    source.SourceError -= SecondaryMfCameraSource_SourceError;
+                    source.Dispose();
+                    RuntimeLog.Warn(
+                        "SecondaryCamera",
+                        $"副摄 Media Foundation 探测通过但启动失败（{source.LastStartFailure}），改用 DirectShow 后端");
+                    return false;
+                }
+
+                _secondaryMfCameraSource = source;
+                RuntimeLog.Info(
+                    "SecondaryCamera",
+                    $"副摄已启动（Media Foundation）{source.ActualWidth}x{source.ActualHeight}@{source.ActualFps:F0}"
+                        + $"，格式={source.ActualFormat}，bt709={source.UsesBt709}"
+                        + $"，configured={width}x{height}@{fps}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                RuntimeLog.Warn("SecondaryCamera", $"副摄 Media Foundation 启动异常，改用 DirectShow：{ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 新后端的副帧到达。帧已经是 BGR24，所有权交给订阅方，
+        /// 不需要再做一次格式转换与克隆；后续处理与 DirectShow 路径完全一致。
+        /// </summary>
+        private void SecondaryMfCameraSource_FrameReady(object? sender, MfFrameEventArgs e)
+        {
+            Mat? frame = null;
+            try
+            {
+                frame = e.Frame;
+                if (frame == null || frame.Empty())
+                {
+                    frame?.Dispose();
+                    return;
+                }
+
+                if (Config is { SecondaryCameraRotate180: true })
+                    CameraFrameOrientation.Apply(frame, true);
+                TrySubmitCameraBarcodeFrame(frame, fromSecondaryCamera: true);
+                PublishSecondaryCameraFrame(frame);
+            }
+            catch (Exception ex)
+            {
+                frame?.Dispose();
+                RuntimeLog.Error("SecondaryCamera", "副摄 Media Foundation 帧处理失败", ex);
+            }
+        }
+
+        private void SecondaryMfCameraSource_SourceError(object? sender, MfSourceErrorEventArgs e) =>
+            RuntimeLog.Warn(
+                "SecondaryCamera",
+                $"副摄 Media Foundation 采集错误：{e.Description}（deviceLost={e.DeviceLost}）");
+
+        /// <summary>
+        /// 启动后观察一段时间：打开设备成功不等于有画面。副摄最常见的失败形态是
+        /// "与主摄是同一台设备被独占""被其它程序占用""网络地址挂着不存在的相机"，
+        /// 这些都不会抛异常。这里只提示用户、不动主路、也不自动换设备 ——
+        /// 换了设备反而可能把用户装好的面单机位换成一台拍不到面单的相机。
+        /// </summary>
+        private void ScheduleSecondaryCameraFrameWatch()
+        {
+            CancellationTokenSource? previous = _secondaryFrameWatchCts;
+            if (previous != null)
+            {
+                try { previous.Cancel(); } catch { }
+                try { previous.Dispose(); } catch { }
+            }
+
+            var cts = new CancellationTokenSource();
+            _secondaryFrameWatchCts = cts;
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(6), cts.Token).ConfigureAwait(false);
+                    if (cts.IsCancellationRequested || HasSecondaryCameraFrame || !IsSecondaryCameraRunning)
+                        return;
+
+                    RuntimeLog.Warn(
+                        "SecondaryCamera",
+                        "副摄像头启动后 6 秒没有画面：可能与主摄是同一台设备被独占、被其它程序占用，或地址不可用");
+                    System.Windows.Threading.Dispatcher? dispatcher = System.Windows.Application.Current?.Dispatcher;
+                    dispatcher?.BeginInvoke(new Action(() =>
+                        ShowToast("副摄像头没有画面，请检查它是否与主摄冲突、被其它程序占用或地址不可用", ToastSeverity.Warning)));
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception ex)
+                {
+                    RuntimeLog.Warn("SecondaryCamera", $"副摄出帧观察失败：{ex.Message}");
+                }
+            });
         }
 
         private void SecondaryVideoSource_NewFrame(object? sender, NewFrameEventArgs eventArgs)

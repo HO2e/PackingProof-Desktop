@@ -143,6 +143,15 @@ namespace ExpressPackingMonitoring.Config
         /// <summary>智能特写停留时间的当前默认值（秒）</summary>
         public const double DefaultZoomDurationSeconds = 2.5;
 
+        /// <summary>副画面默认采集规格。面单特写是静物，720p 足够看清字样。</summary>
+        public const string DefaultSecondaryResolutionPreset = "720p";
+
+        /// <summary>副画面默认帧率。面单是静物，低帧率既够用又把两路同时采集的负载压到最低。</summary>
+        public const int DefaultSecondaryFrameFps = 10;
+
+        public const int MinimumSecondaryFrameFps = 1;
+        public const int MaximumSecondaryFrameFps = 60;
+
         /// <summary>副画面宽度占主画面的默认比例</summary>
         public const double DefaultSecondaryOverlayWidthRatio = 0.25;
 
@@ -233,6 +242,10 @@ namespace ExpressPackingMonitoring.Config
         public string SecondaryNetworkCameraUrl { get; set; } = "";
         public string SecondaryNetworkCameraRtspTransport { get; set; } = "tcp";
         public bool SecondaryCameraRotate180 { get; set; }
+        // 副画面（第二路摄像头）的采集规格。面单特写是静物，默认 720p@10：
+        // 既保证面单清晰，又让两路同时采集的带宽、解码与合成成本都可控。
+        public string SecondaryResolutionPreset { get; set; } = DefaultSecondaryResolutionPreset;
+        public int SecondaryFrameFps { get; set; } = DefaultSecondaryFrameFps;
         // 副画面宽度占主画面的比例，以及距右下角的留白。
         public double SecondaryCameraOverlayWidthRatio { get; set; } = DefaultSecondaryOverlayWidthRatio;
         public int SecondaryCameraOverlayMargin { get; set; } = DefaultSecondaryOverlayMargin;
@@ -740,6 +753,26 @@ namespace ExpressPackingMonitoring.Config
                 changed = true;
             }
 
+            string normalizedSecondaryResolution = NormalizeSecondaryResolutionPreset(config.SecondaryResolutionPreset);
+            if (!string.Equals(
+                    config.SecondaryResolutionPreset,
+                    normalizedSecondaryResolution,
+                    StringComparison.Ordinal))
+            {
+                config.SecondaryResolutionPreset = normalizedSecondaryResolution;
+                changed = true;
+            }
+
+            int normalizedSecondaryFps = Math.Clamp(
+                config.SecondaryFrameFps > 0 ? config.SecondaryFrameFps : DefaultSecondaryFrameFps,
+                MinimumSecondaryFrameFps,
+                MaximumSecondaryFrameFps);
+            if (config.SecondaryFrameFps != normalizedSecondaryFps)
+            {
+                config.SecondaryFrameFps = normalizedSecondaryFps;
+                changed = true;
+            }
+
             if (normalizedPreset == DeploymentPresets.RecordingWorkstation
                 && config.BackupConnectionSchemaVersion < CurrentBackupConnectionSchemaVersion)
             {
@@ -1185,6 +1218,27 @@ namespace ExpressPackingMonitoring.Config
                 ? CameraBarcodeSourceSecondary
                 : CameraBarcodeSourcePrimary;
 
+        /// <summary>
+        /// 副画面采集规格预设归一：只认白名单，写坏或旧配置一律回落到 720p。
+        /// 这里不做"猜一个相近值"，非法值静默变成默认规格比卡在非法尺寸上更容易解释。
+        /// </summary>
+        internal static string NormalizeSecondaryResolutionPreset(string? preset) =>
+            preset?.Trim().ToLowerInvariant() switch
+            {
+                "480p" => "480p",
+                "1080p" => "1080p",
+                _ => DefaultSecondaryResolutionPreset,
+            };
+
+        /// <summary>把副画面规格预设解析成实际采集宽高。</summary>
+        internal static (int Width, int Height) ResolveSecondaryFrameSize(string? preset) =>
+            NormalizeSecondaryResolutionPreset(preset) switch
+            {
+                "480p" => (640, 480),
+                "1080p" => (1920, 1080),
+                _ => (1280, 720),
+            };
+
         internal static string NormalizeCameraSourceKind(string? kind, string? networkCameraUrl)
         {
             if (string.Equals(kind, "network", StringComparison.OrdinalIgnoreCase))
@@ -1251,6 +1305,11 @@ namespace ExpressPackingMonitoring.Config
                     next.SecondaryCameraMonikerString,
                     StringComparison.Ordinal)
                 || current.SecondaryCameraRotate180 != next.SecondaryCameraRotate180
+                || !string.Equals(
+                    NormalizeSecondaryResolutionPreset(current.SecondaryResolutionPreset),
+                    NormalizeSecondaryResolutionPreset(next.SecondaryResolutionPreset),
+                    StringComparison.Ordinal)
+                || current.SecondaryFrameFps != next.SecondaryFrameFps
                 || !string.Equals(currentSecondaryKind, nextSecondaryKind, StringComparison.Ordinal)
                 || !string.Equals(currentSecondaryUrl, nextSecondaryUrl, StringComparison.Ordinal)
                 || (currentSecondaryKind == "network"

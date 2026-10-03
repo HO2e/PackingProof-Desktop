@@ -71,6 +71,55 @@ public sealed class SecondaryCameraConfigurationTests
         Assert.Equal("udp", config.SecondaryNetworkCameraRtspTransport);
     }
 
+    /// <summary>
+    /// 副画面规格预设只认白名单，写坏或旧配置一律回到 720p：
+    /// 静默换成默认规格，比卡在一个非法尺寸上更容易解释。
+    /// </summary>
+    [Theory]
+    [InlineData(null, "720p")]
+    [InlineData("", "720p")]
+    [InlineData("480p", "480p")]
+    [InlineData("720p", "720p")]
+    [InlineData("1080P", "1080p")]
+    [InlineData("2160p", "720p")]
+    public void NormalizeSecondaryResolutionPreset_FallsBackTo720p(string? raw, string expected) =>
+        Assert.Equal(expected, AppConfig.NormalizeSecondaryResolutionPreset(raw));
+
+    [Fact]
+    public void ResolveSecondaryFrameSize_MapsPresets()
+    {
+        Assert.Equal((640, 480), AppConfig.ResolveSecondaryFrameSize("480p"));
+        Assert.Equal((1280, 720), AppConfig.ResolveSecondaryFrameSize("720p"));
+        Assert.Equal((1920, 1080), AppConfig.ResolveSecondaryFrameSize("1080p"));
+        Assert.Equal((1280, 720), AppConfig.ResolveSecondaryFrameSize("不属于任何预设"));
+    }
+
+    /// <summary>副画面帧率是独立设置项，必须被夹到合法区间，0 回落到默认值。</summary>
+    [Fact]
+    public void NormalizeAfterLoad_ClampsSecondaryFrameRate()
+    {
+        var config = new AppConfig { SecondaryFrameFps = 0 };
+        AppConfig.NormalizeAfterLoad(config);
+        Assert.Equal(AppConfig.DefaultSecondaryFrameFps, config.SecondaryFrameFps);
+
+        config = new AppConfig { SecondaryFrameFps = 999 };
+        AppConfig.NormalizeAfterLoad(config);
+        Assert.Equal(AppConfig.MaximumSecondaryFrameFps, config.SecondaryFrameFps);
+    }
+
+    /// <summary>换副画面规格必须重建采集会话，否则设置改了不生效。</summary>
+    [Fact]
+    public void RequiresCameraRestart_ReactsToSecondaryCaptureFormat()
+    {
+        var current = new AppConfig();
+        Assert.True(AppConfig.RequiresCameraRestart(
+            current,
+            new AppConfig { SecondaryResolutionPreset = "1080p" }));
+        Assert.True(AppConfig.RequiresCameraRestart(
+            current,
+            new AppConfig { SecondaryFrameFps = 30 }));
+    }
+
     /// <summary>改了副路就必须重启采集，否则设置里换设备不会生效。</summary>
     [Fact]
     public void RequiresCameraRestart_ReactsToSecondaryCameraChanges()
@@ -197,6 +246,8 @@ public sealed class SecondaryCameraConfigurationTests
         Assert.Contains("{Binding Config.SecondaryCameraSourceKind", settings, StringComparison.Ordinal);
         Assert.Contains("{Binding Config.SecondaryNetworkCameraUrl", settings, StringComparison.Ordinal);
         Assert.Contains("{Binding Config.SecondaryCameraOverlayWidthRatio", settings, StringComparison.Ordinal);
+        Assert.Contains("{Binding Config.SecondaryResolutionPreset", settings, StringComparison.Ordinal);
+        Assert.Contains("{Binding Config.SecondaryFrameFps", settings, StringComparison.Ordinal);
     }
 
     /// <summary>第二路独立采集：不能占用主路的帧槽与会话闸门。</summary>

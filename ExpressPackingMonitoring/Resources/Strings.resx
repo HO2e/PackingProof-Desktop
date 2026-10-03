@@ -1460,6 +1460,10 @@
   <data name="来源选网络时填这里的地址，与主画面地址不能相同" xml:space="preserve"><value>Fill this in for a network source; it must differ from the main view address</value></data>
   <data name="副画面大小" xml:space="preserve"><value>Secondary view size</value></data>
   <data name="副画面宽度占主画面的比例，越大越占画面" xml:space="preserve"><value>Width of the secondary view relative to the main view</value></data>
+  <data name="副画面采集规格" xml:space="preserve"><value>Secondary view capture format</value></data>
+  <data name="面单特写是静物，720P 就够；两路同时采集时规格越低越稳" xml:space="preserve"><value>A label close-up is static, so 720P is enough; lower formats keep two simultaneous captures more stable</value></data>
+  <data name="副画面帧率" xml:space="preserve"><value>Secondary view frame rate</value></data>
+  <data name="面单放好后不动，10 帧足够识别与取证" xml:space="preserve"><value>The label stays still, so 10 fps is enough for both recognition and evidence</value></data>
   <data name="按住拖动可调整副画面位置" xml:space="preserve"><value>Drag to move the secondary view</value></data>
   <data name="自动识别面单用哪一路" xml:space="preserve"><value>Which view auto-detects labels</value></data>
   <data name="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面" xml:space="preserve"><value>Switch to the secondary view when it is aimed at the label; falls back to the main view when it has no picture</value></data>

@@ -1462,6 +1462,10 @@
   <data name="来源选网络时填这里的地址，与主画面地址不能相同" xml:space="preserve"><value>来源选网络时填这里的地址，与主画面地址不能相同</value></data>
   <data name="副画面大小" xml:space="preserve"><value>副画面大小</value></data>
   <data name="副画面宽度占主画面的比例，越大越占画面" xml:space="preserve"><value>副画面宽度占主画面的比例，越大越占画面</value></data>
+  <data name="副画面采集规格" xml:space="preserve"><value>副画面采集规格</value></data>
+  <data name="面单特写是静物，720P 就够；两路同时采集时规格越低越稳" xml:space="preserve"><value>面单特写是静物，720P 就够；两路同时采集时规格越低越稳</value></data>
+  <data name="副画面帧率" xml:space="preserve"><value>副画面帧率</value></data>
+  <data name="面单放好后不动，10 帧足够识别与取证" xml:space="preserve"><value>面单放好后不动，10 帧足够识别与取证</value></data>
   <data name="按住拖动可调整副画面位置" xml:space="preserve"><value>按住拖动可调整副画面位置</value></data>
   <data name="自动识别面单用哪一路" xml:space="preserve"><value>自动识别面单用哪一路</value></data>
   <data name="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面" xml:space="preserve"><value>副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面</value></data>

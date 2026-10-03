@@ -1326,6 +1326,49 @@
                                             <ColumnDefinition Width="260"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Text="副画面采集规格" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="面单特写是静物，720P 就够；两路同时采集时规格越低越稳"
+                                                       Style="{StaticResource FieldHintStyle}"/>
+                                        </StackPanel>
+                                        <ComboBox x:Name="SecondaryResolutionPresetComboBox"
+                                                  Grid.Column="2"
+                                                  SelectedValuePath="Tag"
+                                                  SelectedValue="{Binding Config.SecondaryResolutionPreset, Mode=TwoWay}">
+                                            <ComboBoxItem Tag="480p" Content="480P（640×480）"/>
+                                            <ComboBoxItem Tag="720p" Content="720P（1280×720）"/>
+                                            <ComboBoxItem Tag="1080p" Content="1080P（1920×1080）"/>
+                                        </ComboBox>
+                                    </Grid>
+
+                                    <Grid Style="{StaticResource SettingRowStyle}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="260"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Text="副画面帧率" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="面单放好后不动，10 帧足够识别与取证"
+                                                       Style="{StaticResource FieldHintStyle}"/>
+                                        </StackPanel>
+                                        <ComboBox x:Name="SecondaryFrameFpsComboBox"
+                                                  Grid.Column="2"
+                                                  SelectedValuePath="Tag"
+                                                  SelectedValue="{Binding Config.SecondaryFrameFps, Mode=TwoWay}">
+                                            <ComboBoxItem Tag="5" Content="5 帧/秒"/>
+                                            <ComboBoxItem Tag="10" Content="10 帧/秒"/>
+                                            <ComboBoxItem Tag="15" Content="15 帧/秒"/>
+                                            <ComboBoxItem Tag="30" Content="30 帧/秒"/>
+                                        </ComboBox>
+                                    </Grid>
+
+                                    <Grid Style="{StaticResource SettingRowStyle}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="260"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,16,0">
                                             <TextBlock Text="自动识别面单用哪一路" Style="{StaticResource FieldLabelStyle}"/>
                                             <TextBlock Text="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面"
                                                        Style="{StaticResource FieldHintStyle}"/>

@@ -1460,6 +1460,10 @@
   <data name="来源选网络时填这里的地址，与主画面地址不能相同" xml:space="preserve"><value>ソースがネットワークのときに入力します。メイン画面のアドレスとは別のものにしてください</value></data>
   <data name="副画面大小" xml:space="preserve"><value>サブ画面のサイズ</value></data>
   <data name="副画面宽度占主画面的比例，越大越占画面" xml:space="preserve"><value>サブ画面の幅がメイン画面に占める割合</value></data>
+  <data name="副画面采集规格" xml:space="preserve"><value>サブ画面の取り込み解像度</value></data>
+  <data name="面单特写是静物，720P 就够；两路同时采集时规格越低越稳" xml:space="preserve"><value>伝票の接写は静止画なので 720P で十分です。同時に 2 路取り込む場合は解像度を下げるほど安定します</value></data>
+  <data name="副画面帧率" xml:space="preserve"><value>サブ画面のフレームレート</value></data>
+  <data name="面单放好后不动，10 帧足够识别与取证" xml:space="preserve"><value>伝票を置いたら動かないため、10fps で認識と証跡に十分です</value></data>
   <data name="按住拖动可调整副画面位置" xml:space="preserve"><value>ドラッグしてサブ画面の位置を調整できます</value></data>
   <data name="自动识别面单用哪一路" xml:space="preserve"><value>伝票の自動認識に使う映像</value></data>
   <data name="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面" xml:space="preserve"><value>サブ画面を伝票に向けている場合はサブ画面で認識できます。サブ画面に映像がないときはメイン画面に戻ります</value></data>
