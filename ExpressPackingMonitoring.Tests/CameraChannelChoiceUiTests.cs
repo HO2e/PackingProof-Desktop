@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text;
 using System.Windows;
@@ -121,6 +122,39 @@ public sealed class CameraChannelChoiceUiTests
             Assert.Equal(2, card.DeviceChoices.Count(choice => choice.Kind == "usb"));
             Assert.Contains(card.DeviceChoices, choice => choice.Moniker == "moniker-c");
             Assert.DoesNotContain(card.DeviceChoices, choice => choice.Moniker == "moniker-b");
+        });
+    }
+
+    /// <summary>
+    /// 换设备时档位列表必须**就地更新**（集合实例不变）。
+    /// 换实例会让下拉先清空选中项再靠绑定恢复，现场就是"选了摄像头，分辨率/帧率
+    /// 要切一下 tab 才刷新"。
+    /// </summary>
+    [Fact]
+    public void PickingDevice_UpdatesFormatListsInPlace()
+    {
+        RunOnStaThread(() =>
+        {
+            AppConfig config = CreateConfig(mainMoniker: "moniker-a", channelMoniker: "");
+            SettingsWindow window = CreateWindow(config);
+            PrepareWindow(window);
+            OverlayChannelCard card = window.OverlayCameraCards[0];
+
+            ObservableCollection<CameraResolutionOption> resolutions = card.Resolutions;
+            ObservableCollection<FpsOption> fpsOptions = card.FpsOptions;
+            Assert.NotEmpty(resolutions);
+            Assert.NotEmpty(fpsOptions);
+
+            card.SelectedDevice = card.DeviceChoices.First(choice => choice.Moniker == "moniker-b");
+
+            // 同一个集合实例：下拉不会被换 ItemsSource 清一遍，档位与选中项当场就是新的。
+            Assert.Same(resolutions, card.Resolutions);
+            Assert.Same(fpsOptions, card.FpsOptions);
+            Assert.NotEmpty(card.Resolutions);
+            Assert.NotEmpty(card.FpsOptions);
+            Assert.NotNull(card.SelectedResolution);
+            Assert.NotNull(card.SelectedFps);
+            Assert.Equal("moniker-b", config.CameraChannels[0].MonikerString);
         });
     }
 

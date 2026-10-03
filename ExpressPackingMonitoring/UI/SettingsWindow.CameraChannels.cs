@@ -23,8 +23,6 @@ namespace ExpressPackingMonitoring.UI
         private readonly SettingsWindow _owner;
         private readonly int _index;
         private IReadOnlyList<CameraDeviceChoice> _deviceChoices = Array.Empty<CameraDeviceChoice>();
-        private IReadOnlyList<CameraResolutionOption> _resolutions = Array.Empty<CameraResolutionOption>();
-        private IReadOnlyList<FpsOption> _fpsOptions = Array.Empty<FpsOption>();
         private CameraResolutionOption? _selectedResolution;
         private FpsOption? _selectedFps;
 
@@ -121,7 +119,12 @@ namespace ExpressPackingMonitoring.UI
             }
         }
 
-        public IReadOnlyList<CameraResolutionOption> Resolutions => _resolutions;
+        /// <summary>
+        /// 这一路能选的分辨率。用可观察集合、**实例始终不换**：换设备时只改内容。
+        /// 每次换新列表实例会让下拉先清空选中项、再靠绑定恢复，现场表现就是
+        /// "选了摄像头，分辨率和帧率要切一下 tab 才更新"。
+        /// </summary>
+        public ObservableCollection<CameraResolutionOption> Resolutions { get; } = new();
 
         public CameraResolutionOption? SelectedResolution
         {
@@ -139,7 +142,8 @@ namespace ExpressPackingMonitoring.UI
             }
         }
 
-        public IReadOnlyList<FpsOption> FpsOptions => _fpsOptions;
+        /// <summary>这一路能选的帧率。同样保持实例不变，只更新内容。</summary>
+        public ObservableCollection<FpsOption> FpsOptions { get; } = new();
 
         public FpsOption? SelectedFps
         {
@@ -197,15 +201,24 @@ namespace ExpressPackingMonitoring.UI
                 fpsOptions.Insert(0, selectedFps);
             }
 
-            _resolutions = resolutions;
-            _selectedResolution = selectedResolution;
-            _fpsOptions = fpsOptions;
-            _selectedFps = selectedFps;
+            ReplaceIfChanged(Resolutions, resolutions);
+            ReplaceIfChanged(FpsOptions, fpsOptions);
 
-            Raise(nameof(Resolutions));
+            _selectedResolution = selectedResolution;
+            _selectedFps = selectedFps;
             Raise(nameof(SelectedResolution));
-            Raise(nameof(FpsOptions));
             Raise(nameof(SelectedFps));
+        }
+
+        /// <summary>把可观察集合更新成新内容；内容一样时不动，避免下拉无谓地清一次选中项。</summary>
+        private static void ReplaceIfChanged<T>(ObservableCollection<T> target, IReadOnlyList<T> source)
+        {
+            if (target.Count == source.Count && target.SequenceEqual(source))
+                return;
+
+            target.Clear();
+            foreach (T item in source)
+                target.Add(item);
         }
 
         /// <summary>保存前把界面上选中的档位落回配置（下拉刚改完还没失焦时也能写进去）。</summary>
