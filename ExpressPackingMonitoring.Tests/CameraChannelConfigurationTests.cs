@@ -1,5 +1,7 @@
 using System.Text;
 using ExpressPackingMonitoring.Config;
+using ExpressPackingMonitoring.Services;
+using ExpressPackingMonitoring.ViewModels;
 using Xunit;
 
 namespace ExpressPackingMonitoring.Tests;
@@ -354,7 +356,7 @@ public sealed class CameraChannelConfigurationTests
     {
         string scanner = ReadProjectFile(Path.Combine("ViewModels", "MainViewModel.Scanner.cs"));
 
-        Assert.Contains("GetOverlayGuideGeometry(barcodeChannel)", scanner, StringComparison.Ordinal);
+        Assert.Contains("GetOverlayGuideGeometry(barcodeChannel.Number)", scanner, StringComparison.Ordinal);
         Assert.Contains("forceDecode: sourceChannelNumber > 0", scanner, StringComparison.Ordinal);
 
         string channels = ReadProjectFile(Path.Combine("ViewModels", "MainViewModel.OverlayChannels.cs"));
@@ -582,6 +584,35 @@ public sealed class CameraChannelConfigurationTests
         Assert.Equal(AppConfig.DefaultOverlayGuideRatio, channel.BarcodeGuideHeightRatio);
         Assert.Equal(0.0, channel.BarcodeGuideOffsetX);
         Assert.Equal(0.0, channel.BarcodeGuideOffsetY);
+    }
+
+    /// <summary>
+    /// 取景框没调过时按"短边居中方形"算：默认就是 1:1 裁剪，这块既是要显示的画面、也是识别范围。
+    /// 调过（比例不再是默认值）以后就按用户存的比例走，四个角可以自由改大小。
+    /// </summary>
+    [Fact]
+    public void DefaultOverlayGuide_IsACenteredSquareCrop()
+    {
+        CameraBarcodeGuideGeometry guide = MainViewModel.ResolveOverlayGuideGeometry(
+            new CameraChannelConfig(),
+            1280,
+            720);
+
+        Assert.Equal(AppConfig.DefaultOverlayGuideRatio * 720 / 1280, guide.WidthRatio, 3);
+        Assert.Equal(AppConfig.DefaultOverlayGuideRatio, guide.HeightRatio, 3);
+        // 宽高按像素算一样长 = 1:1
+        Assert.Equal(guide.WidthRatio * 1280, guide.HeightRatio * 720, 1);
+        Assert.Equal(0.0, guide.OffsetX);
+        Assert.Equal(0.0, guide.OffsetY);
+
+        var touched = new CameraChannelConfig
+        {
+            BarcodeGuideWidthRatio = 0.5,
+            BarcodeGuideHeightRatio = 0.4
+        };
+        CameraBarcodeGuideGeometry stored = MainViewModel.ResolveOverlayGuideGeometry(touched, 1280, 720);
+        Assert.Equal(0.5, stored.WidthRatio, 3);
+        Assert.Equal(0.4, stored.HeightRatio, 3);
     }
 
     /// <summary>

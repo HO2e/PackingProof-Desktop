@@ -42,17 +42,20 @@ namespace ExpressPackingMonitoring.ViewModels
                 IsCameraBarcodeGuideLocked);
 
         /// <summary>
-        /// 识别框当前能否在主界面拖动。摄像头休眠时识别框本来就不显示，扫码放大期间
+        /// 识别框当前能否拖动。摄像头休眠时识别框本来就不显示，扫码放大期间
         /// 预览画面已被裁切、和取景用的整帧比例对不上，这两种状态下不接受拖动。
+        ///
+        /// 进入某一幅副画面的取景编辑屏时一定可以拖：这一屏就是用来调裁剪的，
+        /// 不该再受主界面那个小锁、或"摄像头自动识别面单"开关的影响。
         /// </summary>
         public bool IsCameraBarcodeGuideEditable =>
-            Config?.EnableCameraBarcodeRecognition == true
-            && !IsCameraBarcodeGuideLocked
-            && !IsCameraSleeping
+            !IsCameraSleeping
             && !IsZoomingActive
-            // 识别输入来自叠加画面时，框只是画中画上的状态反馈；
-            // 那一路的取景要在"点画中画"打开的编辑屏里改，避免在主画面上误拖框改错几何。
-            && (!ShouldUseOverlayChannelForBarcode || IsEditingOverlayPreview);
+            && (IsEditingOverlayPreview
+                // 主界面：识别开着、没锁、而且识别输入不是叠加画面（否则那一路的取景在编辑屏里改）
+                || (Config?.EnableCameraBarcodeRecognition == true
+                    && !IsCameraBarcodeGuideLocked
+                    && !ShouldUseOverlayChannelForBarcode));
 
         /// <summary>当前生效的识别框几何</summary>
         /// <remarks>

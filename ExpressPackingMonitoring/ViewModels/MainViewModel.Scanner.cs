@@ -328,7 +328,7 @@ namespace ExpressPackingMonitoring.ViewModels
                     // 叠加画面用那一路自己的取景框：主画面那套比例是按打包台构图调的，
                     // 原样套过去会错位；那一路的取景框与 PiP 显示的是同一块 ROI，所画即所识别。
                     ActiveBarcodeOverlayChannel is { } barcodeChannel
-                        ? GetOverlayGuideGeometry(barcodeChannel)
+                        ? GetOverlayGuideGeometry(barcodeChannel.Number)
                         : new CameraBarcodeGuideGeometry(
                             Config.CameraBarcodeGuideWidthRatio,
                             Config.CameraBarcodeGuideHeightRatio,

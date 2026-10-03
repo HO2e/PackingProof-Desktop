@@ -752,7 +752,7 @@ namespace ExpressPackingMonitoring.ViewModels
                     // 识别框就是裁剪范围：画中画只显示框内那块，识别也只解这块。
                     // 与主摄画框用的是同一个换算：几何 -> 画面上的矩形。
                     System.Windows.Rect guide = CameraBarcodeGuideLayout.ToDisplayRect(
-                        GetOverlayGuideGeometry(channel),
+                        ResolveOverlayGuideGeometry(channel.Config, overlay.Width, overlay.Height),
                         new System.Windows.Rect(0, 0, overlay.Width, overlay.Height));
                     Rect cropRect = new Rect(
                             (int)Math.Round(guide.X),
@@ -834,17 +834,48 @@ namespace ExpressPackingMonitoring.ViewModels
         /// 一路叠加画面的识别框：与主摄同一套定义（宽高占比 + 居中偏移），在预览的画中画上直接拖。
         /// 它只决定识别哪一块，不裁剪画面内容。
         /// </summary>
-        private CameraBarcodeGuideGeometry GetOverlayGuideGeometry(OverlayChannel channel) =>
-            new(
-                channel.Config.BarcodeGuideWidthRatio,
-                channel.Config.BarcodeGuideHeightRatio,
-                channel.Config.BarcodeGuideOffsetX,
-                channel.Config.BarcodeGuideOffsetY);
+        private CameraBarcodeGuideGeometry ResolveOverlayGuideGeometry(OverlayChannel channel) =>
+            channel.OverlaySourceSize is { Width: > 0, Height: > 0 } size
+                ? ResolveOverlayGuideGeometry(channel.Config, size.Width, size.Height)
+                : new CameraBarcodeGuideGeometry(
+                    channel.Config.BarcodeGuideWidthRatio,
+                    channel.Config.BarcodeGuideHeightRatio,
+                    channel.Config.BarcodeGuideOffsetX,
+                    channel.Config.BarcodeGuideOffsetY);
 
-        /// <summary>按通道号取识别框几何；通道不存在时退回整幅。</summary>
+        /// <summary>
+        /// 取景框几何：用户没调过（还是默认比例 + 居中）时按"短边居中方形"算 ——
+        /// 也就是默认 1:1 裁剪，这块既是要显示的画面、也是识别范围；
+        /// 调过以后按存下来的比例走，四个角可以自由改大小。
+        /// </summary>
+        internal static CameraBarcodeGuideGeometry ResolveOverlayGuideGeometry(
+            CameraChannelConfig channel,
+            int frameWidth,
+            int frameHeight)
+        {
+            bool untouched =
+                Math.Abs(channel.BarcodeGuideWidthRatio - AppConfig.DefaultOverlayGuideRatio) < 0.001
+                && Math.Abs(channel.BarcodeGuideHeightRatio - AppConfig.DefaultOverlayGuideRatio) < 0.001
+                && Math.Abs(channel.BarcodeGuideOffsetX) < 0.001
+                && Math.Abs(channel.BarcodeGuideOffsetY) < 0.001;
+
+            if (untouched && frameWidth > 0 && frameHeight > 0)
+            {
+                double side = Math.Min(frameWidth, frameHeight) * AppConfig.DefaultOverlayGuideRatio;
+                return new CameraBarcodeGuideGeometry(side / frameWidth, side / frameHeight, 0, 0);
+            }
+
+            return new CameraBarcodeGuideGeometry(
+                channel.BarcodeGuideWidthRatio,
+                channel.BarcodeGuideHeightRatio,
+                channel.BarcodeGuideOffsetX,
+                channel.BarcodeGuideOffsetY);
+        }
+
+        /// <summary>按通道号取取景框几何；通道不存在时退回整幅。</summary>
         internal CameraBarcodeGuideGeometry GetOverlayGuideGeometry(int channelNumber) =>
             FindOverlayChannel(channelNumber) is { } channel
-                ? GetOverlayGuideGeometry(channel)
+                ? ResolveOverlayGuideGeometry(channel)
                 : new CameraBarcodeGuideGeometry(1.0, 1.0, 0, 0);
 
         /// <summary>识别来源选了某一路叠加画面、且那一路已经出帧时，识别框画在画中画上。</summary>
@@ -852,9 +883,12 @@ namespace ExpressPackingMonitoring.ViewModels
 
         /// <summary>当前识别框几何（与主摄同一套语义）。</summary>
         internal CameraBarcodeGuideGeometry CurrentOverlayGuideGeometry =>
-            ShouldUseOverlayChannelForBarcode && ActiveBarcodeOverlayChannel is { } channel
-                ? GetOverlayGuideGeometry(channel)
-                : new CameraBarcodeGuideGeometry(1.0, 1.0, 0, 0);
+            // 正在编辑取景时用被编辑那一路的几何：编辑屏就是用来调它的，与识别来源选没选它无关。
+            FindOverlayChannel(_editingOverlayChannelNumber) is { } editing
+                ? ResolveOverlayGuideGeometry(editing)
+                : ActiveBarcodeOverlayChannel is { } active
+                    ? ResolveOverlayGuideGeometry(active)
+                    : new CameraBarcodeGuideGeometry(1.0, 1.0, 0, 0);
 
         /// <summary>是否正在编辑某一路叠加画面的取景。</summary>
         public bool IsEditingOverlayPreview { get; private set; }
@@ -1107,7 +1141,7 @@ namespace ExpressPackingMonitoring.ViewModels
             // 画中画显示的是识别框内那块，落位必须按裁剪后的尺寸与比例算，
             // 否则拖动框会跟画面错位（这正是之前"框和画面对不上"的来源）。
             System.Windows.Rect guide = CameraBarcodeGuideLayout.ToDisplayRect(
-                GetOverlayGuideGeometry(channel),
+                ResolveOverlayGuideGeometry(channel.Config, sourceWidth, sourceHeight),
                 new System.Windows.Rect(0, 0, sourceWidth, sourceHeight));
             int croppedWidth = Math.Max(1, (int)Math.Round(guide.Width));
             int croppedHeight = Math.Max(1, (int)Math.Round(guide.Height));
