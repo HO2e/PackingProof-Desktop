@@ -294,7 +294,17 @@ namespace ExpressPackingMonitoring.ViewModels
         private string _cameraBarcodeStatusText = "将面单条形码放入框内";
         private bool _isCameraBarcodeCandidate;
         private bool _isCameraBarcodeConfirmed;
-        public string CameraBarcodeStatusText { get => _cameraBarcodeStatusText; private set => SetProperty(ref _cameraBarcodeStatusText, value); }
+        /// <summary>
+        /// 框旁边那条提示。副摄取景编辑态下说的是"这一屏在干什么、怎么退出"，
+        /// 不能再沿用面单识别那条文案，否则用户看不到任何关于当前操作的提示。
+        /// </summary>
+        public string CameraBarcodeStatusText
+        {
+            get => IsEditingSecondaryCameraPreview
+                ? "拖动框调整副摄取景，点完成或按 Esc 退出"
+                : _cameraBarcodeStatusText;
+            private set => SetProperty(ref _cameraBarcodeStatusText, value);
+        }
         public bool IsCameraBarcodeCandidate { get => _isCameraBarcodeCandidate; private set => SetProperty(ref _isCameraBarcodeCandidate, value); }
         public bool IsCameraBarcodeConfirmed { get => _isCameraBarcodeConfirmed; private set => SetProperty(ref _isCameraBarcodeConfirmed, value); }
         public bool IsCameraBarcodeRecognitionEnabled => Config?.EnableCameraBarcodeRecognition == true;

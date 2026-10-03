@@ -49,7 +49,10 @@ namespace ExpressPackingMonitoring.ViewModels
             Config?.EnableCameraBarcodeRecognition == true
             && !IsCameraBarcodeGuideLocked
             && !IsCameraSleeping
-            && !IsZoomingActive;
+            && !IsZoomingActive
+            // 识别输入来自副摄时，框只是画中画上的状态反馈；
+            // 副摄的取景要在"点画中画"打开的编辑屏里改，避免在主画面上误拖框改错几何。
+            && (!ShouldUseSecondaryCameraForBarcode || IsEditingSecondaryCameraPreview);
 
         /// <summary>当前生效的识别框几何</summary>
         /// <remarks>

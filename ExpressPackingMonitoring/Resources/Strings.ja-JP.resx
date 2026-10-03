@@ -559,6 +559,7 @@
   <data name="4. 扫码枪（可选）" xml:space="preserve"><value>4. バーコードスキャナー（任意）</value></data>
   <data name="将面单条形码放入引导框，可同时测试摄像头画面和自动识别" xml:space="preserve"><value>送り状のバーコードをガイド枠に入れると、カメラ映像と自動認識を同時にテストできます</value></data>
   <data name="将面单条形码放入框内" xml:space="preserve"><value>送り状のバーコードを枠内に入れてください</value></data>
+  <data name="拖动框调整副摄取景，点完成或按 Esc 退出" xml:space="preserve"><value>枠をドラッグして副カメラの構図を調整し、完了または Esc で終了します</value></data>
   <data name="扫码枪（可选）" xml:space="preserve"><value>バーコードスキャナー（任意）</value></data>
   <data name="没有扫码枪可直接进入下一步；如需使用，扫码枪可作为摄像头识别的后备方案在这里测试" xml:space="preserve"><value>スキャナーがなくても次へ進めます。使用する場合は、カメラ認識の予備としてここでテストできます</value></data>
   <data name="点击任意位置唤醒，再将面单放入识别框" xml:space="preserve"><value>任意の場所をクリックして復帰させ、送り状を認識枠に入れてください</value></data>

@@ -234,7 +234,21 @@ namespace ExpressPackingMonitoring.UI
                 _lastMouseActivityNotifyAt = now;
                 (DataContext as MainViewModel)?.NotifyUserActivity();
             };
-            PreviewKeyDown += (s, e) => (DataContext as MainViewModel)?.NotifyUserActivity();
+            PreviewKeyDown += (s, e) =>
+            {
+                (DataContext as MainViewModel)?.NotifyUserActivity();
+
+                // 副摄取景编辑时必须有一条可靠的退出路径：Esc 与"完成"等效。
+                if (e.Key == Key.Escape
+                    && DataContext is MainViewModel vm
+                    && vm.IsEditingSecondaryCameraPreview)
+                {
+                    vm.ExitSecondaryCameraPreviewEdit();
+                    UpdateSecondaryOverlayThumb(vm);
+                    UpdateCameraBarcodeGuide(vm);
+                    e.Handled = true;
+                }
+            };
             Loaded += (s, e) => {
                 ScanInputTextBox.Focus();
                 if (DataContext is MainViewModel vm)
@@ -255,8 +269,12 @@ namespace ExpressPackingMonitoring.UI
                         else if (args.PropertyName == nameof(MainViewModel.SecondaryOverlayPlacementVersion))
                         {
                             // 副画面在帧里的落位变了（改裁剪、进出取景编辑、拖动大小/位置）：
-                            // 拖动框必须跟着重摆，否则会停在上一帧的位置，和画面对不上。
-                            Dispatcher.BeginInvoke(new Action(() => UpdateSecondaryOverlayThumb(vm)));
+                            // 拖动框必须跟着重摆；识别框贴在画中画上时也要一起重摆，否则反馈框会错位。
+                            Dispatcher.BeginInvoke(new Action(() =>
+                            {
+                                UpdateSecondaryOverlayThumb(vm);
+                                UpdateCameraBarcodeGuide(vm);
+                            }));
                         }
                         else if (args.PropertyName == nameof(MainViewModel.PreviewImageSource))
                         {
@@ -532,6 +550,27 @@ namespace ExpressPackingMonitoring.UI
             // 当前几何与当前画面尺寸切换成副摄的，摆框逻辑与主摄完全同一条路径。
             CameraBarcodeGuideGeometry geometry = vm.CurrentCameraBarcodeGuideGeometry;
             Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(sourceW, sourceH, actualW, actualH);
+
+            // 识别输入来自副摄（且不在取景编辑屏）：框贴到画中画上。
+            // 画中画显示的就是"框内那块裁剪"，所以框等于画中画本身；
+            // 绿/黄识别状态和提示文字都落在这块上，识别反馈不会丢。
+            if (!vm.IsEditingSecondaryCameraPreview
+                && vm.ShouldUseSecondaryCameraForBarcode
+                && vm.VideoFrame is { PixelWidth: > 0, PixelHeight: > 0 } overlayFrame
+                && vm.TryResolveSecondaryOverlayRect(
+                    overlayFrame.PixelWidth,
+                    overlayFrame.PixelHeight,
+                    out SecondaryCameraOverlayRect overlay))
+            {
+                double overlayScale = videoRect.Width / overlayFrame.PixelWidth;
+                videoRect = new Rect(
+                    videoRect.X + (overlay.X * overlayScale),
+                    videoRect.Y + (overlay.Y * overlayScale),
+                    overlay.Width * overlayScale,
+                    overlay.Height * overlayScale);
+                geometry = new CameraBarcodeGuideGeometry(1.0, 1.0, 0, 0);
+            }
+
             Rect guideRect = CameraBarcodeGuideLayout.ToDisplayRect(geometry, videoRect);
             if (guideRect.IsEmpty)
             {

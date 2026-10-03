@@ -60,13 +60,51 @@ namespace ExpressPackingMonitoring.ViewModels
             using var region = new Mat(frame, targetRect);
             bgr.CopyTo(region);
 
-            // 边框画在画面内侧，不会越出主帧边界。
-            Cv2.Rectangle(
+            // 边框画在画面内侧，不会越出主帧边界；圆角与识别框对应，不要生硬的方角。
+            var borderRect = new Rect(rect.X + 1, rect.Y + 1, rect.Width - 2, rect.Height - 2);
+            DrawRoundedBorder(
                 frame,
-                new Rect(rect.X + 1, rect.Y + 1, rect.Width - 2, rect.Height - 2),
+                borderRect,
                 new Scalar(255, 255, 255),
-                BorderThickness);
+                BorderThickness,
+                ResolveCornerRadius(borderRect.Width, borderRect.Height));
             return true;
+        }
+
+        /// <summary>圆角半径：按小窗短边取比例，保证和识别框的圆角观感一致，不随分辨率跑偏。</summary>
+        private static int ResolveCornerRadius(int width, int height) =>
+            Math.Clamp((int)Math.Round(Math.Min(width, height) * 0.02), 4, 48);
+
+        /// <summary>
+        /// 画一圈圆角边框：OpenCV 没有现成的圆角矩形，用四段直边加四个 90° 圆弧拼出来。
+        /// 识别框是圆角矩形，小窗边框跟着圆角，两者才对得上。
+        /// </summary>
+        private static void DrawRoundedBorder(Mat frame, Rect rect, Scalar color, int thickness, int radius)
+        {
+            if (rect.Width <= 0 || rect.Height <= 0)
+                return;
+
+            int r = Math.Min(radius, Math.Min(rect.Width, rect.Height) / 2);
+            if (r <= 0)
+            {
+                Cv2.Rectangle(frame, rect, color, thickness);
+                return;
+            }
+
+            int left = rect.Left;
+            int top = rect.Top;
+            int right = rect.Right;
+            int bottom = rect.Bottom;
+
+            Cv2.Line(frame, new Point(left + r, top), new Point(right - r, top), color, thickness, LineTypes.AntiAlias);
+            Cv2.Line(frame, new Point(left + r, bottom), new Point(right - r, bottom), color, thickness, LineTypes.AntiAlias);
+            Cv2.Line(frame, new Point(left, top + r), new Point(left, bottom - r), color, thickness, LineTypes.AntiAlias);
+            Cv2.Line(frame, new Point(right, top + r), new Point(right, bottom - r), color, thickness, LineTypes.AntiAlias);
+
+            Cv2.Ellipse(frame, new Point(left + r, top + r), new Size(r, r), 0, 180, 270, color, thickness, LineTypes.AntiAlias);
+            Cv2.Ellipse(frame, new Point(right - r, top + r), new Size(r, r), 0, 270, 360, color, thickness, LineTypes.AntiAlias);
+            Cv2.Ellipse(frame, new Point(right - r, bottom - r), new Size(r, r), 0, 0, 90, color, thickness, LineTypes.AntiAlias);
+            Cv2.Ellipse(frame, new Point(left + r, bottom - r), new Size(r, r), 0, 90, 180, color, thickness, LineTypes.AntiAlias);
         }
 
         /// <summary>

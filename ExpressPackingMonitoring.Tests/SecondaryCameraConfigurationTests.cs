@@ -399,6 +399,24 @@ public sealed class SecondaryCameraConfigurationTests
             StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// 副摄取景编辑态必须给出"这一屏在干什么、怎么退出"的提示，并且要有可靠的退出路径：
+    /// "完成"按下即生效（实测鼠标捕获会在按下后被释放，等 MouseUp 的按钮点不动），
+    /// 外加 Esc 兜底。
+    /// </summary>
+    [Fact]
+    public void SecondaryPreviewEditShowsItsOwnHintAndCanBeExited()
+    {
+        string viewModel = ReadProjectFile(Path.Combine("ViewModels", "MainViewModel.cs"));
+        Assert.Contains("拖动框调整副摄取景，点完成或按 Esc 退出", viewModel, StringComparison.Ordinal);
+
+        string window = ReadProjectFile(Path.Combine("UI", "MainWindow.xaml.cs"));
+        Assert.Contains("Key.Escape", window, StringComparison.Ordinal);
+
+        string xaml = ReadProjectFile(Path.Combine("UI", "MainWindow.xaml"));
+        Assert.Contains("ClickMode=\"Press\"", xaml, StringComparison.Ordinal);
+    }
+
     /// <summary>默认必须是"还没拖动过"，否则首次启动副画面就会跑到左上角。</summary>
     [Fact]
     public void SecondaryOverlayPositionStartsUnset()

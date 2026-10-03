@@ -50,6 +50,33 @@ public sealed class SecondaryCameraFrameComposerTests
         Assert.Equal(4.0 / 3.0, (double)rect.Width / rect.Height, precision: 2);
     }
 
+    /// <summary>
+    /// 小窗边框要是圆角，和识别框的圆角矩形对应：
+    /// 直边中段有白边，直角位置不画（否则看起来就是生硬的方角）。
+    /// </summary>
+    [Fact]
+    public void OverlayBorderIsRounded()
+    {
+        using var main = new Mat(400, 640, MatType.CV_8UC3, new Scalar(0, 0, 0));
+        using var secondary = new Mat(200, 300, MatType.CV_8UC3, new Scalar(0, 0, 0));
+
+        Assert.True(SecondaryCameraFrameComposer.TryCompose(main, secondary, widthRatio: 0.5, margin: 16));
+
+        SecondaryCameraOverlayRect rect = SecondaryCameraOverlayPolicy
+            .Resolve(640, 400, 300, 200, widthRatio: 0.5, margin: 16)!.Value;
+
+        // 边框画在小窗内侧 1px 处：顶边中段必须是白的
+        int middleX = rect.X + (rect.Width / 2);
+        Vec3b edge = main.At<Vec3b>(rect.Y + 1, middleX);
+        Assert.True(edge.Item0 > 200 && edge.Item1 > 200 && edge.Item2 > 200, "小窗边框没有画出来");
+
+        // 圆角处：小窗矩形最外侧的直角位置不能是白边
+        Vec3b corner = main.At<Vec3b>(rect.Y + 1, rect.X + 1);
+        Assert.False(
+            corner.Item0 > 200 && corner.Item1 > 200 && corner.Item2 > 200,
+            "小窗边框还是方角，没有圆角");
+    }
+
     /// <summary>灰度副画面（某些后端/网络流会给单通道）必须能合成，而不是抛异常。</summary>
     [Fact]
     public void SingleChannelOverlayIsConverted()

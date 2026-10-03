@@ -75,7 +75,10 @@ namespace ExpressPackingMonitoring.ViewModels
             private set
             {
                 if (SetProperty(ref _hasSecondaryCameraFrame, value))
+                {
                     OnPropertyChanged(nameof(IsBarcodeGuideVisible));
+                    OnPropertyChanged(nameof(IsCameraBarcodeGuideEditable));
+                }
             }
         }
 
@@ -170,6 +173,7 @@ namespace ExpressPackingMonitoring.ViewModels
                 OnPropertyChanged(nameof(IsSecondaryCameraConfigured));
                 OnPropertyChanged(nameof(IsSecondaryCameraOverlayVisible));
                 OnPropertyChanged(nameof(IsBarcodeGuideVisible));
+                OnPropertyChanged(nameof(IsCameraBarcodeGuideEditable));
                 SaveConfig();
                 RestartSecondaryCamera();
             }
@@ -183,11 +187,11 @@ namespace ExpressPackingMonitoring.ViewModels
 
         /// <summary>
         /// 识别框是否显示。框只出现在识别来源那一路：
-        /// 来源是主摄时画在主画面上；来源是副摄时，画中画本身就是框内那块裁剪结果，
-        /// 框只在"点开副摄取景编辑"这一屏里出现，正常浏览时不在主画面上叠加。
+        /// 来源是主摄时画在主画面上；来源是副摄时贴到画中画上（画中画就是框内那块裁剪结果），
+        /// 这样绿/黄识别状态与提示文字才有地方显示 —— 不能再像之前那样整条反馈都收掉。
         /// </summary>
-        public bool IsBarcodeGuideVisible =>
-            !ShouldUseSecondaryCameraForBarcode || IsEditingSecondaryCameraPreview;
+        public bool IsBarcodeGuideVisible => true;
+
 
         /// <summary>
         /// 「摄像头自动识别面单」是否改用副画面：配置选了副画面、副画面开着、而且副路真的出过帧。
@@ -815,6 +819,9 @@ namespace ExpressPackingMonitoring.ViewModels
                 OnPropertyChanged(nameof(PreviewImageSource));
                 // 框只在识别来源那一路出现：进出编辑态会改变它的显隐。
                 OnPropertyChanged(nameof(IsBarcodeGuideVisible));
+                OnPropertyChanged(nameof(IsCameraBarcodeGuideEditable));
+                // 编辑态的提示文案与识别态不同，进出编辑态要重新取一次。
+                OnPropertyChanged(nameof(CameraBarcodeStatusText));
                 // 画面尺寸在编辑态下由副摄帧决定，界面要据此重摆识别框。
                 OnPropertyChanged(nameof(CameraFrameSize));
                 // 编辑态由副摄画面接管预览，别让主画面的帧把它冲掉。
