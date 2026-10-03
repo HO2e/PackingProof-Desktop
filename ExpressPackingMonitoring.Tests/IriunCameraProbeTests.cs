@@ -79,12 +79,11 @@ public sealed class IriunCameraProbeTests
     }
 
     /// <summary>
-    /// 真实主摄帧 + 默认取景框（短边居中方形、1:1）的合成：
-    /// 小窗矩形之外一个像素都不许变，小窗之内必须被副画面完整覆盖。
-    /// 副画面用纯色，结果可精确断言；真实两路同时出帧已由双摄用例覆盖。
+    /// 真实主摄帧 + 副画面（整幅）的合成：小窗矩形之外一个像素都不许变，
+    /// 小窗之内必须被副画面完整覆盖。副画面用纯色，结果可精确断言。
     /// </summary>
     [Fact]
-    public void RealMainFrame_ComposesTheCroppedOverlayExactly()
+    public void RealMainFrame_ComposesTheOverlayExactly()
     {
         SkipUnlessEnabled();
         IReadOnlyList<MfCaptureDevice> devices = MfCaptureDevice.Enumerate();
@@ -94,27 +93,12 @@ public sealed class IriunCameraProbeTests
         using Mat mainFrame = CaptureSingleFrame(devices[0].SymbolicLink, rotationDegrees: 0);
         using Mat composed = mainFrame.Clone();
 
-        // 副画面用竖屏尺寸的纯红色块：既能验证按短边取方形，也能精确断言像素。
+        // 副画面用竖屏尺寸的纯红色块：贴合"面单摄像头竖装"的常见形态，也能精确断言像素。
         using var secondaryFrame = new Mat(720, 480, MatType.CV_8UC3, new Scalar(0, 0, 255));
-        SecondaryCameraOverlayRect crop = SecondaryCameraOverlayPolicy.ResolveCropRect(
-            secondaryFrame.Width,
-            secondaryFrame.Height,
-            sizeRatio: AppConfig.DefaultSecondaryCropSizeRatio,
-            centerX: 0.5,
-            centerY: 0.5);
-        Assert.Equal(480, crop.Width);
-        Assert.Equal(480, crop.Height);
-        // 竖屏源（480x720）按短边取方形后纵向居中：左右贴满，上下各留 120。
-        Assert.Equal(0, crop.X);
-        Assert.Equal(120, crop.Y);
-
-        using var cropped = new Mat(
-            secondaryFrame,
-            new Rect(crop.X, crop.Y, crop.Width, crop.Height));
 
         bool composedOk = SecondaryCameraFrameComposer.TryCompose(
             composed,
-            cropped,
+            secondaryFrame,
             widthRatio: 0.4,
             margin: 16,
             allowUpscale: false);
@@ -123,8 +107,8 @@ public sealed class IriunCameraProbeTests
         SecondaryCameraOverlayRect? overlay = SecondaryCameraOverlayPolicy.Resolve(
             mainFrame.Width,
             mainFrame.Height,
-            crop.Width,
-            crop.Height,
+            secondaryFrame.Width,
+            secondaryFrame.Height,
             widthRatio: 0.4,
             margin: 16,
             allowUpscale: false);

@@ -409,7 +409,7 @@ namespace ExpressPackingMonitoring.ViewModels
                 $"识别提交状态变化 source={(fromSecondary ? "副画面" : "主画面")} "
                 + $"useSecondary={shouldUseSecondary} accepted={accepted} reason={reason} "
                 + $"hasSecondaryFrame={HasSecondaryCameraFrame} "
-                + $"enableSecondary={Config?.EnableSecondaryCamera} "
+                + $"secondarySource={Config?.SecondaryCameraSourceKind} "
                 + $"configSource={Config?.CameraBarcodeRecognitionSource}");
         }
 

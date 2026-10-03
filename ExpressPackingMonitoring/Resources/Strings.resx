@@ -1474,6 +1474,13 @@
   <data name="关闭时副画面不会超过摄像头本身的分辨率；放大只会更糊，不会多出细节" xml:space="preserve"><value>When off, the secondary view never exceeds the camera's own resolution; enlarging only blurs it and adds no detail</value></data>
   <data name="摄像头横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转" xml:space="preserve"><value>Adjust in 90-degree steps when the camera is mounted sideways or upside down; preview, recognition and recording rotate together</value></data>
   <data name="副画面方向" xml:space="preserve"><value>Secondary view orientation</value></data>
+  <data name="副摄像头" xml:space="preserve"><value>Secondary camera</value></data>
+  <data name="拍面单的摄像头，画面叠在主画面右下角" xml:space="preserve"><value>Camera aimed at the label; its picture overlays the main view's bottom-right corner</value></data>
+  <data name="无" xml:space="preserve"><value>None</value></data>
+  <data name="本地摄像头" xml:space="preserve"><value>Local camera</value></data>
+  <data name="网络摄像头" xml:space="preserve"><value>Network camera</value></data>
+  <data name="画中画大小" xml:space="preserve"><value>Overlay size</value></data>
+  <data name="副画面占主画面的宽度比例" xml:space="preserve"><value>Width of the secondary view relative to the main view</value></data>
   <data name="面单摄像头横装或竖装时按 90° 一档调整，副画面与识别同步旋转" xml:space="preserve"><value>Adjust in 90-degree steps when the label camera is mounted sideways; the secondary view and recognition rotate together</value></data>
   <data name="正装（0°）" xml:space="preserve"><value>Upright (0°)</value></data>
   <data name="顺时针 90°" xml:space="preserve"><value>90° clockwise</value></data>

@@ -65,8 +65,16 @@ namespace ExpressPackingMonitoring.ViewModels
             }
         }
 
-        /// <summary>副画面是否参与合成。关闭时整条链路直接跳过，主路行为与从前完全一致。</summary>
-        internal bool IsSecondaryCameraComposeEnabled => Config is { EnableSecondaryCamera: true };
+        /// <summary>副画面是否参与合成：来源选了"无"就整条链路跳过，主路行为与从前完全一致。</summary>
+        internal bool IsSecondaryCameraComposeEnabled =>
+            Config is { } config
+            && !string.Equals(
+                config.SecondaryCameraSourceKind,
+                AppConfig.SecondaryCameraSourceNone,
+                StringComparison.Ordinal);
+
+        /// <summary>设置页据此显示/隐藏副摄的其余选项：选了"无"就整块收起。</summary>
+        public bool IsSecondaryCameraConfigured => IsSecondaryCameraComposeEnabled;
 
         /// <summary>副摄像头当前是否已启动。</summary>
         internal bool IsSecondaryCameraRunning =>
@@ -75,8 +83,7 @@ namespace ExpressPackingMonitoring.ViewModels
             || _secondaryNetworkCameraSource != null;
 
         /// <summary>
-        /// 主画面取景框是否该显示。识别改用副画面时它是按副画面整帧解码的，
-        /// 取景框既不起作用、又会叠在副画面上让人以为"框不对位"，所以这时收起。
+        /// 主画面取景框是否该显示。识别改用副画面时，取景框画到副画面上，主画面这个收起。
         /// </summary>
         public bool IsBarcodeGuideVisible => !ShouldUseSecondaryCameraForBarcode;
 
@@ -87,9 +94,9 @@ namespace ExpressPackingMonitoring.ViewModels
         /// 否则"换了识别摄像头但没连上"会直接变成完全识别不了。
         /// </summary>
         internal bool ShouldUseSecondaryCameraForBarcode =>
-            Config is { EnableSecondaryCamera: true }
+            IsSecondaryCameraComposeEnabled
             && string.Equals(
-                Config.CameraBarcodeRecognitionSource,
+                Config?.CameraBarcodeRecognitionSource,
                 AppConfig.CameraBarcodeSourceSecondary,
                 StringComparison.Ordinal)
             && HasSecondaryCameraFrame;
@@ -100,7 +107,11 @@ namespace ExpressPackingMonitoring.ViewModels
         /// </summary>
         internal void StartSecondaryCamera()
         {
-            if (Config is not { EnableSecondaryCamera: true } config)
+            if (Config is not { } config
+                || string.Equals(
+                    config.SecondaryCameraSourceKind,
+                    AppConfig.SecondaryCameraSourceNone,
+                    StringComparison.Ordinal))
             {
                 StopSecondaryCamera();
                 return;
@@ -575,42 +586,28 @@ namespace ExpressPackingMonitoring.ViewModels
                     if (Config is not { } config)
                         return;
 
-                    // 先按取景框裁剪：PiP 显示的就是取景框内容，条码识别也用同一块 ROI，
-                    // 做到"看到什么就识别什么"。裁剪是 ROI 视图，不拷贝像素。
-                    SecondaryCameraOverlayRect crop = SecondaryCameraOverlayPolicy.ResolveCropRect(
-                        secondary.Width,
-                        secondary.Height,
-                        config.SecondaryCropSizeRatio,
-                        config.SecondaryCropCenterX,
-                        config.SecondaryCropCenterY);
-                    if (crop.Width <= 0 || crop.Height <= 0)
-                        return;
-
-                    using var cropped = new Mat(
-                        secondary,
-                        new Rect(crop.X, crop.Y, crop.Width, crop.Height));
-
+                    // 副画面按整幅合成：识别框只决定识别哪一块，不再裁掉画面内容。
                     // 与下面的合成用同一套输入算一次，用来记录"这一帧把副画面画在哪"；
                     // 界面拖动框据此换算，不再自己另算一份。
                     SecondaryCameraOverlayRect? composedRect = SecondaryCameraOverlayPolicy.Resolve(
                         frame.Width,
                         frame.Height,
-                        crop.Width,
-                        crop.Height,
+                        secondary.Width,
+                        secondary.Height,
                         config.SecondaryCameraOverlayWidthRatio,
                         config.SecondaryCameraOverlayMargin,
                         config.SecondaryCameraOverlayLeftRatio,
                         config.SecondaryCameraOverlayTopRatio,
-                        config.SecondaryAllowUpscale);
+                        allowUpscale: false);
 
                     if (SecondaryCameraFrameComposer.TryCompose(
                             frame,
-                            cropped,
+                            secondary,
                             config.SecondaryCameraOverlayWidthRatio,
                             config.SecondaryCameraOverlayMargin,
                             config.SecondaryCameraOverlayLeftRatio,
                             config.SecondaryCameraOverlayTopRatio,
-                            config.SecondaryAllowUpscale))
+                            allowUpscale: false))
                     {
                         _lastComposedOverlayRect = composedRect;
                         _lastComposedFrameSize = (frame.Width, frame.Height);
@@ -649,46 +646,20 @@ namespace ExpressPackingMonitoring.ViewModels
         }
 
         /// <summary>
-        /// 当前取景框（副画面像素坐标）。副画面没出帧时返回 false。
-        /// 取景框是正方形，边长按副画面短边占比、中心按归一化坐标定位，默认即"短边居中裁剪"。
+        /// 副摄识别框：与主摄同一套定义（宽高占比 + 居中偏移），在预览的画中画上直接拖。
+        /// 它只决定识别哪一块，不裁剪画面内容。
         /// </summary>
-        private bool TryResolveSecondaryCropRect(AppConfig config, out SecondaryCameraOverlayRect crop)
-        {
-            crop = default;
-            (int sourceWidth, int sourceHeight) = _secondaryOverlaySourceSize;
-            if (sourceWidth <= 0 || sourceHeight <= 0)
-                return false;
+        internal CameraBarcodeGuideGeometry GetSecondaryCameraGuideGeometry() =>
+            Config is { } config
+                ? new CameraBarcodeGuideGeometry(
+                    config.SecondaryBarcodeGuideWidthRatio,
+                    config.SecondaryBarcodeGuideHeightRatio,
+                    config.SecondaryBarcodeGuideOffsetX,
+                    config.SecondaryBarcodeGuideOffsetY)
+                : new CameraBarcodeGuideGeometry(1.0, 1.0, 0, 0);
 
-            crop = SecondaryCameraOverlayPolicy.ResolveCropRect(
-                sourceWidth,
-                sourceHeight,
-                config.SecondaryCropSizeRatio,
-                config.SecondaryCropCenterX,
-                config.SecondaryCropCenterY);
-            return crop.Width > 0 && crop.Height > 0;
-        }
-
-        /// <summary>
-        /// 副摄识别用的取景几何：与合成用的是同一块取景框，所以"看到的就是识别的那块"。
-        /// 拿不到副帧尺寸时回退整帧 —— 宁可多解一点，也不能因为尺寸缺失就完全不识别。
-        /// </summary>
-        internal CameraBarcodeGuideGeometry GetSecondaryCameraGuideGeometry()
-        {
-            if (Config is not { } config
-                || !TryResolveSecondaryCropRect(config, out SecondaryCameraOverlayRect crop))
-            {
-                return new CameraBarcodeGuideGeometry(1.0, 1.0, 0, 0);
-            }
-
-            (int sourceWidth, int sourceHeight) = _secondaryOverlaySourceSize;
-            double widthRatio = (double)crop.Width / sourceWidth;
-            double heightRatio = (double)crop.Height / sourceHeight;
-            double marginX = (sourceWidth - crop.Width) / 2.0;
-            double marginY = (sourceHeight - crop.Height) / 2.0;
-            double offsetX = marginX > 0.5 ? (crop.X - marginX) / marginX : 0;
-            double offsetY = marginY > 0.5 ? (crop.Y - marginY) / marginY : 0;
-            return new CameraBarcodeGuideGeometry(widthRatio, heightRatio, offsetX, offsetY);
-        }
+        /// <summary>识别来源选了副摄且副摄已经出帧时，识别框画在画中画上。</summary>
+        internal bool IsSecondaryCameraGuideVisible => ShouldUseSecondaryCameraForBarcode;
 
         /// <summary>
         /// 这里跑在视频处理线程上，属性通知必须回 UI 线程，
@@ -745,19 +716,20 @@ namespace ExpressPackingMonitoring.ViewModels
                 return true;
             }
 
-            if (!TryResolveSecondaryCropRect(config, out SecondaryCameraOverlayRect crop))
+            (int sourceWidth, int sourceHeight) = _secondaryOverlaySourceSize;
+            if (sourceWidth <= 0 || sourceHeight <= 0)
                 return false;
 
             SecondaryCameraOverlayRect? resolved = SecondaryCameraOverlayPolicy.Resolve(
                 frameWidth,
                 frameHeight,
-                crop.Width,
-                crop.Height,
+                sourceWidth,
+                sourceHeight,
                 config.SecondaryCameraOverlayWidthRatio,
                 config.SecondaryCameraOverlayMargin,
                 config.SecondaryCameraOverlayLeftRatio,
                 config.SecondaryCameraOverlayTopRatio,
-                config.SecondaryAllowUpscale);
+                allowUpscale: false);
 
             if (resolved is not { } value)
                 return false;

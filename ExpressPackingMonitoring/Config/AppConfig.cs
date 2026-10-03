@@ -154,10 +154,13 @@ namespace ExpressPackingMonitoring.Config
         public const int MinimumSecondaryFrameFps = 1;
         public const int MaximumSecondaryFrameFps = 60;
 
-        /// <summary>副摄取景框：正方形，边长占副画面短边的比例。默认取满整块方形。</summary>
-        public const double DefaultSecondaryCropSizeRatio = 1.0;
-        public const double MinimumSecondaryCropSizeRatio = 0.25;
-        public const double MaximumSecondaryCropSizeRatio = 1.0;
+        /// <summary>副摄识别框默认尺寸，与主摄同一套口径：占画面宽高的比例，偏移 0 表示居中。</summary>
+        public const double DefaultSecondaryGuideRatio = 0.85;
+        public const double MinimumSecondaryGuideRatio = 0.1;
+        public const double MaximumSecondaryGuideRatio = 1.0;
+
+        /// <summary>副摄来源为"不接"的取值：设置页据此隐藏其余副摄选项。</summary>
+        public const string SecondaryCameraSourceNone = "none";
 
         /// <summary>
         /// 旋转角度未设置：老配置里只有"旋转 180°"开关，加载时按它推导出实际角度，
@@ -248,11 +251,15 @@ namespace ExpressPackingMonitoring.Config
         public string NetworkCameraUrl { get; set; } = "";
         public string NetworkCameraRtspTransport { get; set; } = "tcp";
 
-        // 第二路摄像头：叠在主画面右下角的副画面，预览与录像共用同一帧，默认关闭。
+        // 第二路摄像头：叠在主画面右下角的副画面，预览与录像共用同一帧。
+        // 来源即开关：选"无"就是不接副摄，不再单独放一个开关。
         // 必须是**另一台**物理设备：同一台 USB 摄像头被两路同时打开时设备是独占的，
         // 会有一路拿不到画面甚至被判掉线。
-        public bool EnableSecondaryCamera { get; set; } = false;
-        public string SecondaryCameraSourceKind { get; set; } = "usb";
+        public string SecondaryCameraSourceKind { get; set; } = SecondaryCameraSourceNone;
+        // 旧版本用的独立开关，只用于把老配置迁移成"来源"口径；保存时同步写回，降级回旧版本仍能识别。
+        public bool EnableSecondaryCamera { get; set; }
+        // 副摄来源口径的迁移版本。
+        public int SecondaryCameraSetupVersion { get; set; }
         public string SecondaryCameraMonikerString { get; set; } = "";
         public int SecondaryCameraIndex { get; set; } = 1;
         public string SecondaryNetworkCameraUrl { get; set; } = "";
@@ -264,13 +271,12 @@ namespace ExpressPackingMonitoring.Config
         // 既保证面单清晰，又让两路同时采集的带宽、解码与合成成本都可控。
         public string SecondaryResolutionPreset { get; set; } = DefaultSecondaryResolutionPreset;
         public int SecondaryFrameFps { get; set; } = DefaultSecondaryFrameFps;
-        // 副摄取景框：正方形，边长按副画面短边占比，中心点按归一化坐标。
-        // 默认 1.0 + 居中，就是"按短边居中裁剪"；这块同时是识别用的 ROI。
-        public double SecondaryCropSizeRatio { get; set; } = DefaultSecondaryCropSizeRatio;
-        public double SecondaryCropCenterX { get; set; } = 0.5;
-        public double SecondaryCropCenterY { get; set; } = 0.5;
-        // 默认不把副画面放大到超过它自己的分辨率：放大只会更糊。用户显式打开才允许超采样。
-        public bool SecondaryAllowUpscale { get; set; }
+        // 副摄识别框：与主摄同一套定义（宽高占画面的比例、偏移按四周留白）。
+        // 副画面显示整幅副摄画面，这个框只决定识别哪一块，在预览里直接拖。
+        public double SecondaryBarcodeGuideWidthRatio { get; set; } = DefaultSecondaryGuideRatio;
+        public double SecondaryBarcodeGuideHeightRatio { get; set; } = DefaultSecondaryGuideRatio;
+        public double SecondaryBarcodeGuideOffsetX { get; set; }
+        public double SecondaryBarcodeGuideOffsetY { get; set; }
         // 副画面宽度占主画面的比例，以及距右下角的留白。
         public double SecondaryCameraOverlayWidthRatio { get; set; } = DefaultSecondaryOverlayWidthRatio;
         public int SecondaryCameraOverlayMargin { get; set; } = DefaultSecondaryOverlayMargin;
@@ -714,7 +720,7 @@ namespace ExpressPackingMonitoring.Config
             }
 
             // 第二路摄像头与主路同口径归一：来源判定、URL 去空白、传输方式、副画面比例与留白。
-            string normalizedSecondaryCameraSourceKind = NormalizeCameraSourceKind(
+            string normalizedSecondaryCameraSourceKind = NormalizeSecondaryCameraSourceKind(
                 config.SecondaryCameraSourceKind,
                 config.SecondaryNetworkCameraUrl);
             if (!string.Equals(
@@ -723,6 +729,17 @@ namespace ExpressPackingMonitoring.Config
                     StringComparison.Ordinal))
             {
                 config.SecondaryCameraSourceKind = normalizedSecondaryCameraSourceKind;
+                changed = true;
+            }
+
+            // 兼容字段按来源同步：降级回旧版本时，"无"要写成一个关掉的开关。
+            bool legacyEnableSecondary = !string.Equals(
+                config.SecondaryCameraSourceKind,
+                SecondaryCameraSourceNone,
+                StringComparison.Ordinal);
+            if (config.EnableSecondaryCamera != legacyEnableSecondary)
+            {
+                config.EnableSecondaryCamera = legacyEnableSecondary;
                 changed = true;
             }
 
@@ -831,27 +848,37 @@ namespace ExpressPackingMonitoring.Config
                 changed = true;
             }
 
-            double normalizedCropSize = NormalizeSecondaryCropSizeRatio(config.SecondaryCropSizeRatio);
-            if (!double.IsFinite(config.SecondaryCropSizeRatio)
-                || Math.Abs(config.SecondaryCropSizeRatio - normalizedCropSize) > 0.001)
+            double normalizedSecondaryGuideWidth = NormalizeSecondaryGuideRatio(
+                config.SecondaryBarcodeGuideWidthRatio);
+            if (!double.IsFinite(config.SecondaryBarcodeGuideWidthRatio)
+                || Math.Abs(config.SecondaryBarcodeGuideWidthRatio - normalizedSecondaryGuideWidth) > 0.001)
             {
-                config.SecondaryCropSizeRatio = normalizedCropSize;
+                config.SecondaryBarcodeGuideWidthRatio = normalizedSecondaryGuideWidth;
                 changed = true;
             }
 
-            double normalizedCropCenterX = NormalizeCropCenter(config.SecondaryCropCenterX);
-            if (!double.IsFinite(config.SecondaryCropCenterX)
-                || Math.Abs(config.SecondaryCropCenterX - normalizedCropCenterX) > 0.001)
+            double normalizedSecondaryGuideHeight = NormalizeSecondaryGuideRatio(
+                config.SecondaryBarcodeGuideHeightRatio);
+            if (!double.IsFinite(config.SecondaryBarcodeGuideHeightRatio)
+                || Math.Abs(config.SecondaryBarcodeGuideHeightRatio - normalizedSecondaryGuideHeight) > 0.001)
             {
-                config.SecondaryCropCenterX = normalizedCropCenterX;
+                config.SecondaryBarcodeGuideHeightRatio = normalizedSecondaryGuideHeight;
                 changed = true;
             }
 
-            double normalizedCropCenterY = NormalizeCropCenter(config.SecondaryCropCenterY);
-            if (!double.IsFinite(config.SecondaryCropCenterY)
-                || Math.Abs(config.SecondaryCropCenterY - normalizedCropCenterY) > 0.001)
+            double normalizedSecondaryGuideOffsetX = NormalizeGuideOffset(config.SecondaryBarcodeGuideOffsetX);
+            if (!double.IsFinite(config.SecondaryBarcodeGuideOffsetX)
+                || Math.Abs(config.SecondaryBarcodeGuideOffsetX - normalizedSecondaryGuideOffsetX) > 0.001)
             {
-                config.SecondaryCropCenterY = normalizedCropCenterY;
+                config.SecondaryBarcodeGuideOffsetX = normalizedSecondaryGuideOffsetX;
+                changed = true;
+            }
+
+            double normalizedSecondaryGuideOffsetY = NormalizeGuideOffset(config.SecondaryBarcodeGuideOffsetY);
+            if (!double.IsFinite(config.SecondaryBarcodeGuideOffsetY)
+                || Math.Abs(config.SecondaryBarcodeGuideOffsetY - normalizedSecondaryGuideOffsetY) > 0.001)
+            {
+                config.SecondaryBarcodeGuideOffsetY = normalizedSecondaryGuideOffsetY;
                 changed = true;
             }
 
@@ -1321,15 +1348,24 @@ namespace ExpressPackingMonitoring.Config
                 _ => (1280, 720),
             };
 
-        /// <summary>副摄取景框边长占比归一。非法值回到默认（取满整块方形）。</summary>
-        internal static double NormalizeSecondaryCropSizeRatio(double value) =>
-            double.IsFinite(value) && value > 0
-                ? Math.Clamp(value, MinimumSecondaryCropSizeRatio, MaximumSecondaryCropSizeRatio)
-                : DefaultSecondaryCropSizeRatio;
+        /// <summary>
+        /// 副摄来源归一：除"无"以外，其它取值与主摄同口径（网络/本地）。
+        /// 写成无法识别的值时回到"无"，绝不因为一个坏值让副摄悄悄开始采集。
+        /// </summary>
+        internal static string NormalizeSecondaryCameraSourceKind(string? kind, string? networkCameraUrl) =>
+            string.Equals(kind?.Trim(), SecondaryCameraSourceNone, StringComparison.OrdinalIgnoreCase)
+                ? SecondaryCameraSourceNone
+                : NormalizeCameraSourceKind(kind, networkCameraUrl);
 
-        /// <summary>副摄取景框中心点归一。非法值回到画面中心。</summary>
-        internal static double NormalizeCropCenter(double value) =>
-            double.IsFinite(value) ? Math.Clamp(value, 0.0, 1.0) : 0.5;
+        /// <summary>副摄识别框尺寸占比归一：与主摄同一套区间。</summary>
+        internal static double NormalizeSecondaryGuideRatio(double value) =>
+            double.IsFinite(value) && value > 0
+                ? Math.Clamp(value, MinimumSecondaryGuideRatio, MaximumSecondaryGuideRatio)
+                : DefaultSecondaryGuideRatio;
+
+        /// <summary>副摄识别框偏移归一：0 表示居中，±1 表示贴边。</summary>
+        internal static double NormalizeGuideOffset(double value) =>
+            double.IsFinite(value) ? Math.Clamp(value, -1.0, 1.0) : 0.0;
 
         /// <summary>
         /// 旋转角度归一：未设置（老配置）时按旧的"旋转 180°"开关推导；
@@ -1394,9 +1430,13 @@ namespace ExpressPackingMonitoring.Config
             string nextTransport = NormalizeNetworkTransport(next.NetworkCameraRtspTransport);
 
             string currentSecondaryKind =
-                NormalizeCameraSourceKind(current.SecondaryCameraSourceKind, current.SecondaryNetworkCameraUrl);
+                NormalizeSecondaryCameraSourceKind(
+                    current.SecondaryCameraSourceKind,
+                    current.SecondaryNetworkCameraUrl);
             string nextSecondaryKind =
-                NormalizeCameraSourceKind(next.SecondaryCameraSourceKind, next.SecondaryNetworkCameraUrl);
+                NormalizeSecondaryCameraSourceKind(
+                    next.SecondaryCameraSourceKind,
+                    next.SecondaryNetworkCameraUrl);
             string currentSecondaryUrl = current.SecondaryNetworkCameraUrl?.Trim() ?? "";
             string nextSecondaryUrl = next.SecondaryNetworkCameraUrl?.Trim() ?? "";
             string currentSecondaryTransport =
@@ -1416,7 +1456,6 @@ namespace ExpressPackingMonitoring.Config
                 || (currentKind == "network"
                     && nextKind == "network"
                     && !string.Equals(currentTransport, nextTransport, StringComparison.Ordinal))
-                || current.EnableSecondaryCamera != next.EnableSecondaryCamera
                 || current.SecondaryCameraIndex != next.SecondaryCameraIndex
                 || !string.Equals(
                     current.SecondaryCameraMonikerString,

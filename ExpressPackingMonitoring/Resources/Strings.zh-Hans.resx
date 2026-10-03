@@ -1476,6 +1476,13 @@
   <data name="摄像头画面方向" xml:space="preserve"><value>摄像头画面方向</value></data>
   <data name="摄像头横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转" xml:space="preserve"><value>摄像头横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转</value></data>
   <data name="副画面方向" xml:space="preserve"><value>副画面方向</value></data>
+  <data name="副摄像头" xml:space="preserve"><value>副摄像头</value></data>
+  <data name="拍面单的摄像头，画面叠在主画面右下角" xml:space="preserve"><value>拍面单的摄像头，画面叠在主画面右下角</value></data>
+  <data name="无" xml:space="preserve"><value>无</value></data>
+  <data name="本地摄像头" xml:space="preserve"><value>本地摄像头</value></data>
+  <data name="网络摄像头" xml:space="preserve"><value>网络摄像头</value></data>
+  <data name="画中画大小" xml:space="preserve"><value>画中画大小</value></data>
+  <data name="副画面占主画面的宽度比例" xml:space="preserve"><value>副画面占主画面的宽度比例</value></data>
   <data name="面单摄像头横装或竖装时按 90° 一档调整，副画面与识别同步旋转" xml:space="preserve"><value>面单摄像头横装或竖装时按 90° 一档调整，副画面与识别同步旋转</value></data>
   <data name="正装（0°）" xml:space="preserve"><value>正装（0°）</value></data>
   <data name="顺时针 90°" xml:space="preserve"><value>顺时针 90°</value></data>

@@ -151,43 +151,6 @@ public sealed class SecondaryCameraOverlayPolicyTests
     }
 
     /// <summary>
-    /// 取景框默认就是"按副画面短边居中裁剪"：1280×720 取 720×720，横向居中、纵向贴满。
-    /// 手机竖装（720×1280）时同理，换成纵向居中。
-    /// </summary>
-    [Fact]
-    public void CropRect_DefaultsToCenteredSquare()
-    {
-        SecondaryCameraOverlayRect landscape = SecondaryCameraOverlayPolicy.ResolveCropRect(1280, 720, 1.0, 0.5, 0.5);
-        Assert.Equal((280, 0, 720, 720), (landscape.X, landscape.Y, landscape.Width, landscape.Height));
-
-        SecondaryCameraOverlayRect portrait = SecondaryCameraOverlayPolicy.ResolveCropRect(720, 1280, 1.0, 0.5, 0.5);
-        Assert.Equal((0, 280, 720, 720), (portrait.X, portrait.Y, portrait.Width, portrait.Height));
-    }
-
-    /// <summary>取景框永远留在画面内：中心贴边时也不会算出越界的 ROI。</summary>
-    [Theory]
-    [InlineData(0.0, 0.0)]
-    [InlineData(1.0, 1.0)]
-    [InlineData(0.0, 1.0)]
-    [InlineData(1.0, 0.0)]
-    public void CropRect_StaysInsideFrame(double centerX, double centerY)
-    {
-        SecondaryCameraOverlayRect rect = SecondaryCameraOverlayPolicy.ResolveCropRect(1280, 720, 0.5, centerX, centerY);
-        Assert.True(rect.X >= 0 && rect.Y >= 0);
-        Assert.True(rect.X + rect.Width <= 1280);
-        Assert.True(rect.Y + rect.Height <= 720);
-        Assert.Equal(rect.Width, rect.Height);
-    }
-
-    [Theory]
-    [InlineData(0.0, 1.0)]
-    [InlineData(0.05, 0.25)]
-    [InlineData(2.0, 1.0)]
-    [InlineData(double.NaN, 1.0)]
-    public void CropSizeRatio_IsNormalized(double raw, double expected) =>
-        Assert.Equal(expected, SecondaryCameraOverlayPolicy.NormalizeCropSizeRatio(raw), precision: 3);
-
-    /// <summary>
     /// 默认不允许放大：副画面比目标矩形小的时候按原生尺寸贴，只有显式允许才超采样。
     /// 放大只会更糊，不会多出任何细节。
     /// </summary>

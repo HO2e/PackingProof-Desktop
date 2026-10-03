@@ -17,8 +17,8 @@ public sealed class SecondaryCameraConfigurationTests
         var config = new AppConfig();
 
         // 默认必须关：老用户升级后画面不能凭空多出一路。
+        Assert.Equal(AppConfig.SecondaryCameraSourceNone, config.SecondaryCameraSourceKind);
         Assert.False(config.EnableSecondaryCamera);
-        Assert.Equal("usb", config.SecondaryCameraSourceKind);
         Assert.Equal(AppConfig.DefaultSecondaryOverlayWidthRatio, config.SecondaryCameraOverlayWidthRatio);
         Assert.Equal(AppConfig.DefaultSecondaryOverlayMargin, config.SecondaryCameraOverlayMargin);
     }
@@ -59,6 +59,8 @@ public sealed class SecondaryCameraConfigurationTests
     {
         var config = new AppConfig
         {
+            // 已经启用过副摄的老配置：来源要按主路同口径归一，不能被迁移成"无"。
+            EnableSecondaryCamera = true,
             SecondaryCameraSourceKind = "什么都不是",
             SecondaryNetworkCameraUrl = "  rtsp://192.168.1.9/stream  ",
             SecondaryNetworkCameraRtspTransport = "UDP"
@@ -128,7 +130,7 @@ public sealed class SecondaryCameraConfigurationTests
 
         Assert.True(AppConfig.RequiresCameraRestart(
             current,
-            new AppConfig { EnableSecondaryCamera = true }));
+            new AppConfig { SecondaryCameraSourceKind = "usb" }));
         Assert.True(AppConfig.RequiresCameraRestart(
             current,
             new AppConfig { SecondaryCameraMonikerString = "别的一台" }));
@@ -241,9 +243,15 @@ public sealed class SecondaryCameraConfigurationTests
     {
         string settings = ReadProjectFile(Path.Combine("UI", "SettingsWindow.xaml"));
 
-        Assert.Contains("SecondaryCameraCheckBox", settings, StringComparison.Ordinal);
-        Assert.Contains("{Binding Config.EnableSecondaryCamera", settings, StringComparison.Ordinal);
+        // 来源就是开关：选"无"时其余选项整块收起。
+        Assert.Contains("SecondaryCameraSourceComboBox", settings, StringComparison.Ordinal);
         Assert.Contains("{Binding Config.SecondaryCameraSourceKind", settings, StringComparison.Ordinal);
+        Assert.Contains("Tag=\"none\" Content=\"无\"", settings, StringComparison.Ordinal);
+        Assert.Contains(
+            "Visibility=\"{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}\"",
+            settings,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("SecondaryCameraCheckBox", settings, StringComparison.Ordinal);
         Assert.Contains("{Binding Config.SecondaryNetworkCameraUrl", settings, StringComparison.Ordinal);
         Assert.Contains("{Binding Config.SecondaryCameraOverlayWidthRatio", settings, StringComparison.Ordinal);
         Assert.Contains("{Binding Config.SecondaryResolutionPreset", settings, StringComparison.Ordinal);
@@ -338,7 +346,7 @@ public sealed class SecondaryCameraConfigurationTests
     }
 
     /// <summary>
-    /// 副画面识别要用与 PiP 同一块取景框（所画即所识别），主画面那套比例不能直接套过来；
+    /// 副摄识别框有自己的比例（不能套主画面那套构图），并且要跳过运动门控：
     /// 面单放好后副画面是静止的，不跳过门控就永远解不出静止条码。
     /// </summary>
     [Fact]
@@ -350,11 +358,7 @@ public sealed class SecondaryCameraConfigurationTests
         Assert.Contains("forceDecode: fromSecondaryCamera", scanner, StringComparison.Ordinal);
 
         string secondary = ReadProjectFile(Path.Combine("ViewModels", "MainViewModel.SecondaryCamera.cs"));
-        Assert.Contains("ResolveCropRect", secondary, StringComparison.Ordinal);
-        Assert.Contains(
-            "new CameraBarcodeGuideGeometry(widthRatio, heightRatio, offsetX, offsetY)",
-            secondary,
-            StringComparison.Ordinal);
+        Assert.Contains("SecondaryBarcodeGuideWidthRatio", secondary, StringComparison.Ordinal);
 
         string service = ReadProjectFile(Path.Combine("Services", "CameraBarcodeRecognitionService.cs"));
         Assert.Contains("public bool TrySubmitFrame(Mat frame, bool forceDecode = false)", service, StringComparison.Ordinal);
@@ -370,16 +374,36 @@ public sealed class SecondaryCameraConfigurationTests
         Assert.Equal(AppConfig.UnsetOverlayPosition, config.SecondaryCameraOverlayTopRatio);
     }
 
-    /// <summary>取景框默认就是"短边居中 1:1"，用户不设置也能直接用；默认也不放大副画面。</summary>
+    /// <summary>副摄识别框默认居中、占画面八成半，用户不设置也能直接用。</summary>
     [Fact]
-    public void SecondaryCropDefaultsToCenteredSquare()
+    public void SecondaryBarcodeGuideDefaultsToCenteredBox()
     {
         var config = new AppConfig();
 
-        Assert.Equal(AppConfig.DefaultSecondaryCropSizeRatio, config.SecondaryCropSizeRatio);
-        Assert.Equal(0.5, config.SecondaryCropCenterX);
-        Assert.Equal(0.5, config.SecondaryCropCenterY);
-        Assert.False(config.SecondaryAllowUpscale);
+        Assert.Equal(AppConfig.DefaultSecondaryGuideRatio, config.SecondaryBarcodeGuideWidthRatio);
+        Assert.Equal(AppConfig.DefaultSecondaryGuideRatio, config.SecondaryBarcodeGuideHeightRatio);
+        Assert.Equal(0.0, config.SecondaryBarcodeGuideOffsetX);
+        Assert.Equal(0.0, config.SecondaryBarcodeGuideOffsetY);
+    }
+
+    /// <summary>
+    /// 来源就是开关：选"无"整条链路关闭，兼容字段跟着同步，降级回旧版本仍能识别。
+    /// 没有这个字段的老配置反序列化后就是默认值"无"，不会凭空多出一路副摄。
+    /// </summary>
+    [Fact]
+    public void SecondaryCameraSourceReplacesTheLegacySwitch()
+    {
+        var picked = new AppConfig { SecondaryCameraSourceKind = "network", SecondaryNetworkCameraUrl = "rtsp://x/y" };
+        AppConfig.NormalizeAfterLoad(picked);
+        Assert.Equal("network", picked.SecondaryCameraSourceKind);
+        Assert.True(picked.EnableSecondaryCamera);
+
+        var none = new AppConfig { SecondaryCameraSourceKind = AppConfig.SecondaryCameraSourceNone };
+        AppConfig.NormalizeAfterLoad(none);
+        Assert.False(none.EnableSecondaryCamera);
+
+        // 反序列化后没有这个字段的老配置：默认就是"无"。
+        Assert.Equal(AppConfig.SecondaryCameraSourceNone, new AppConfig().SecondaryCameraSourceKind);
     }
 
     /// <summary>

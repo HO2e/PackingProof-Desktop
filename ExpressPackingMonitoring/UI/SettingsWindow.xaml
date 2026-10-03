@@ -1273,38 +1273,22 @@
                                             <ColumnDefinition Width="260"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副画面（第二路摄像头）" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="再选一台摄像头叠在主画面右下角，预览和录像里都有"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <CheckBox x:Name="SecondaryCameraCheckBox"
-                                                  Grid.Column="2"
-                                                  IsChecked="{Binding Config.EnableSecondaryCamera, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  VerticalAlignment="Center"
-                                                  HorizontalAlignment="Left"
-                                                  Style="{StaticResource ToggleSwitchStyle}"/>
-                                    </Grid>
-
-                                    <Grid Style="{StaticResource SettingRowStyle}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副画面来源" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="不能和主画面选同一台摄像头，同一台设备无法被两路同时打开"
+                                            <TextBlock Text="副摄像头" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="拍面单的摄像头，画面叠在主画面右下角"
                                                        Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <ComboBox x:Name="SecondaryCameraSourceComboBox"
                                                   Grid.Column="2"
                                                   SelectedValuePath="Tag"
                                                   SelectedValue="{Binding Config.SecondaryCameraSourceKind, Mode=TwoWay}">
-                                            <ComboBoxItem Tag="usb" Content="本地 USB 摄像头"/>
-                                            <ComboBoxItem Tag="network" Content="网络摄像头流"/>
+                                            <ComboBoxItem Tag="none" Content="无"/>
+                                            <ComboBoxItem Tag="usb" Content="本地摄像头"/>
+                                            <ComboBoxItem Tag="network" Content="网络摄像头"/>
                                         </ComboBox>
                                     </Grid>
 
+                                    <!-- 选了"无"就把下面这些没用的选项整块收起来 -->
+                                    <StackPanel Visibility="{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}">
                                     <Grid Style="{StaticResource SettingRowStyle}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -1394,79 +1378,6 @@
                                             <ColumnDefinition Width="260"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副画面取景大小" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="按副画面短边取一块居中方形，这块既是要显示的画面，也是识别范围"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <Slider x:Name="SecondaryCropSizeSlider"
-                                                Grid.Column="2"
-                                                Style="{StaticResource SettingsSliderStyle}"
-                                                Minimum="0.25" Maximum="1" TickFrequency="0.05"
-                                                Value="{Binding Config.SecondaryCropSizeRatio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                    </Grid>
-
-                                    <Grid Style="{StaticResource SettingRowStyle}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="取景水平位置" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="0 靠左、1 靠右，默认居中"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <Slider x:Name="SecondaryCropCenterXSlider"
-                                                Grid.Column="2"
-                                                Style="{StaticResource SettingsSliderStyle}"
-                                                Minimum="0" Maximum="1" TickFrequency="0.05"
-                                                Value="{Binding Config.SecondaryCropCenterX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                    </Grid>
-
-                                    <Grid Style="{StaticResource SettingRowStyle}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="取景垂直位置" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="0 靠上、1 靠下，默认居中"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <Slider x:Name="SecondaryCropCenterYSlider"
-                                                Grid.Column="2"
-                                                Style="{StaticResource SettingsSliderStyle}"
-                                                Minimum="0" Maximum="1" TickFrequency="0.05"
-                                                Value="{Binding Config.SecondaryCropCenterY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                    </Grid>
-
-                                    <Grid Style="{StaticResource SettingRowStyle}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="允许放大副画面" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="关闭时副画面不会超过摄像头本身的分辨率；放大只会更糊，不会多出细节"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <CheckBox x:Name="SecondaryAllowUpscaleCheckBox"
-                                                  Grid.Column="2"
-                                                  IsChecked="{Binding Config.SecondaryAllowUpscale, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  VerticalAlignment="Center"
-                                                  HorizontalAlignment="Left"
-                                                  Style="{StaticResource ToggleSwitchStyle}"/>
-                                    </Grid>
-
-                                    <Grid Style="{StaticResource SettingRowStyle}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
                                             <TextBlock Text="自动识别面单用哪一路" Style="{StaticResource FieldLabelStyle}"/>
                                             <TextBlock Text="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面"
                                                        Style="{StaticResource FieldHintStyle}"/>
@@ -1487,16 +1398,24 @@
                                             <ColumnDefinition Width="260"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副画面大小" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="副画面宽度占主画面的比例，越大越占画面"
-                                                       Style="{StaticResource FieldHintStyle}"/>
+                                            <TextBlock Text="画中画大小" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="副画面占主画面的宽度比例" Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
-                                        <Slider x:Name="SecondaryCameraOverlayRatioSlider"
-                                                Grid.Column="2"
-                                                Style="{StaticResource SettingsSliderStyle}"
-                                                Minimum="0.1" Maximum="0.5" TickFrequency="0.05"
-                                                Value="{Binding Config.SecondaryCameraOverlayWidthRatio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <StackPanel Grid.Column="2">
+                                            <Grid>
+                                                <TextBlock Text="更小" Style="{StaticResource SliderEndLabelStyle}" HorizontalAlignment="Left"/>
+                                                <TextBlock Text="{Binding ElementName=SecondaryCameraOverlayRatioSlider, Path=Value, StringFormat={}{0:P0}}"
+                                                           Style="{StaticResource SliderValueTextStyle}"
+                                                           HorizontalAlignment="Center"/>
+                                                <TextBlock Text="更大" Style="{StaticResource SliderEndLabelStyle}" HorizontalAlignment="Right"/>
+                                            </Grid>
+                                            <Slider x:Name="SecondaryCameraOverlayRatioSlider"
+                                                    Style="{StaticResource SettingsSliderStyle}"
+                                                    Minimum="0.1" Maximum="0.5" TickFrequency="0.05"
+                                                    Value="{Binding Config.SecondaryCameraOverlayWidthRatio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </StackPanel>
                                     </Grid>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
 

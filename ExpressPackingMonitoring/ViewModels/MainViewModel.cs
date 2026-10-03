@@ -613,6 +613,7 @@ namespace ExpressPackingMonitoring.ViewModels
                     OnPropertyChanged(nameof(ScanInputPlaceholder));
                     OnPropertyChanged(nameof(IsPreRecordBufferVisible));
                     OnPropertyChanged(nameof(IsSecondaryCameraOverlayVisible));
+                    OnPropertyChanged(nameof(IsSecondaryCameraConfigured));
                     OnPropertyChanged(nameof(IsBarcodeGuideVisible));
                     PublishPreRecordBufferStatus(force: true);
                 }
