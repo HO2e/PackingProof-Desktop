@@ -1407,26 +1407,6 @@
                                                   Style="{StaticResource ToggleSwitchStyle}"/>
                                     </Grid>
 
-                                    <Grid Style="{StaticResource SettingRowStyle}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="自动识别面单用哪一路" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <ComboBox x:Name="BarcodeRecognitionSourceComboBox"
-                                                  Grid.Column="2"
-                                                  SelectedValuePath="Tag"
-                                                  SelectedValue="{Binding Config.CameraBarcodeRecognitionSource, Mode=TwoWay}">
-                                            <ComboBoxItem Tag="primary" Content="主画面"/>
-                                            <ComboBoxItem Tag="secondary" Content="副画面"/>
-                                        </ComboBox>
-                                    </Grid>
-
                                 </StackPanel>
                             </Border>
 
@@ -1449,6 +1429,25 @@
                                                   VerticalAlignment="Center"
                                                   HorizontalAlignment="Left"
                                                   Style="{StaticResource ToggleSwitchStyle}"/>
+                                    </Grid>
+
+                                    <Grid Style="{StaticResource SettingRowStyle}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="260"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Text="识别摄像头" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="选择用哪一路摄像头识别面单条码" Style="{StaticResource FieldHintStyle}"/>
+                                        </StackPanel>
+                                        <ComboBox x:Name="BarcodeRecognitionSourceComboBox"
+                                                  Grid.Column="2"
+                                                  SelectedValuePath="Tag"
+                                                  SelectedValue="{Binding Config.CameraBarcodeRecognitionSource, Mode=TwoWay}">
+                                            <ComboBoxItem Tag="primary" Content="主摄像头"/>
+                                            <ComboBoxItem Tag="secondary" Content="副摄像头"/>
+                                        </ComboBox>
                                     </Grid>
 
                                     <Grid Style="{StaticResource AdvancedSettingRowStyle}">

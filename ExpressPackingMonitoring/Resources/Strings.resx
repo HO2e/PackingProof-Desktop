@@ -560,6 +560,8 @@
   <data name="将面单条形码放入引导框，可同时测试摄像头画面和自动识别" xml:space="preserve"><value>Place the shipping-label barcode inside the guide to test the camera and recognition</value></data>
   <data name="将面单条形码放入框内" xml:space="preserve"><value>Place the shipping-label barcode inside the guide</value></data>
   <data name="主摄像头" xml:space="preserve"><value>Main camera</value></data>
+  <data name="识别摄像头" xml:space="preserve"><value>Recognition camera</value></data>
+  <data name="选择用哪一路摄像头识别面单条码" xml:space="preserve"><value>Choose which camera recognizes the shipping-label barcode</value></data>
   <data name="帧率" xml:space="preserve"><value>Frame rate</value></data>
   <data name="画面方向" xml:space="preserve"><value>Orientation</value></data>
   <data name="叠加在主画面上的另一路摄像头" xml:space="preserve"><value>Another camera overlaid on the main picture</value></data>
