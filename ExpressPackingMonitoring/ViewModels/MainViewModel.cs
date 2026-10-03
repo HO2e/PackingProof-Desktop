@@ -643,6 +643,7 @@ namespace ExpressPackingMonitoring.ViewModels
                     OnPropertyChanged(nameof(IsPreRecordBufferVisible));
                     OnPropertyChanged(nameof(IsOverlayVisible));
                     OnPropertyChanged(nameof(IsBarcodeGuideVisible));
+                    OnPropertyChanged(nameof(IsCameraBarcodeGuideLockVisible));
                     PublishPreRecordBufferStatus(force: true);
                 }
             }

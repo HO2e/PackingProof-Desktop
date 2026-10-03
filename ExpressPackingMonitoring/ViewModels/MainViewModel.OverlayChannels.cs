@@ -948,6 +948,11 @@ namespace ExpressPackingMonitoring.ViewModels
             OnPropertyChanged(nameof(PreviewImageSource));
             OnPropertyChanged(nameof(CameraBarcodeStatusText));
             OnPropertyChanged(nameof(CameraFrameSize));
+            // 小锁/框的可编辑性都跟"在不在取景编辑屏"有关：识别来源是副画面时，
+            // 主界面上不显示小锁，但进了这一屏就要显示，所以这里必须重新通知一次。
+            OnPropertyChanged(nameof(IsBarcodeGuideVisible));
+            OnPropertyChanged(nameof(IsCameraBarcodeGuideLockVisible));
+            OnPropertyChanged(nameof(IsCameraBarcodeGuideEditable));
             // 编辑态由这一路画面接管预览，别让主画面的帧把它冲掉。
             SuppressVideoPreviewUpdates = true;
         }
@@ -970,6 +975,9 @@ namespace ExpressPackingMonitoring.ViewModels
             OnPropertyChanged(nameof(PreviewImageSource));
             OnPropertyChanged(nameof(CameraBarcodeStatusText));
             OnPropertyChanged(nameof(CameraFrameSize));
+            OnPropertyChanged(nameof(IsBarcodeGuideVisible));
+            OnPropertyChanged(nameof(IsCameraBarcodeGuideLockVisible));
+            OnPropertyChanged(nameof(IsCameraBarcodeGuideEditable));
             SuppressVideoPreviewUpdates = false;
         }
 

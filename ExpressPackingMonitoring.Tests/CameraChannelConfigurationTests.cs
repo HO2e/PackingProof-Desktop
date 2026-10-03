@@ -616,6 +616,32 @@ public sealed class CameraChannelConfigurationTests
     }
 
     /// <summary>
+    /// 识别来源选的是副画面时，主界面上那个框只是状态反馈、不显示小锁；
+    /// 进这一屏取景编辑时必须重新通知一次显隐，否则小锁的绑定不会刷新，点进去就看不到锁。
+    /// </summary>
+    [Fact]
+    public void EnteringOverlayPreviewEdit_RefreshesGuideLockVisibility()
+    {
+        string channels = ReadProjectFile(Path.Combine("ViewModels", "MainViewModel.OverlayChannels.cs"));
+
+        int enter = channels.IndexOf("internal void EnterOverlayPreviewEdit", StringComparison.Ordinal);
+        int exit = channels.IndexOf("internal void ExitOverlayPreviewEdit", StringComparison.Ordinal);
+        Assert.True(enter >= 0 && exit > enter, "没找到进入/退出取景编辑的实现");
+
+        string enterBody = channels[enter..exit];
+        Assert.Contains("nameof(IsCameraBarcodeGuideLockVisible)", enterBody, StringComparison.Ordinal);
+        Assert.Contains("nameof(IsCameraBarcodeGuideEditable)", enterBody, StringComparison.Ordinal);
+
+        int nextMember = channels.IndexOf("\n        internal ", exit, StringComparison.Ordinal);
+        string exitBody = nextMember > exit ? channels[exit..nextMember] : channels[exit..];
+        Assert.Contains("nameof(IsCameraBarcodeGuideLockVisible)", exitBody, StringComparison.Ordinal);
+
+        // 应用设置（换识别来源）时也要刷新，否则主界面的小锁显隐会停在旧状态。
+        string viewModel = ReadProjectFile(Path.Combine("ViewModels", "MainViewModel.cs"));
+        Assert.Contains("OnPropertyChanged(nameof(IsCameraBarcodeGuideLockVisible));", viewModel, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// 主界面必须给每一路画中画都生成可拖动的框：画中画是画进帧里的，
     /// 没有它就没法用鼠标调位置；按通道生成，以后加第三、第四路不用改。
     /// </summary>
