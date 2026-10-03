@@ -148,8 +148,11 @@ namespace ExpressPackingMonitoring.Config
         /// <summary>副画面默认采集规格。面单特写是静物，720p 足够看清字样。</summary>
         public const string DefaultSecondaryResolutionPreset = "720p";
 
-        /// <summary>副画面默认帧率。面单是静物，低帧率既够用又把两路同时采集的负载压到最低。</summary>
-        public const int DefaultSecondaryFrameFps = 10;
+        /// <summary>
+        /// 副画面默认帧率。取 30：摄像头普遍支持，Media Foundation 会就近协商到设备实际支持的档位，
+        /// 画面跟手；副画面本来就是静物特写，再高只会白吃带宽和解码。
+        /// </summary>
+        public const int DefaultSecondaryFrameFps = 30;
 
         public const int MinimumSecondaryFrameFps = 1;
         public const int MaximumSecondaryFrameFps = 60;

@@ -870,14 +870,17 @@ namespace ExpressPackingMonitoring.ViewModels
             SecondaryPreviewFrame = null;
         }
 
-        /// <summary>编辑态下把副摄帧转成预览位图，节流到 10fps，避免每帧都做一次转换。</summary>
+        /// <summary>
+        /// 编辑态下把副摄帧转成预览位图，节流到 30fps：既跟得上采集帧率、拖动取景时不卡，
+        /// 又不会每一帧都做一次整帧转换。原来限在 10fps，现场反馈"副摄画面太卡"。
+        /// </summary>
         private void PublishSecondaryPreviewFrameIfDue(Mat frame)
         {
             if (!IsEditingSecondaryCameraPreview || frame == null || frame.Empty())
                 return;
 
             DateTime now = DateTime.Now;
-            if (now - _lastSecondaryPreviewPublishedAt < TimeSpan.FromMilliseconds(100))
+            if (now - _lastSecondaryPreviewPublishedAt < TimeSpan.FromMilliseconds(33))
                 return;
             _lastSecondaryPreviewPublishedAt = now;
 

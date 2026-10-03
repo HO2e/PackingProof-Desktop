@@ -339,7 +339,8 @@
                                     </Style.Triggers>
                                 </Style>
                             </Grid.Style>
-                            <Rectangle RadiusX="6" RadiusY="6" StrokeThickness="3" StrokeDashArray="6 3" IsHitTestVisible="False">
+                            <Rectangle x:Name="CameraBarcodeGuideBox"
+                                       RadiusX="6" RadiusY="6" StrokeThickness="3" StrokeDashArray="6 3" IsHitTestVisible="False">
                                 <Rectangle.Style>
                                     <Style TargetType="Rectangle">
                                         <Setter Property="Stroke" Value="{StaticResource CameraGuideStroke}"/>

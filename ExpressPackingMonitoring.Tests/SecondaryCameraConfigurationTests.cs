@@ -119,7 +119,7 @@ public sealed class SecondaryCameraConfigurationTests
             new AppConfig { SecondaryResolutionPreset = "1080p" }));
         Assert.True(AppConfig.RequiresCameraRestart(
             current,
-            new AppConfig { SecondaryFrameFps = 30 }));
+            new AppConfig { SecondaryFrameFps = 15 }));
     }
 
     /// <summary>改了副路就必须重启采集，否则设置里换设备不会生效。</summary>

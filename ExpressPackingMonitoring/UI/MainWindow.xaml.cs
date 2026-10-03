@@ -592,7 +592,8 @@ namespace ExpressPackingMonitoring.UI
                 guideRect.X - (actualW - guideRect.Width) / 2.0,
                 guideRect.Y - (actualH - guideRect.Height) / 2.0);
             // 画中画在主摄识别框之上：被小窗盖住的那段框线要真的被遮掉，不能透出来。
-            CameraBarcodeGuide.Clip = BuildGuideClip(guideRect, ResolveSecondaryOverlayOccluder(vm, actualW, actualH));
+            // 只裁框体本身，别裁到四角把手和拖动命中层（它们要留在框外一点）。
+            CameraBarcodeGuideBox.Clip = BuildGuideClip(guideRect, ResolveSecondaryOverlayOccluder(vm, actualW, actualH));
 
             // 小锁与提示是独立的一层（在画中画之上），用与识别框完全相同的摆法：
             // 同样大小的居中层 + 同一套平移，面板停在框的顶部中点，不依赖测量时机。
