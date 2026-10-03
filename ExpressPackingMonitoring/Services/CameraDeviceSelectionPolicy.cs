@@ -66,4 +66,36 @@ internal static class CameraDeviceSelectionPolicy
         return allDevices.Any(d =>
             d.Kind == "usb" && string.Equals(d.Moniker, selfMoniker, StringComparison.Ordinal));
     }
+
+    /// <summary>
+    /// 多路通道的占用归一：按**优先级从高到低**依次占设备（主摄在前、副摄在后），
+    /// 某一路要占的标识为空、被前面那一路占了、或者清单里已经找不到这台设备，就返回空串
+    /// （调用方应把这一路退回"无"）。
+    ///
+    /// 这样"两路选了同一台"永远只有一种结果：优先级高的保留、低的让位。
+    /// 不这么做的话，两边各自投影会互相把对方挤掉，下拉会在两台设备之间来回跳。
+    /// </summary>
+    internal static IReadOnlyList<string> ResolveOwnership(
+        IReadOnlyList<string?> requestedMonikers,
+        IReadOnlyList<CameraDeviceChoice> allDevices)
+    {
+        var taken = new HashSet<string>(StringComparer.Ordinal);
+        var resolved = new string[requestedMonikers.Count];
+        for (int i = 0; i < requestedMonikers.Count; i++)
+        {
+            string? moniker = requestedMonikers[i];
+            resolved[i] = "";
+            if (string.IsNullOrEmpty(moniker))
+                continue;
+
+            bool exists = allDevices.Any(d =>
+                d.Kind == "usb" && string.Equals(d.Moniker, moniker, StringComparison.Ordinal));
+            if (!exists || !taken.Add(moniker!))
+                continue;
+
+            resolved[i] = moniker!;
+        }
+
+        return resolved;
+    }
 }

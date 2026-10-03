@@ -51,4 +51,41 @@ public sealed class CameraDeviceSelectionPolicyTests
             expected,
             CameraDeviceSelectionPolicy.CanKeepSelection(selfMoniker, [otherMoniker], All));
     }
+
+    /// <summary>
+    /// 两路撞车（历史配置里主副摄存了同一台）时只能有一个结果：
+    /// 优先级高的主摄保留，副摄退回"无"。两边各自投影会互相挤，下拉会来回跳。
+    /// </summary>
+    [Fact]
+    public void ResolveOwnership_LetsTheHigherPriorityChannelKeepTheDevice()
+    {
+        IReadOnlyList<string> resolved = CameraDeviceSelectionPolicy.ResolveOwnership(
+            ["moniker-b", "moniker-b"],
+            All);
+
+        Assert.Equal("moniker-b", resolved[0]);
+        Assert.Equal("", resolved[1]);
+    }
+
+    [Fact]
+    public void ResolveOwnership_ClearsDevicesThatAreNoLongerPresent()
+    {
+        IReadOnlyList<string> resolved = CameraDeviceSelectionPolicy.ResolveOwnership(
+            ["moniker-gone", "moniker-b"],
+            All);
+
+        Assert.Equal("", resolved[0]);
+        Assert.Equal("moniker-b", resolved[1]);
+    }
+
+    [Fact]
+    public void ResolveOwnership_KeepsDistinctDevicesAndIgnoresEmptySelections()
+    {
+        IReadOnlyList<string> resolved = CameraDeviceSelectionPolicy.ResolveOwnership(
+            [null, "moniker-b"],
+            All);
+
+        Assert.Equal("", resolved[0]);
+        Assert.Equal("moniker-b", resolved[1]);
+    }
 }
