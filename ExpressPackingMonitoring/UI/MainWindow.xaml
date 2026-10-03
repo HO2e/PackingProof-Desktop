@@ -612,8 +612,16 @@
                                     </Style.Triggers>
                                 </Style>
                             </Canvas.Style>
-                            <StackPanel x:Name="CameraBarcodeGuideHintPanel"
-                                        Orientation="Horizontal">
+                            <!--
+                                提示层里先放一层"和取景框一样宽"的宿主，面板再在宿主里居中：
+                                这样既回到居中的观感，又不用去量面板宽度（量错就会把面板推出框外）。
+                            -->
+                            <Grid x:Name="CameraBarcodeGuideHintHost"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Top">
+                                <StackPanel x:Name="CameraBarcodeGuideHintPanel"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Center">
                                 <Button x:Name="BtnCameraGuideLock"
                                         Width="30"
                                         Height="30"
@@ -700,6 +708,7 @@
                                                FontWeight="SemiBold"/>
                                 </Border>
                             </StackPanel>
+                            </Grid>
                         </Canvas>
 
                         <!-- 副摄取景编辑态：点"完成"退出，回到正常预览 -->

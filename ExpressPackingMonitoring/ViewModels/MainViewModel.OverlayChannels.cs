@@ -80,7 +80,6 @@ namespace ExpressPackingMonitoring.ViewModels
             internal CancellationTokenSource? FrameWatchCts;
 
             internal bool HasFrame;
-            internal bool IsEditingPreview;
             internal System.Windows.Media.Imaging.BitmapSource? PreviewFrame;
             internal DateTime LastPreviewPublishedAt = DateTime.MinValue;
 

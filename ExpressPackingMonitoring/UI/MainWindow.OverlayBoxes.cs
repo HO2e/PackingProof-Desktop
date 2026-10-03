@@ -166,12 +166,19 @@ namespace ExpressPackingMonitoring.UI
 
         private static void Place(FrameworkElement element, double left, double top, double width, double height)
         {
-            Canvas.SetLeft(element, left);
-            Canvas.SetTop(element, top);
             if (width > 0)
                 element.Width = width;
             if (height > 0)
                 element.Height = height;
+
+            // 位置用 RenderTransform 摆：只影响渲染、不触发布局 ——
+            // 拖动窗口改大小时才会像取景框那样实时跟手（改 Canvas.Left/Top 要走一次布局，会晚一拍）。
+            TranslateTransform offset = element.RenderTransform as TranslateTransform ?? new TranslateTransform();
+            offset.X = left;
+            offset.Y = top;
+            element.RenderTransform = offset;
+            Canvas.SetLeft(element, 0);
+            Canvas.SetTop(element, 0);
         }
 
         private void OverlayBox_DragDelta(object sender, DragDeltaEventArgs e)

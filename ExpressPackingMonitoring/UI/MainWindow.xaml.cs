@@ -444,8 +444,11 @@ namespace ExpressPackingMonitoring.UI
             // 这里刻意不去量面板宽度再居中 —— 宽度一旦量成 0，面板就会被推到框外很远。
             // 坐标同样要先从"画面坐标系"换算到提示层的坐标系（两者原点不重合）。
             Point hintOriginInLayer = VideoImage.TranslatePoint(new Point(0, 0), CameraBarcodeGuideHintLayer);
-            Canvas.SetLeft(CameraBarcodeGuideHintPanel, hintOriginInLayer.X + guideRect.X + 10);
-            Canvas.SetTop(CameraBarcodeGuideHintPanel, hintOriginInLayer.Y + guideRect.Y + 10);
+            // 宿主跟取景框一样宽、顶到框的顶部，面板在宿主里居中 —— 回到原来居中的观感，
+            // 又不用量面板宽度；框再窄也只是面板左右探出去一点，不会被挤变形。
+            CameraBarcodeGuideHintHost.Width = guideRect.Width;
+            Canvas.SetLeft(CameraBarcodeGuideHintHost, hintOriginInLayer.X + guideRect.X);
+            Canvas.SetTop(CameraBarcodeGuideHintHost, hintOriginInLayer.Y + guideRect.Y + 10);
             Logging.RuntimeLog.Info(
                 "OverlayUi",
                 $"取景框提示定位 guide=({guideRect.X:F0},{guideRect.Y:F0},{guideRect.Width:F0}x{guideRect.Height:F0}) "
