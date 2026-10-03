@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
@@ -1517,4 +1517,6 @@
   <data name="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面" xml:space="preserve"><value>サブ画面を伝票に向けている場合はサブ画面で認識できます。サブ画面に映像がないときはメイン画面に戻ります</value></data>
   <data name="主画面" xml:space="preserve"><value>メイン画面</value></data>
   <data name="副画面" xml:space="preserve"><value>サブ画面</value></data>
+<data name="这一路不接就选“无”" xml:space="preserve"><value>この系統を使わないときは「なし」を選びます</value></data>
+<data name="添加副画面" xml:space="preserve"><value>子画面を追加</value></data>
 </root>

@@ -468,25 +468,30 @@ public sealed class CameraChannelConfigurationTests
         Assert.DoesNotContain("_previewSessionGate", source, StringComparison.Ordinal);
     }
 
-    /// <summary>设置页用纯绑定暴露画中画，避免让被冻结的 SettingsWindow.xaml.cs 继续增长。</summary>
+    /// <summary>
+    /// 设置页用一套模板渲染所有叠加画面：加第三、第四路只是列表多一项，
+    /// 不再复制一段卡片 XAML，也不让被冻结的 SettingsWindow.xaml.cs 继续增长。
+    /// </summary>
     [Fact]
-    public void SettingsWindow_ExposesOverlayByBindingOnly()
+    public void SettingsWindow_RendersOverlayChannelsFromOneTemplate()
     {
         string settings = ReadProjectFile(Path.Combine("UI", "SettingsWindow.xaml"));
 
+        Assert.Contains("ItemsControl ItemsSource=\"{Binding OverlayCameraCards}\"", settings, StringComparison.Ordinal);
+        Assert.Contains("ItemsSource=\"{Binding DeviceChoices}\"", settings, StringComparison.Ordinal);
+        Assert.Contains("SelectedItem=\"{Binding SelectedDevice, Mode=TwoWay}\"", settings, StringComparison.Ordinal);
+        Assert.Contains("Command=\"{Binding AddOverlayChannelCommand}\"", settings, StringComparison.Ordinal);
+        Assert.Contains("Command=\"{Binding RemoveCommand}\"", settings, StringComparison.Ordinal);
         // 来源就是开关：选"无"时其余选项整块收起。
-        Assert.Contains("SecondaryCameraDeviceComboBox", settings, StringComparison.Ordinal);
-        Assert.Contains("{Binding SecondaryCameraChoices}", settings, StringComparison.Ordinal);
-        Assert.Contains("{Binding SelectedSecondaryCameraChoice", settings, StringComparison.Ordinal);
         Assert.Contains(
-            "Visibility=\"{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}\"",
+            "Visibility=\"{Binding IsConfigured, Converter={StaticResource BoolToVisibility}}\"",
             settings,
             StringComparison.Ordinal);
         Assert.DoesNotContain("SecondaryCameraCheckBox", settings, StringComparison.Ordinal);
-        // 副画面规格与主摄共用同一套档位枚举：分辨率/帧率下拉由 CameraFormatCatalog 填
-        Assert.Contains("SecondaryResolutionComboBox", settings, StringComparison.Ordinal);
-        Assert.Contains("SecondaryFpsComboBox", settings, StringComparison.Ordinal);
-        Assert.Contains("SecondaryCameraFormats_Loaded", settings, StringComparison.Ordinal);
+        // 叠加画面规格与主摄共用同一套档位枚举：分辨率/帧率下拉由 CameraFormatCatalog 填
+        Assert.Contains("ItemsSource=\"{Binding Resolutions}\"", settings, StringComparison.Ordinal);
+        Assert.Contains("ItemsSource=\"{Binding FpsOptions}\"", settings, StringComparison.Ordinal);
+        Assert.Contains("Loaded=\"CameraChannelCards_Loaded\"", settings, StringComparison.Ordinal);
     }
 
     /// <summary>

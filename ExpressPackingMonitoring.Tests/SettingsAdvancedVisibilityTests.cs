@@ -406,9 +406,10 @@ public sealed class SettingsAdvancedVisibilityTests
     [InlineData("录像网页访问密钥")]
     public void CommonSettings_RemainVisibleWhenAdvancedSettingsAreHidden(string label)
     {
-        XElement labelElement = FindLabel(LoadSettingsXaml(), label);
-
-        Assert.False(IsControlledByAdvancedToggle(labelElement), $"{label} 不应受高级设置开关控制");
+        // 同一行标签可能出现在多张卡上（例如主摄与每一路叠加画面各有一个"分辨率"）：
+        // 只要没有任何一处受高级设置开关控制就算合格。
+        foreach (XElement labelElement in FindLabels(LoadSettingsXaml(), label))
+            Assert.False(IsControlledByAdvancedToggle(labelElement), $"{label} 不应受高级设置开关控制");
     }
 
     [Fact]
@@ -440,11 +441,18 @@ public sealed class SettingsAdvancedVisibilityTests
                 StringComparison.Ordinal) == true);
     }
 
-    private static XElement FindLabel(XDocument document, string label)
-    {
-        return Assert.Single(
+    private static XElement FindLabel(XDocument document, string label) =>
+        Assert.Single(
             document.Descendants(Presentation + "TextBlock"),
             element => (string?)element.Attribute("Text") == label);
+
+    private static List<XElement> FindLabels(XDocument document, string label)
+    {
+        List<XElement> matches = document.Descendants(Presentation + "TextBlock")
+            .Where(element => (string?)element.Attribute("Text") == label)
+            .ToList();
+        Assert.NotEmpty(matches);
+        return matches;
     }
 
     private static XDocument LoadSettingsXaml()

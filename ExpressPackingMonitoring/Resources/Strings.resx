@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
@@ -1517,4 +1517,6 @@
   <data name="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面" xml:space="preserve"><value>Switch to the secondary view when it is aimed at the label; falls back to the main view when it has no picture</value></data>
   <data name="主画面" xml:space="preserve"><value>Main view</value></data>
   <data name="副画面" xml:space="preserve"><value>Secondary view</value></data>
+<data name="这一路不接就选“无”" xml:space="preserve"><value>Choose "None" to leave this overlay unused</value></data>
+<data name="添加副画面" xml:space="preserve"><value>Add overlay</value></data>
 </root>

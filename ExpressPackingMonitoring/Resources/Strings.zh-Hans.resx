@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
@@ -1519,4 +1519,6 @@
   <data name="副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面" xml:space="preserve"><value>副画面专门对着面单时可改用副画面识别；副路没画面会自动回退主画面</value></data>
   <data name="主画面" xml:space="preserve"><value>主画面</value></data>
   <data name="副画面" xml:space="preserve"><value>副画面</value></data>
+<data name="这一路不接就选“无”" xml:space="preserve"><value>这一路不接就选“无”</value></data>
+<data name="添加副画面" xml:space="preserve"><value>添加副画面</value></data>
 </root>

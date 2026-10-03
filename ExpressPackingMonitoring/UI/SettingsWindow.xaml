@@ -1068,7 +1068,7 @@
                                                   Grid.Column="2"
                                                   SelectedValuePath="Index"
                                                   DisplayMemberPath="Name"
-                                                  Loaded="SecondaryCameraFormats_Loaded"
+                                                  Loaded="CameraChannelCards_Loaded"
                                                   SelectedValue="{Binding Config.CameraIndex}"
                                                   SelectionChanged="CameraComboBox_SelectionChanged"/>
                                     </Grid>
@@ -1173,103 +1173,147 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- 副摄像头 -->
-                            <Border Style="{StaticResource SectionCardStyle}">
-                                <StackPanel>
-                                    <Grid Style="{StaticResource SettingRowStyle}"
-                                          Visibility="{Binding Capabilities.CanUseCamera, Converter={StaticResource BoolToVisibility}}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副摄像头" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="叠加在主画面上的另一路摄像头"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <ComboBox x:Name="SecondaryCameraDeviceComboBox"
-                                                  Grid.Column="2"
-                                                  ItemsSource="{Binding SecondaryCameraChoices}"
-                                                  DisplayMemberPath="Name"
-                                                  SelectedItem="{Binding SelectedSecondaryCameraChoice, Mode=TwoWay}"/>
-                                    </Grid>
+                            <!-- 副画面：一路一张卡；加第三、第四路只是这个列表里多一项 -->
+                            <ItemsControl ItemsSource="{Binding OverlayCameraCards}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource SectionCardStyle}">
+                                            <StackPanel>
+                                                <Grid Style="{StaticResource SettingRowStyle}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="24"/>
+                                                        <ColumnDefinition Width="260"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Margin="0,0,16,0">
+                                                        <TextBlock Text="{Binding Title}" Style="{StaticResource FieldLabelStyle}"/>
+                                                        <TextBlock Text="叠加在主画面上的另一路摄像头"
+                                                                   Style="{StaticResource FieldHintStyle}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2"
+                                                                Orientation="Horizontal"
+                                                                HorizontalAlignment="Right"
+                                                                VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding DeviceSummary}"
+                                                                   MaxWidth="150"
+                                                                   Margin="0,0,10,0"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   Foreground="{DynamicResource TextSecondary}"/>
+                                                        <Button Content="删除"
+                                                                Height="28"
+                                                                Padding="10,0"
+                                                                Style="{StaticResource SecondarySmallButtonStyle}"
+                                                                Command="{Binding RemoveCommand}"/>
+                                                    </StackPanel>
+                                                </Grid>
 
-                                    <Grid Style="{StaticResource SettingRowStyle}"
-                                          Visibility="{Binding IsSecondaryNetworkCameraSelected, Converter={StaticResource BoolToVisibility}}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副网络摄像头地址" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="例如 rtsp://账号:密码@192.168.1.64:554/stream"
-                                                       Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <TextBox x:Name="SecondaryNetworkCameraUrlTextBox"
-                                                 Grid.Column="2"
-                                                 Text="{Binding Config.SecondaryNetworkCameraUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                 ToolTip="rtsp://user:password@192.168.1.65:554/stream"/>
-                                    </Grid>
+                                                <Grid Style="{StaticResource SettingRowStyle}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="24"/>
+                                                        <ColumnDefinition Width="260"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Margin="0,0,16,0">
+                                                        <TextBlock Text="摄像头" Style="{StaticResource FieldLabelStyle}"/>
+                                                        <TextBlock Text="这一路不接就选“无”"
+                                                                   Style="{StaticResource FieldHintStyle}"/>
+                                                    </StackPanel>
+                                                    <ComboBox Grid.Column="2"
+                                                              ItemsSource="{Binding DeviceChoices}"
+                                                              DisplayMemberPath="Name"
+                                                              SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+                                                              Cursor="Hand"/>
+                                                </Grid>
 
-                                    <Grid Style="{StaticResource SettingRowStyle}"
-                                          Visibility="{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副画面分辨率" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="越高越清晰，文件也越大" Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <ComboBox x:Name="SecondaryResolutionComboBox"
-                                                  Grid.Column="2"
-                                                  DisplayMemberPath="Name"
-                                                  Cursor="Hand"/>
-                                    </Grid>
+                                                <Grid Style="{StaticResource SettingRowStyle}"
+                                                      Visibility="{Binding IsNetworkSelected, Converter={StaticResource BoolToVisibility}}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="24"/>
+                                                        <ColumnDefinition Width="260"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Margin="0,0,16,0">
+                                                        <TextBlock Text="网络摄像头地址" Style="{StaticResource FieldLabelStyle}"/>
+                                                        <TextBlock Text="例如 rtsp://账号:密码@192.168.1.64:554/stream"
+                                                                   Style="{StaticResource FieldHintStyle}"/>
+                                                    </StackPanel>
+                                                    <TextBox Grid.Column="2"
+                                                             Text="{Binding NetworkUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                             ToolTip="rtsp://user:password@192.168.1.65:554/stream"/>
+                                                </Grid>
 
-                                    <Grid Style="{StaticResource SettingRowStyle}"
-                                          Visibility="{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副画面帧率" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="越高越流畅，也更占空间" Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <ComboBox x:Name="SecondaryFpsComboBox"
-                                                  Grid.Column="2"
-                                                  Cursor="Hand"/>
-                                    </Grid>
+                                                <Grid Style="{StaticResource SettingRowStyle}"
+                                                      Visibility="{Binding IsConfigured, Converter={StaticResource BoolToVisibility}}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="24"/>
+                                                        <ColumnDefinition Width="260"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Margin="0,0,16,0">
+                                                        <TextBlock Text="分辨率" Style="{StaticResource FieldLabelStyle}"/>
+                                                        <TextBlock Text="越高越清晰，文件也越大" Style="{StaticResource FieldHintStyle}"/>
+                                                    </StackPanel>
+                                                    <ComboBox Grid.Column="2"
+                                                              ItemsSource="{Binding Resolutions}"
+                                                              DisplayMemberPath="Name"
+                                                              SelectedItem="{Binding SelectedResolution, Mode=TwoWay}"
+                                                              Cursor="Hand"/>
+                                                </Grid>
 
-                                    <Grid Style="{StaticResource SettingRowStyle}"
-                                          Visibility="{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副画面旋转" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="决定画中画的方向" Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <ComboBox x:Name="SecondaryCameraRotationComboBox"
-                                                  Grid.Column="2"
-                                                  SelectedValuePath="Tag"
-                                                  SelectedValue="{Binding Config.SecondaryCameraRotationDegrees, Mode=TwoWay}">
-                                            <ComboBoxItem Tag="0" Content="不旋转"/>
-                                            <ComboBoxItem Tag="90" Content="旋转 90°"/>
-                                            <ComboBoxItem Tag="180" Content="旋转 180°"/>
-                                            <ComboBoxItem Tag="270" Content="旋转 270°"/>
-                                        </ComboBox>
-                                    </Grid>
+                                                <Grid Style="{StaticResource SettingRowStyle}"
+                                                      Visibility="{Binding IsConfigured, Converter={StaticResource BoolToVisibility}}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="24"/>
+                                                        <ColumnDefinition Width="260"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Margin="0,0,16,0">
+                                                        <TextBlock Text="帧率" Style="{StaticResource FieldLabelStyle}"/>
+                                                        <TextBlock Text="越高越流畅，也更占空间" Style="{StaticResource FieldHintStyle}"/>
+                                                    </StackPanel>
+                                                    <ComboBox Grid.Column="2"
+                                                              ItemsSource="{Binding FpsOptions}"
+                                                              DisplayMemberPath="Label"
+                                                              SelectedItem="{Binding SelectedFps, Mode=TwoWay}"
+                                                              Cursor="Hand"/>
+                                                </Grid>
 
-                                </StackPanel>
-                            </Border>
+                                                <Grid Style="{StaticResource SettingRowStyle}"
+                                                      Visibility="{Binding IsConfigured, Converter={StaticResource BoolToVisibility}}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="24"/>
+                                                        <ColumnDefinition Width="260"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Margin="0,0,16,0">
+                                                        <TextBlock Text="画面旋转" Style="{StaticResource FieldLabelStyle}"/>
+                                                        <TextBlock Text="决定画中画的方向" Style="{StaticResource FieldHintStyle}"/>
+                                                    </StackPanel>
+                                                    <ComboBox Grid.Column="2"
+                                                              SelectedValuePath="Tag"
+                                                              SelectedValue="{Binding RotationDegrees, Mode=TwoWay}"
+                                                              Cursor="Hand">
+                                                        <ComboBoxItem Tag="0" Content="不旋转"/>
+                                                        <ComboBoxItem Tag="90" Content="旋转 90°"/>
+                                                        <ComboBoxItem Tag="180" Content="旋转 180°"/>
+                                                        <ComboBoxItem Tag="270" Content="旋转 270°"/>
+                                                    </ComboBox>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <Button Content="添加副画面"
+                                    Height="32"
+                                    Padding="14,0"
+                                    Margin="0,0,0,12"
+                                    HorizontalAlignment="Left"
+                                    Style="{StaticResource SecondarySmallButtonStyle}"
+                                    Command="{Binding AddOverlayChannelCommand}"
+                                    Visibility="{Binding CanAddOverlayChannel, Converter={StaticResource BoolToVisibility}}"/>
 
                             <Border Style="{StaticResource SectionCardStyle}">
                                 <StackPanel>
@@ -1442,11 +1486,10 @@
                                         </StackPanel>
                                         <ComboBox x:Name="BarcodeRecognitionSourceComboBox"
                                                   Grid.Column="2"
-                                                  SelectedValuePath="Tag"
-                                                  SelectedValue="{Binding Config.CameraBarcodeRecognitionSource, Mode=TwoWay}">
-                                            <ComboBoxItem Tag="primary" Content="主摄像头"/>
-                                            <ComboBoxItem Tag="secondary" Content="副摄像头"/>
-                                        </ComboBox>
+                                                  ItemsSource="{Binding BarcodeRecognitionChannelChoices}"
+                                                  DisplayMemberPath="Name"
+                                                  SelectedItem="{Binding SelectedBarcodeRecognitionChannel, Mode=TwoWay}"
+                                                  Cursor="Hand"/>
                                     </Grid>
 
                                     <Grid Style="{StaticResource AdvancedSettingRowStyle}">

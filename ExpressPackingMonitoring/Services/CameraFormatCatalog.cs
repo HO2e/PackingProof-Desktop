@@ -5,8 +5,8 @@ using AForge.Video.DirectShow;
 
 namespace ExpressPackingMonitoring.Services;
 
-/// <summary>可选采集档位的一项：显示名 + 实际宽高。</summary>
-internal sealed record CameraResolutionOption(string Name, int Width, int Height)
+/// <summary>可选采集档位的一项：显示名 + 实际宽高。设置页的通道卡片要绑它，所以是公开类型。</summary>
+public sealed record CameraResolutionOption(string Name, int Width, int Height)
 {
     public override string ToString() => Name;
 }

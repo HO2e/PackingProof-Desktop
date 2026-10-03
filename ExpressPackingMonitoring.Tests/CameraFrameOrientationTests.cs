@@ -45,9 +45,9 @@ public sealed class CameraFrameOrientationTests
             "SettingsWindow.xaml"));
 
         Assert.Contains("Text=\"画面旋转\"", xaml, StringComparison.Ordinal);
-        Assert.Contains("Text=\"副画面旋转\"", xaml, StringComparison.Ordinal);
+        // 主摄与每一路叠加画面共用同一个标签与同一套角度选项
         Assert.Contains("{Binding Config.CameraRotationDegrees", xaml, StringComparison.Ordinal);
-        Assert.Contains("{Binding Config.SecondaryCameraRotationDegrees", xaml, StringComparison.Ordinal);
+        Assert.Contains("SelectedValue=\"{Binding RotationDegrees, Mode=TwoWay}\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Tag=\"90\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Tag=\"270\"", xaml, StringComparison.Ordinal);
     }
