@@ -17,51 +17,18 @@ namespace ExpressPackingMonitoring.UI
     /// </summary>
     public partial class SettingsWindow : INotifyPropertyChanged
     {
-        /// <summary>副摄下拉的一项：无 / 本机某台摄像头 / 网络摄像头。</summary>
-        public sealed record SecondaryCameraChoice(string Name, string Kind, string Moniker, int Index);
-
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        private List<SecondaryCameraChoice>? _secondaryCameraChoices;
+        private List<CameraDeviceChoice>? _secondaryCameraChoices;
 
         /// <summary>
-        /// 副摄下拉列表：无 + 本机真实存在的摄像头（剔除主摄已经选走的那台）+ 网络摄像头。
+        /// 副摄下拉列表：与主画面使用同一份 <see cref="CameraDeviceCatalog"/> 构造逻辑，
+        /// 只把主摄已经选走的那台剔除（同一台设备不能被两路同时打开）。
         /// </summary>
-        public IReadOnlyList<SecondaryCameraChoice> SecondaryCameraChoices =>
-            _secondaryCameraChoices ??= BuildSecondaryCameraChoices();
+        public IReadOnlyList<CameraDeviceChoice> SecondaryCameraChoices =>
+            _secondaryCameraChoices ??= CameraDeviceCatalog.BuildChoices(Config?.CameraMonikerString).ToList();
 
-        private List<SecondaryCameraChoice> BuildSecondaryCameraChoices()
-        {
-            var choices = new List<SecondaryCameraChoice>
-            {
-                new("无", AppConfig.SecondaryCameraSourceNone, "", -1)
-            };
-
-            try
-            {
-                var devices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
-                string mainMoniker = Config?.CameraMonikerString ?? "";
-                for (int i = 0; i < devices.Count; i++)
-                {
-                    if (!string.IsNullOrEmpty(mainMoniker)
-                        && string.Equals(devices[i].MonikerString, mainMoniker, StringComparison.Ordinal))
-                    {
-                        continue;
-                    }
-
-                    choices.Add(new SecondaryCameraChoice(devices[i].Name, "usb", devices[i].MonikerString, i));
-                }
-            }
-            catch
-            {
-                // 枚举失败时至少还有"无"和"网络摄像头"，不影响窗口打开。
-            }
-
-            choices.Add(new SecondaryCameraChoice("网络摄像头", "network", "", -1));
-            return choices;
-        }
-
-        public SecondaryCameraChoice? SelectedSecondaryCameraChoice
+        public CameraDeviceChoice? SelectedSecondaryCameraChoice
         {
             get
             {

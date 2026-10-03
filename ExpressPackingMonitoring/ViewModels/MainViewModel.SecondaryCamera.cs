@@ -99,53 +99,17 @@ namespace ExpressPackingMonitoring.ViewModels
             Config is { } config
             && string.Equals(config.SecondaryCameraSourceKind, "network", StringComparison.Ordinal);
 
-        /// <summary>副摄下拉的一项：无 / 本机某台摄像头 / 网络摄像头。</summary>
-        public sealed record SecondaryCameraChoice(string Name, string Kind, string Moniker, int Index);
-
-        private List<SecondaryCameraChoice>? _secondaryCameraChoices;
+        private List<CameraDeviceChoice>? _secondaryCameraChoices;
 
         /// <summary>
-        /// 副摄下拉列表：与主摄一样列出本机真实存在的摄像头，只是把主摄已经选走的那一台剔掉
-        /// （同一台设备无法被两路同时打开）。"网络摄像头"只在需要时选，选它才出现地址输入。
-        /// 列表放在 ViewModel 里而不是设置页代码里，是为了不往被冻结的 SettingsWindow.xaml.cs 里加逻辑。
+        /// 副摄下拉列表：列表本身由 <see cref="CameraDeviceCatalog"/> 统一构造（主摄、副摄、
+        /// 以后的第三第四路共用一份），这里只把主摄已占用的那台排查在外。
         /// </summary>
-        public IReadOnlyList<SecondaryCameraChoice> SecondaryCameraChoices =>
-            _secondaryCameraChoices ??= BuildSecondaryCameraChoices();
-
-        private List<SecondaryCameraChoice> BuildSecondaryCameraChoices()
-        {
-            var choices = new List<SecondaryCameraChoice>
-            {
-                new("无", AppConfig.SecondaryCameraSourceNone, "", -1)
-            };
-
-            try
-            {
-                var devices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
-                string mainMoniker = Config?.CameraMonikerString ?? "";
-                for (int i = 0; i < devices.Count; i++)
-                {
-                    // 主摄已经占用的那一台不再出现在副摄列表里。
-                    if (!string.IsNullOrEmpty(mainMoniker)
-                        && string.Equals(devices[i].MonikerString, mainMoniker, StringComparison.Ordinal))
-                    {
-                        continue;
-                    }
-
-                    choices.Add(new SecondaryCameraChoice(devices[i].Name, "usb", devices[i].MonikerString, i));
-                }
-            }
-            catch (Exception ex)
-            {
-                RuntimeLog.Warn("SecondaryCamera", $"枚举副摄候选设备失败：{ex.Message}");
-            }
-
-            choices.Add(new SecondaryCameraChoice("网络摄像头", "network", "", -1));
-            return choices;
-        }
+        public IReadOnlyList<CameraDeviceChoice> SecondaryCameraChoices =>
+            _secondaryCameraChoices ??= CameraDeviceCatalog.BuildChoices(Config?.CameraMonikerString).ToList();
 
         /// <summary>当前选中的副摄；写入时把选择落到配置并保存，主摄那套字段完全不动。</summary>
-        public SecondaryCameraChoice? SelectedSecondaryCameraChoice
+        public CameraDeviceChoice? SelectedSecondaryCameraChoice
         {
             get
             {
