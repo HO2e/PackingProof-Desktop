@@ -168,9 +168,10 @@ namespace ExpressPackingMonitoring.ViewModels
             || _secondaryNetworkCameraSource != null;
 
         /// <summary>
-        /// 主画面取景框是否该显示。识别改用副画面时，取景框画到副画面上，主画面这个收起。
+        /// 识别框是否显示。识别改用副画面时它画在画中画上，两种模式都要显示，
+        /// 位置由主界面的 UpdateCameraBarcodeGuide 按当前来源决定。
         /// </summary>
-        public bool IsBarcodeGuideVisible => !ShouldUseSecondaryCameraForBarcode;
+        public bool IsBarcodeGuideVisible => true;
 
         /// <summary>
         /// 「摄像头自动识别面单」是否改用副画面：配置选了副画面、副画面开着、而且副路真的出过帧。
@@ -381,18 +382,6 @@ namespace ExpressPackingMonitoring.ViewModels
             if (selectedMoniker.Length == 0)
                 return;
 
-            // 同一台 USB 摄像头是独占设备，两路同时打开必然有一路拿不到画面。但"标识相同"
-            // 不等于"真的是同一台"：没有序列号的廉价摄像头，实例路径跟着 USB 端口走，换插口
-            // 就会换标识；而两台同型号设备同时插着时标识本来就不同。所以这里只提示、不拦截，
-            // 最终以"有没有出帧"为准（见 ScheduleSecondaryCameraFrameWatch）。
-            // 主路走网络流时不占用本地设备，这时更不该因为残留的 Moniker 把副路挡掉。
-            if (!IsNetworkCameraConfigured()
-                && string.Equals(selectedMoniker, config.CameraMonikerString, StringComparison.Ordinal))
-            {
-                RuntimeLog.Warn("SecondaryCamera", "副摄像头与主摄像头配置为同一台设备，仍尝试启动，以实际出帧为准");
-                ShowToast("副摄像头与主摄像头是同一台设备，可能只有一路能出画面", ToastSeverity.Warning);
-            }
-
             // 先走新后端：原生格式协商 + GPU 解码与色彩校正，与主摄同一条路径。
             // 软件虚拟摄像头（MF 枚举不到）、驱动异常或探测不通过时再回退 DirectShow。
             if (TryStartMediaFoundationSecondaryCamera(selectedMoniker))
@@ -416,29 +405,43 @@ namespace ExpressPackingMonitoring.ViewModels
         }
 
         /// <summary>
-        /// 优先按记住的 Moniker 精确匹配；没配过或设备已拔掉时按索引回落。
-        /// 副摄像头不写回主路的摄像头配置，两者互不影响。
+        /// 解析副摄要打开的设备。
+        ///
+        /// **不做"随便回落一台"**：以前在没配过或设备拔掉时会退到索引 1/0，结果经常正好是主摄那一台，
+        /// 两路抢同一台设备 —— 表现就是"主副冲突"提示和副摄永远没有画面。
+        /// 现在解析不到就返回空，由调用方直接不启动副路。
         /// </summary>
         private static string ResolveSecondaryCameraMoniker(
             AppConfig config,
             FilterInfoCollection devices)
         {
+            string mainMoniker = config.CameraMonikerString ?? "";
             string configured = config.SecondaryCameraMonikerString ?? "";
             if (configured.Length > 0)
             {
                 for (int i = 0; i < devices.Count; i++)
                 {
-                    if (string.Equals(devices[i].MonikerString, configured, StringComparison.Ordinal))
-                        return configured;
+                    if (!string.Equals(devices[i].MonikerString, configured, StringComparison.Ordinal))
+                        continue;
+                    if (string.Equals(configured, mainMoniker, StringComparison.Ordinal))
+                        break;
+                    return configured;
                 }
 
-                RuntimeLog.Warn("SecondaryCamera", "配置的副摄像头未连接，回落到索引选择");
+                RuntimeLog.Info("SecondaryCamera", "配置的副摄像头当前不在（或就是主摄那一台），副画面先不启动");
+                return "";
             }
 
             int index = config.SecondaryCameraIndex;
-            if (index < 0 || index >= devices.Count)
-                index = devices.Count > 1 ? 1 : 0;
-            return devices[index].MonikerString;
+            if (index >= 0 && index < devices.Count)
+            {
+                string moniker = devices[index].MonikerString;
+                if (!string.Equals(moniker, mainMoniker, StringComparison.Ordinal))
+                    return moniker;
+            }
+
+            RuntimeLog.Info("SecondaryCamera", "副摄还没有选定设备，副画面先不启动");
+            return "";
         }
 
         /// <summary>
@@ -745,6 +748,53 @@ namespace ExpressPackingMonitoring.ViewModels
 
         /// <summary>识别来源选了副摄且副摄已经出帧时，识别框画在画中画上。</summary>
         internal bool IsSecondaryCameraGuideVisible => ShouldUseSecondaryCameraForBarcode;
+
+        /// <summary>副摄识别框当前几何（与主摄同一套语义）。</summary>
+        internal CameraBarcodeGuideGeometry CurrentSecondaryCameraBarcodeGuideGeometry =>
+            GetSecondaryCameraGuideGeometry();
+
+        /// <summary>
+        /// 在预览里拖动副摄识别框时写回配置：拖动过程只改内存，松手才落盘。
+        /// 与主摄识别框走同一套换算，只是参考矩形换成画中画。
+        /// </summary>
+        internal void ApplySecondaryCameraBarcodeGuideGeometry(
+            CameraBarcodeGuideGeometry geometry,
+            bool persist)
+        {
+            if (Config is not { } config)
+                return;
+
+            double widthRatio = AppConfig.NormalizeSecondaryGuideRatio(geometry.WidthRatio);
+            double heightRatio = AppConfig.NormalizeSecondaryGuideRatio(geometry.HeightRatio);
+            double offsetX = AppConfig.NormalizeGuideOffset(geometry.OffsetX);
+            double offsetY = AppConfig.NormalizeGuideOffset(geometry.OffsetY);
+            config.SecondaryBarcodeGuideWidthRatio = widthRatio;
+            config.SecondaryBarcodeGuideHeightRatio = heightRatio;
+            config.SecondaryBarcodeGuideOffsetX = offsetX;
+            config.SecondaryBarcodeGuideOffsetY = offsetY;
+            if (!persist)
+                return;
+
+            if (!WorkstationConfigStore.TryUpdate(
+                    saved =>
+                    {
+                        saved.SecondaryBarcodeGuideWidthRatio = widthRatio;
+                        saved.SecondaryBarcodeGuideHeightRatio = heightRatio;
+                        saved.SecondaryBarcodeGuideOffsetX = offsetX;
+                        saved.SecondaryBarcodeGuideOffsetY = offsetY;
+                    },
+                    out AppConfig savedConfig,
+                    out string error))
+            {
+                RuntimeLog.Warn("SecondaryCamera", $"副摄识别框保存失败：{error}");
+                return;
+            }
+
+            config.SecondaryBarcodeGuideWidthRatio = savedConfig.SecondaryBarcodeGuideWidthRatio;
+            config.SecondaryBarcodeGuideHeightRatio = savedConfig.SecondaryBarcodeGuideHeightRatio;
+            config.SecondaryBarcodeGuideOffsetX = savedConfig.SecondaryBarcodeGuideOffsetX;
+            config.SecondaryBarcodeGuideOffsetY = savedConfig.SecondaryBarcodeGuideOffsetY;
+        }
 
         /// <summary>
         /// 这里跑在视频处理线程上，属性通知必须回 UI 线程，
