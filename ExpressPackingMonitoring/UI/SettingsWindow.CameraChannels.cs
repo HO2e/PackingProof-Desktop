@@ -430,6 +430,32 @@ namespace ExpressPackingMonitoring.UI
         }
 
         /// <summary>
+        /// 高级设置里改了"副画面数量"：按新路数补齐/截断通道，并立刻重建卡片与设备占用关系 ——
+        /// 用户在"设备与外观"里要马上看到卡片多了或少了几张，不用等保存再重开设置页。
+        /// 路数没变（含打开设置页时的初始化赋值）直接返回，不做无谓的重建。
+        /// </summary>
+        internal void OverlayChannelCount_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (Config is not { } config)
+                return;
+
+            int before = config.CameraChannels.Count;
+            AppConfig.NormalizeCameraChannels(config);
+            if (config.CameraChannels.Count == before)
+                return;
+
+            // 被截掉的那一路如果正是识别来源，收回到主摄，和加载时的归一规则一致。
+            config.CameraBarcodeRecognitionChannel = AppConfig.NormalizeBarcodeRecognitionChannel(
+                config.CameraBarcodeRecognitionChannel,
+                config.CameraChannels);
+
+            RebuildOverlayCards();
+            foreach (OverlayChannelCard card in OverlayCameraCards)
+                LoadOverlayChannelFormats(card);
+            SyncCameraChoices();
+        }
+
+        /// <summary>
         /// 主摄与所有叠加画面一起重算：任一路换了设备，所有下拉都用新的占用关系重新投影。
         /// 同一台设备只能归一路，主摄优先；让位的那一路退回"无"（不把用户眼前选中的主摄挪走）。
         /// </summary>

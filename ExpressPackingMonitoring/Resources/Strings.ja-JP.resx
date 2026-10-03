@@ -1473,6 +1473,12 @@
   <data name="例如 rtsp://账号:密码@192.168.1.64:554/stream" xml:space="preserve"><value>例：rtsp://ユーザー:パスワード@192.168.1.64:554/stream</value></data>
   <data name="按住拖动可调整副画面大小" xml:space="preserve"><value>ドラッグでサブ画面の大きさを変更できます</value></data>
   <data name="按住拖动可调整副画面位置" xml:space="preserve"><value>ドラッグしてサブ画面の位置を調整できます</value></data>
+  <data name="副画面数量" xml:space="preserve"><value>サブ画面の数</value></data>
+  <data name="主画面之外还能叠几路副摄像头，改了以后按新路数重启这些画面" xml:space="preserve"><value>メイン画面のほかに重ねられるサブカメラの数です。変更すると新しい数でサブ画面を再起動します</value></data>
+  <data name="1 路" xml:space="preserve"><value>1 系統</value></data>
+  <data name="2 路" xml:space="preserve"><value>2 系統</value></data>
+  <data name="3 路" xml:space="preserve"><value>3 系統</value></data>
+  <data name="4 路" xml:space="preserve"><value>4 系統</value></data>
   <data name="主画面" xml:space="preserve"><value>メイン画面</value></data>
   <data name="副画面" xml:space="preserve"><value>サブ画面</value></data>
 <data name="这一路不接就选“无”" xml:space="preserve"><value>この系統を使わないときは「なし」を選びます</value></data>

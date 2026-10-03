@@ -1473,6 +1473,12 @@
   <data name="例如 rtsp://账号:密码@192.168.1.64:554/stream" xml:space="preserve"><value>For example rtsp://user:password@192.168.1.64:554/stream</value></data>
   <data name="按住拖动可调整副画面大小" xml:space="preserve"><value>Drag to resize the secondary view</value></data>
   <data name="按住拖动可调整副画面位置" xml:space="preserve"><value>Drag to move the secondary view</value></data>
+  <data name="副画面数量" xml:space="preserve"><value>Secondary view count</value></data>
+  <data name="主画面之外还能叠几路副摄像头，改了以后按新路数重启这些画面" xml:space="preserve"><value>How many secondary cameras can be overlaid beyond the main view; changing this restarts them with the new count</value></data>
+  <data name="1 路" xml:space="preserve"><value>1 channel</value></data>
+  <data name="2 路" xml:space="preserve"><value>2 channels</value></data>
+  <data name="3 路" xml:space="preserve"><value>3 channels</value></data>
+  <data name="4 路" xml:space="preserve"><value>4 channels</value></data>
   <data name="主画面" xml:space="preserve"><value>Main view</value></data>
   <data name="副画面" xml:space="preserve"><value>Secondary view</value></data>
 <data name="这一路不接就选“无”" xml:space="preserve"><value>Choose "None" to leave this overlay unused</value></data>

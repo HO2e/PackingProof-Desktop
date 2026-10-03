@@ -170,6 +170,35 @@ public sealed class CameraOverlayLayoutTests
     }
 
     /// <summary>
+    /// 第三、第四路默认贴上面两个角：四路副画面各占一角，彼此不会叠住，
+    /// 每块也都完整落在主画面内。
+    /// （枚举是内部类型，理论参数的签名用 int 传值再强转。）
+    /// </summary>
+    [Theory]
+    [InlineData(0, 1920 - 16 - 480, 1080 - 16 - 270)] // BottomRight
+    [InlineData(1, 16, 1080 - 16 - 270)]               // BottomLeft
+    [InlineData(2, 1920 - 16 - 480, 16)]               // TopRight
+    [InlineData(3, 16, 16)]                            // TopLeft
+    public void UnsetPosition_PlacesOverlayInTheAnchoredCorner(
+        int anchorValue,
+        int expectedX,
+        int expectedY)
+    {
+        var anchor = (CameraOverlayAnchor)anchorValue;
+        CameraOverlayRect? rect = CameraOverlayLayout.Resolve(
+            1920, 1080, 1920, 1080, 0.25, 16,
+            leftRatio: AppConfig.UnsetOverlayPosition,
+            topRatio: AppConfig.UnsetOverlayPosition,
+            anchor: anchor);
+
+        Assert.NotNull(rect);
+        Assert.Equal(expectedX, rect!.Value.X);
+        Assert.Equal(expectedY, rect.Value.Y);
+        Assert.Equal(480, rect.Value.Width);
+        Assert.Equal(270, rect.Value.Height);
+    }
+
+    /// <summary>
     /// 默认不允许放大：副画面比目标矩形小的时候按原生尺寸贴，只有显式允许才超采样。
     /// 放大只会更糊，不会多出任何细节。
     /// </summary>

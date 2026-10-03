@@ -249,7 +249,7 @@ public sealed class CameraChannelChoiceUiTests
     }
 
     /// <summary>
-    /// 路数是固定的：设置页永远两张卡（默认都是"无"），不加删除入口；
+    /// 路数按"副画面数量"来：默认两张卡（都是"无"），不加删除入口；
     /// 识别来源只列真的接了设备的那几路 —— 没接的选了也用不上。
     /// </summary>
     [Fact]
@@ -261,7 +261,7 @@ public sealed class CameraChannelChoiceUiTests
             SettingsWindow window = CreateWindow(config);
             PrepareWindow(window);
 
-            Assert.Equal(AppConfig.MaxOverlayChannels, window.OverlayCameraCards.Count);
+            Assert.Equal(AppConfig.DefaultOverlayChannelCount, window.OverlayCameraCards.Count);
             Assert.Equal(["主摄像头", "副摄像头 1"], window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
 
             // 第二路默认是"无"，接上设备后识别来源里才会出现它
@@ -335,6 +335,60 @@ public sealed class CameraChannelChoiceUiTests
     }
 
     /// <summary>
+    /// 高级设置里改"副画面数量"：设备与外观的卡片要立刻跟着多/少，识别来源也要跟着放开或收回 ——
+    /// 不能只改配置、等保存后重开设置页才生效。
+    /// </summary>
+    [Fact]
+    public void ChangingOverlayChannelCount_RebuildsCardsAndBarcodeChoices()
+    {
+        RunOnStaThread(() =>
+        {
+            AppConfig config = CreateConfig(mainMoniker: "moniker-a", channelMoniker: "moniker-b");
+            SettingsWindow window = CreateWindow(config);
+            PrepareWindow(window);
+
+            window.SelectedBarcodeRecognitionChannel =
+                window.BarcodeRecognitionChannelChoices.First(option => option.Number == 1);
+            Assert.Equal(1, config.CameraBarcodeRecognitionChannel);
+
+            // 加到四路：卡片立刻变四张
+            config.OverlayChannelCount = 4;
+            window.OverlayChannelCount_SelectionChanged(window, EmptySelectionChanged());
+
+            Assert.Equal(4, window.OverlayCameraCards.Count);
+            Assert.Equal(4, config.CameraChannels.Count);
+            Assert.Equal("副摄像头 4", window.OverlayCameraCards[3].Title);
+            // 新加的两路默认"无"，所以识别来源里还没有它们
+            Assert.Equal(["主摄像头", "副摄像头 1"], window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
+
+            // 第四路接上设备后，识别来源能选到"副摄像头 4"
+            OverlayChannelCard fourth = window.OverlayCameraCards[3];
+            fourth.SelectedDevice = fourth.DeviceChoices.First(choice => choice.Moniker == "moniker-c");
+            Assert.Equal(
+                ["主摄像头", "副摄像头 1", "副摄像头 4"],
+                window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
+
+            BarcodeRecognitionChannelOption fourth_option =
+                window.BarcodeRecognitionChannelChoices.First(option => option.Number == 4);
+            window.SelectedBarcodeRecognitionChannel = fourth_option;
+            Assert.Equal(4, config.CameraBarcodeRecognitionChannel);
+
+            // 再改回两路：第四路连卡带设置一起收掉，识别来源回到主摄
+            config.OverlayChannelCount = 2;
+            window.OverlayChannelCount_SelectionChanged(window, EmptySelectionChanged());
+
+            Assert.Equal(2, window.OverlayCameraCards.Count);
+            Assert.Equal(2, config.CameraChannels.Count);
+            Assert.Equal(0, config.CameraBarcodeRecognitionChannel);
+            Assert.Equal(["主摄像头", "副摄像头 1"], window.BarcodeRecognitionChannelChoices.Select(o => o.Name));
+            Assert.Equal(0, window.SelectedBarcodeRecognitionChannel?.Number);
+        });
+    }
+
+    private static SelectionChangedEventArgs EmptySelectionChanged() =>
+        new(Selector.SelectionChangedEvent, Array.Empty<object>(), Array.Empty<object>());
+
+    /// <summary>
     /// 没 Show 过的窗口里，XAML 挂的绑定不会自己 attach（绑定创建时 DataContext 还没到位），
     /// 所以主摄下拉按 XAML 里同样的路径重挂一遍；下方 XAML 守卫负责保证路径没走偏。
     /// 卡片本身是普通 VM 属性，测试直接读它们即可。
@@ -395,6 +449,17 @@ public sealed class CameraChannelChoiceUiTests
         Assert.Contains("ItemsSource=\"{Binding Resolutions}\"", xaml, StringComparison.Ordinal);
         Assert.Contains("ItemsSource=\"{Binding FpsOptions}\"", xaml, StringComparison.Ordinal);
         Assert.Contains("SelectedValue=\"{Binding RotationDegrees, Mode=TwoWay}\"", xaml, StringComparison.Ordinal);
+
+        // 副画面数量放在高级设置里：改路数以这个下拉为准，设备与外观的卡片跟着它变
+        Assert.Contains(
+            "SelectedValue=\"{Binding Config.OverlayChannelCount, Mode=TwoWay}\"",
+            xaml,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "SelectionChanged=\"OverlayChannelCount_SelectionChanged\"",
+            xaml,
+            StringComparison.Ordinal);
+        Assert.Contains("AutomationProperties.Name=\"副画面数量\"", xaml, StringComparison.Ordinal);
 
         // 识别来源按通道列，不再是写死的"主摄像头/副摄像头"两项。
         Assert.Contains("ItemsSource=\"{Binding BarcodeRecognitionChannelChoices}\"", xaml, StringComparison.Ordinal);

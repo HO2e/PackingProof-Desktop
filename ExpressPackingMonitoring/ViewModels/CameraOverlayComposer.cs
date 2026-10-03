@@ -3,7 +3,7 @@ using OpenCvSharp;
 namespace ExpressPackingMonitoring.ViewModels
 {
     /// <summary>
-    /// 把第二路摄像头画面缩放后贴到主画面右下角。
+    /// 把一路副摄像头画面缩放后贴到主画面的一角。
     ///
     /// 直接画在录像/预览共用的那一帧上（与水印同一手法），所以预览和录像天然一致：
     /// 不需要第二套发布管线，也不会出现"预览里有、录像里没有"的分叉。

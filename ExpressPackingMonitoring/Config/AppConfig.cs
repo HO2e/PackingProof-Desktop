@@ -165,11 +165,16 @@ namespace ExpressPackingMonitoring.Config
         public const double MinimumOverlayGuideRatio = 0.1;
         public const double MaximumOverlayGuideRatio = 1.0;
 
+        /// <summary>叠加画面默认几路：主摄之外再叠两路。</summary>
+        public const int DefaultOverlayChannelCount = 2;
+
         /// <summary>
-        /// 叠加画面最多几路。两路 USB 摄像头已经吃满多数机器的带宽，画中画再多也看不清，
-        /// 所以主摄之外固定最多再叠两路；要放宽只改这一处。
+        /// 叠加画面可配置的路数区间。上限是硬约束：每多一路就多一份采集与解码，
+        /// 两路 USB 摄像头已经吃满多数机器的带宽，再多画面也看不清。
         /// </summary>
-        public const int MaxOverlayChannels = 2;
+        public const int MinimumOverlayChannelCount = 1;
+
+        public const int MaximumOverlayChannelCount = 4;
 
         /// <summary>叠加画面来源为"不接"的取值：设置页据此收起这一路的其余选项。</summary>
         public const string OverlayChannelSourceNone = "none";
@@ -257,18 +262,22 @@ namespace ExpressPackingMonitoring.Config
         public string NetworkCameraUrl { get; set; } = "";
         public string NetworkCameraRtspTransport { get; set; } = "tcp";
 
-        // 叠加画面（画中画）：固定 MaxOverlayChannels 路，每个元素是一路，设置页一张卡。
+        // 叠加画面路数：高级设置里可以改（默认两路）。不改路数时永远按这个值补齐/截断，
+        // 设置页与运行时都按它循环，加第三、第四路不需要另写一套逻辑。
+        public int OverlayChannelCount { get; set; } = DefaultOverlayChannelCount;
+
+        // 叠加画面（画中画）：每个元素是一路，设置页一张卡。
         // 没接的那一路来源就是"无"（来源即开关），不用的那一路不需要删掉。
         // 必须是**另一台**物理设备：同一台 USB 摄像头被两路同时打开时设备是独占的，
         // 会有一路拿不到画面甚至被判掉线。
         // 主摄像头不在这里：它是录像主链路，用的仍是上面的主摄字段。
         public List<CameraChannelConfig> CameraChannels { get; set; } = CreateDefaultCameraChannels();
 
-        /// <summary>默认给满 MaxOverlayChannels 路空通道：设置页固定显示这几张卡，都是"无"。</summary>
+        /// <summary>默认给满 DefaultOverlayChannelCount 路空通道：设置页显示这几张卡，都是"无"。</summary>
         private static List<CameraChannelConfig> CreateDefaultCameraChannels()
         {
-            var channels = new List<CameraChannelConfig>(MaxOverlayChannels);
-            for (int i = 0; i < MaxOverlayChannels; i++)
+            var channels = new List<CameraChannelConfig>(DefaultOverlayChannelCount);
+            for (int i = 0; i < DefaultOverlayChannelCount; i++)
                 channels.Add(new CameraChannelConfig());
             return channels;
         }
@@ -1244,25 +1253,33 @@ namespace ExpressPackingMonitoring.Config
                 : DefaultOverlayGuideRatio;
 
         /// <summary>
-        /// 叠加画面归一：至少留一路（没接也算一路，设置页才有卡片可显示），最多 MaxOverlayChannels 路，
-        /// 末尾没用到的空路收起来。每一路都按与主摄同口径的规则归一。
+        /// 叠加画面归一：路数跟着 <see cref="AppConfig.OverlayChannelCount"/> 走 ——
+        /// 少了就补齐（没接也算一路，设置页才有卡片可显示），多了就截断（改小路数或手改过配置）。
+        /// 每一路都按与主摄同口径的规则归一。
         /// 返回 true 表示有字段被改写。
         /// </summary>
         internal static bool NormalizeCameraChannels(AppConfig config)
         {
             bool changed = false;
             config.CameraChannels ??= new List<CameraChannelConfig>();
-            if (config.CameraChannels.Count > MaxOverlayChannels)
+
+            int channelCount = NormalizeOverlayChannelCount(config.OverlayChannelCount);
+            if (config.OverlayChannelCount != channelCount)
             {
-                config.CameraChannels.RemoveRange(
-                    MaxOverlayChannels,
-                    config.CameraChannels.Count - MaxOverlayChannels);
+                config.OverlayChannelCount = channelCount;
                 changed = true;
             }
 
-            // 固定这么多路：设置页永远显示"副画面 1/2"两张卡，不接的那一路来源就是"无"。
-            // 少了就补齐，多了（手改配置/降级）就截断。
-            while (config.CameraChannels.Count < MaxOverlayChannels)
+            if (config.CameraChannels.Count > channelCount)
+            {
+                config.CameraChannels.RemoveRange(
+                    channelCount,
+                    config.CameraChannels.Count - channelCount);
+                changed = true;
+            }
+
+            // 设置页显示"副画面 1..N"这么多张卡，不接的那一路来源就是"无"。
+            while (config.CameraChannels.Count < channelCount)
             {
                 config.CameraChannels.Add(new CameraChannelConfig());
                 changed = true;
@@ -1273,6 +1290,10 @@ namespace ExpressPackingMonitoring.Config
 
             return changed;
         }
+
+        /// <summary>叠加画面路数归一：越界的取值按可配置区间夹紧。</summary>
+        internal static int NormalizeOverlayChannelCount(int value) =>
+            Math.Clamp(value, MinimumOverlayChannelCount, MaximumOverlayChannelCount);
 
         /// <summary>一路叠加画面的归一。返回 true 表示有字段被改写。</summary>
         internal static bool NormalizeCameraChannel(CameraChannelConfig channel)
@@ -1476,7 +1497,8 @@ namespace ExpressPackingMonitoring.Config
             string currentTransport = NormalizeNetworkTransport(current.NetworkCameraRtspTransport);
             string nextTransport = NormalizeNetworkTransport(next.NetworkCameraRtspTransport);
 
-            if (current.CameraChannels.Count != next.CameraChannels.Count)
+            if (current.OverlayChannelCount != next.OverlayChannelCount
+                || current.CameraChannels.Count != next.CameraChannels.Count)
                 return true;
 
             for (int i = 0; i < current.CameraChannels.Count; i++)

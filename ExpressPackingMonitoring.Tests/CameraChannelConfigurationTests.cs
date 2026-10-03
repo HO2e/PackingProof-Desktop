@@ -28,7 +28,8 @@ public sealed class CameraChannelConfigurationTests
         var config = new AppConfig();
 
         // 默认必须关：老用户升级后画面不能凭空多出一路。空通道只为设置页有卡片可显示。
-        Assert.Equal(AppConfig.MaxOverlayChannels, config.CameraChannels.Count);
+        Assert.Equal(AppConfig.DefaultOverlayChannelCount, config.OverlayChannelCount);
+        Assert.Equal(AppConfig.DefaultOverlayChannelCount, config.CameraChannels.Count);
         Assert.All(config.CameraChannels, channel => Assert.False(channel.IsConfigured));
 
         CameraChannelConfig channel = config.CameraChannels[0];
@@ -169,33 +170,90 @@ public sealed class CameraChannelConfigurationTests
     }
 
     /// <summary>
-    /// 路数固定：设置页永远显示这几张卡（都是"无"就是不接）。少了补齐、多了截断，
-    /// 所以界面不需要"添加/删除"这种入口。
+    /// 路数跟着"副画面数量"走：设置页按它显示几张卡（都是"无"就是不接）。
+    /// 少了补齐、多了截断，所以界面不需要"添加/删除"这种入口。
     /// </summary>
     [Fact]
-    public void NormalizeAfterLoad_KeepsAFixedChannelCount()
+    public void NormalizeAfterLoad_FollowsConfiguredChannelCount()
     {
         var tooMany = new AppConfig
         {
-            CameraChannels = Enumerable.Range(0, AppConfig.MaxOverlayChannels + 2)
+            OverlayChannelCount = 3,
+            CameraChannels = Enumerable.Range(0, AppConfig.MaximumOverlayChannelCount + 2)
                 .Select(_ => new CameraChannelConfig { SourceKind = "usb", MonikerString = "m" })
                 .ToList()
         };
         AppConfig.NormalizeAfterLoad(tooMany);
-        Assert.Equal(AppConfig.MaxOverlayChannels, tooMany.CameraChannels.Count);
+        Assert.Equal(3, tooMany.CameraChannels.Count);
+        Assert.Equal(3, tooMany.OverlayChannelCount);
 
         var onlyOne = new AppConfig
         {
             CameraChannels = [new CameraChannelConfig { SourceKind = "usb", MonikerString = "m1" }]
         };
         AppConfig.NormalizeAfterLoad(onlyOne);
-        Assert.Equal(AppConfig.MaxOverlayChannels, onlyOne.CameraChannels.Count);
+        Assert.Equal(AppConfig.DefaultOverlayChannelCount, onlyOne.CameraChannels.Count);
         Assert.Equal("m1", onlyOne.CameraChannels[0].MonikerString);
         Assert.False(onlyOne.CameraChannels[1].IsConfigured);
 
         var empty = new AppConfig { CameraChannels = [] };
         AppConfig.NormalizeAfterLoad(empty);
-        Assert.Equal(AppConfig.MaxOverlayChannels, empty.CameraChannels.Count);
+        Assert.Equal(AppConfig.DefaultOverlayChannelCount, empty.CameraChannels.Count);
+
+        // 配置了四路：补齐到四张卡，设置页与运行时都按四路走。
+        var four = new AppConfig { OverlayChannelCount = 4, CameraChannels = [] };
+        AppConfig.NormalizeAfterLoad(four);
+        Assert.Equal(4, four.CameraChannels.Count);
+        Assert.Equal(4, four.OverlayChannelCount);
+    }
+
+    /// <summary>副画面数量的取值区间：越界一律夹回可配置范围，写坏的值不会带出一堆空通道。</summary>
+    [Fact]
+    public void NormalizeAfterLoad_ClampsOverlayChannelCount()
+    {
+        foreach ((int raw, int expected) in new[]
+        {
+            (AppConfig.MinimumOverlayChannelCount - 1, AppConfig.MinimumOverlayChannelCount),
+            (0, AppConfig.MinimumOverlayChannelCount),
+            (int.MinValue, AppConfig.MinimumOverlayChannelCount),
+            (AppConfig.MaximumOverlayChannelCount + 1, AppConfig.MaximumOverlayChannelCount),
+            (99, AppConfig.MaximumOverlayChannelCount),
+        })
+        {
+            var config = new AppConfig { OverlayChannelCount = raw };
+            AppConfig.NormalizeAfterLoad(config);
+            Assert.Equal(expected, config.OverlayChannelCount);
+            Assert.Equal(expected, config.CameraChannels.Count);
+        }
+    }
+
+    /// <summary>改小副画面数量：多出来的那几路连同它的设置一起收掉，识别来源不能停在已经不存在的那一路上。</summary>
+    [Fact]
+    public void NormalizeAfterLoad_ShrinkingDropsExtraChannels()
+    {
+        var config = new AppConfig
+        {
+            OverlayChannelCount = 4,
+            CameraChannels =
+            [
+                new CameraChannelConfig { SourceKind = "usb", MonikerString = "相机A" },
+                new CameraChannelConfig { SourceKind = "usb", MonikerString = "相机B" },
+                new CameraChannelConfig { SourceKind = "usb", MonikerString = "相机C" },
+                new CameraChannelConfig { SourceKind = "usb", MonikerString = "相机D" },
+            ]
+        };
+        AppConfig.NormalizeAfterLoad(config);
+        Assert.Equal(4, config.CameraChannels.Count);
+
+        // 识别来源放在第四路：把路数改成两路后，第四路不存在了，必须回主摄。
+        config.CameraBarcodeRecognitionChannel = 4;
+        config.OverlayChannelCount = 2;
+        AppConfig.NormalizeAfterLoad(config);
+
+        Assert.Equal(2, config.CameraChannels.Count);
+        Assert.Equal("相机A", config.CameraChannels[0].MonikerString);
+        Assert.Equal("相机B", config.CameraChannels[1].MonikerString);
+        Assert.Equal(0, config.CameraBarcodeRecognitionChannel);
     }
 
     /// <summary>两路各自独立：设备、旋转、档位、画中画比例互不干扰。</summary>
@@ -487,7 +545,7 @@ public sealed class CameraChannelConfigurationTests
             "Visibility=\"{Binding IsConfigured, Converter={StaticResource BoolToVisibility}}\"",
             settings,
             StringComparison.Ordinal);
-        // 路数固定，界面不再需要"添加/删除"这种入口。
+        // 路数在高级设置里选，界面不再需要"添加/删除"这种入口。
         Assert.DoesNotContain("添加副画面", settings, StringComparison.Ordinal);
         Assert.DoesNotContain("AddOverlayChannelCommand", settings, StringComparison.Ordinal);
         Assert.DoesNotContain("RemoveCommand", settings, StringComparison.Ordinal);
@@ -499,6 +557,33 @@ public sealed class CameraChannelConfigurationTests
         Assert.Contains("Text=\"{Binding Title}\"", settings, StringComparison.Ordinal);
         Assert.DoesNotContain("DeviceSummary", settings, StringComparison.Ordinal);
         Assert.Contains("Loaded=\"CameraChannelCards_Loaded\"", settings, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// 高级设置里"副画面数量"的可选项必须和 AppConfig 的可配置区间一一对应：
+    /// 改了常量却忘了改下拉，用户就选不到新增的那几路。
+    /// </summary>
+    [Fact]
+    public void SettingsWindow_ChannelCountOptionsMatchConfiguredRange()
+    {
+        string settings = ReadProjectFile(Path.Combine("UI", "SettingsWindow.xaml"));
+
+        int anchorIndex = settings.IndexOf("AutomationProperties.Name=\"副画面数量\"", StringComparison.Ordinal);
+        Assert.True(anchorIndex > 0, "高级设置里找不到“副画面数量”下拉");
+
+        string combo = settings[anchorIndex..];
+        combo = combo[..combo.IndexOf("</ComboBox>", StringComparison.Ordinal)];
+        for (int count = AppConfig.MinimumOverlayChannelCount;
+            count <= AppConfig.MaximumOverlayChannelCount;
+            count++)
+        {
+            Assert.Contains($"Tag=\"{count}\"", combo, StringComparison.Ordinal);
+        }
+
+        Assert.DoesNotContain(
+            $"Tag=\"{AppConfig.MaximumOverlayChannelCount + 1}\"",
+            combo,
+            StringComparison.Ordinal);
     }
 
     /// <summary>

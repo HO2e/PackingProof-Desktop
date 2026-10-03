@@ -155,13 +155,20 @@ namespace ExpressPackingMonitoring.ViewModels
             _overlayChannels.FirstOrDefault(channel => channel.Number == channelNumber);
 
         /// <summary>
-        /// 用户没拖过时贴哪一角：第 1 路贴右下（沿用老习惯）、第 2 路贴左下，
-        /// 两块画中画一右一左不会叠在一起。以后再加路按奇偶轮着来。
+        /// 用户没拖过时贴哪一角：第 1 路右下（沿用老习惯）、第 2 路左下、第 3 路右上、第 4 路左上，
+        /// 四路各占一角不会互相叠住。超过四路时按奇偶继续轮流贴下面两角。
         /// </summary>
         private static CameraOverlayAnchor OverlayAnchorFor(OverlayChannel channel) =>
-            channel.Number % 2 == 0
-                ? CameraOverlayAnchor.BottomLeft
-                : CameraOverlayAnchor.BottomRight;
+            channel.Number switch
+            {
+                1 => CameraOverlayAnchor.BottomRight,
+                2 => CameraOverlayAnchor.BottomLeft,
+                3 => CameraOverlayAnchor.TopRight,
+                4 => CameraOverlayAnchor.TopLeft,
+                _ => channel.Number % 2 == 0
+                    ? CameraOverlayAnchor.BottomLeft
+                    : CameraOverlayAnchor.BottomRight,
+            };
 
         /// <summary>
         /// 按当前配置对齐运行时通道：路数或配置对象变了就整组重建（设置页应用配置会换一份 AppConfig）。
