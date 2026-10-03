@@ -316,6 +316,7 @@
                         <Grid x:Name="CameraBarcodeGuide"
                               Width="0"
                               Height="0"
+                              Panel.ZIndex="30"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center">
                             <Grid.Style>
@@ -702,7 +703,7 @@
                         <!-- 副摄取景编辑态：点"完成"退出，回到正常预览 -->
                         <Button x:Name="BtnSecondaryPreviewDone"
                                 Content="完成"
-                                Panel.ZIndex="20"
+                                Panel.ZIndex="40"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Top"
                                 Margin="0,12,12,0"
