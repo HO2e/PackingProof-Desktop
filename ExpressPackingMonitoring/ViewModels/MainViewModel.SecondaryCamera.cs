@@ -168,10 +168,12 @@ namespace ExpressPackingMonitoring.ViewModels
             || _secondaryNetworkCameraSource != null;
 
         /// <summary>
-        /// 识别框是否显示。识别改用副画面时它画在画中画上，两种模式都要显示，
-        /// 位置由主界面的 UpdateCameraBarcodeGuide 按当前来源决定。
+        /// 识别框是否显示。框只出现在识别来源那一路：
+        /// 来源是主摄时画在主画面上；来源是副摄时，画中画本身就是框内那块裁剪结果，
+        /// 框只在"点开副摄取景编辑"这一屏里出现，正常浏览时不在主画面上叠加。
         /// </summary>
-        public bool IsBarcodeGuideVisible => true;
+        public bool IsBarcodeGuideVisible =>
+            !ShouldUseSecondaryCameraForBarcode || IsEditingSecondaryCameraPreview;
 
         /// <summary>
         /// 「摄像头自动识别面单」是否改用副画面：配置选了副画面、副画面开着、而且副路真的出过帧。
@@ -679,14 +681,29 @@ namespace ExpressPackingMonitoring.ViewModels
                     if (Config is not { } config)
                         return;
 
-                    // 副画面按整幅合成：识别框只决定识别哪一块，不再裁掉画面内容。
+                    // 识别框就是裁剪范围：画中画只显示框内那块，识别也只解这块。
+                    // 与主摄画框用的是同一个换算：几何 -> 画面上的矩形。
+                    System.Windows.Rect guide = CameraBarcodeGuideLayout.ToDisplayRect(
+                        GetSecondaryCameraGuideGeometry(),
+                        new System.Windows.Rect(0, 0, secondary.Width, secondary.Height));
+                    Rect cropRect = new Rect(
+                            (int)Math.Round(guide.X),
+                            (int)Math.Round(guide.Y),
+                            Math.Max(1, (int)Math.Round(guide.Width)),
+                            Math.Max(1, (int)Math.Round(guide.Height)))
+                        .Intersect(new Rect(0, 0, secondary.Width, secondary.Height));
+                    if (cropRect.Width <= 0 || cropRect.Height <= 0)
+                        return;
+
+                    using var cropped = new Mat(secondary, cropRect);
+
                     // 与下面的合成用同一套输入算一次，用来记录"这一帧把副画面画在哪"；
                     // 界面拖动框据此换算，不再自己另算一份。
                     SecondaryCameraOverlayRect? composedRect = SecondaryCameraOverlayPolicy.Resolve(
                         frame.Width,
                         frame.Height,
-                        secondary.Width,
-                        secondary.Height,
+                        cropped.Width,
+                        cropped.Height,
                         config.SecondaryCameraOverlayWidthRatio,
                         config.SecondaryCameraOverlayMargin,
                         config.SecondaryCameraOverlayLeftRatio,
@@ -695,7 +712,7 @@ namespace ExpressPackingMonitoring.ViewModels
 
                     if (SecondaryCameraFrameComposer.TryCompose(
                             frame,
-                            secondary,
+                            cropped,
                             config.SecondaryCameraOverlayWidthRatio,
                             config.SecondaryCameraOverlayMargin,
                             config.SecondaryCameraOverlayLeftRatio,
@@ -776,6 +793,8 @@ namespace ExpressPackingMonitoring.ViewModels
 
                 OnPropertyChanged(nameof(IsSecondaryPreviewEditing));
                 OnPropertyChanged(nameof(PreviewImageSource));
+                // 框只在识别来源那一路出现：进出编辑态会改变它的显隐。
+                OnPropertyChanged(nameof(IsBarcodeGuideVisible));
                 // 编辑态由副摄画面接管预览，别让主画面的帧把它冲掉。
                 SuppressVideoPreviewUpdates = value;
             }
@@ -808,11 +827,13 @@ namespace ExpressPackingMonitoring.ViewModels
             if (!IsSecondaryCameraComposeEnabled)
                 return;
 
+            RuntimeLog.Info("SecondaryCamera", "进入副摄取景编辑");
             IsEditingSecondaryCameraPreview = true;
         }
 
         internal void ExitSecondaryCameraPreviewEdit()
         {
+            RuntimeLog.Info("SecondaryCamera", "退出副摄取景编辑");
             IsEditingSecondaryCameraPreview = false;
             SecondaryPreviewFrame = null;
         }
@@ -947,11 +968,19 @@ namespace ExpressPackingMonitoring.ViewModels
             if (sourceWidth <= 0 || sourceHeight <= 0)
                 return false;
 
+            // 画中画显示的是识别框内那块，落位必须按裁剪后的尺寸与比例算，
+            // 否则拖动框会跟画面错位（这正是之前"框和画面对不上"的来源）。
+            System.Windows.Rect guide = CameraBarcodeGuideLayout.ToDisplayRect(
+                GetSecondaryCameraGuideGeometry(),
+                new System.Windows.Rect(0, 0, sourceWidth, sourceHeight));
+            int croppedWidth = Math.Max(1, (int)Math.Round(guide.Width));
+            int croppedHeight = Math.Max(1, (int)Math.Round(guide.Height));
+
             SecondaryCameraOverlayRect? resolved = SecondaryCameraOverlayPolicy.Resolve(
                 frameWidth,
                 frameHeight,
-                sourceWidth,
-                sourceHeight,
+                croppedWidth,
+                croppedHeight,
                 config.SecondaryCameraOverlayWidthRatio,
                 config.SecondaryCameraOverlayMargin,
                 config.SecondaryCameraOverlayLeftRatio,

@@ -506,12 +506,16 @@ namespace ExpressPackingMonitoring.UI
             CameraBarcodeGuideGeometry geometry = onSecondary
                 ? vm.CurrentSecondaryCameraBarcodeGuideGeometry
                 : vm.CurrentCameraBarcodeGuideGeometry;
-            // 画面比例要按"当前显示的那一路"算：副摄可能是竖屏，用主摄的尺寸摆框必然偏。
+            // 画面比例一律按"当前真正显示的那张图"算。
+            // 不能读 ViewModel 里那张副摄预览：它每 100ms 才发布一次，刚切进全屏时还是空的，
+            // 于是框会按主摄的比例摆——副摄是竖屏时表现就是"全屏之后偏左"。
             if (onSecondary
-                && vm.SecondaryPreviewFrame is { PixelWidth: > 0, PixelHeight: > 0 } secondaryFrame)
+                && VideoImage.Source is System.Windows.Media.Imaging.BitmapSource displayed
+                && displayed.PixelWidth > 0
+                && displayed.PixelHeight > 0)
             {
-                sourceW = secondaryFrame.PixelWidth;
-                sourceH = secondaryFrame.PixelHeight;
+                sourceW = displayed.PixelWidth;
+                sourceH = displayed.PixelHeight;
             }
 
             Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(sourceW, sourceH, actualW, actualH);
@@ -610,14 +614,17 @@ namespace ExpressPackingMonitoring.UI
             if (DataContext is not MainViewModel vm)
                 return Rect.Empty;
 
-            // 与 UpdateCameraBarcodeGuide 用同一套尺寸来源：编辑副摄时按副摄画面算比例。
+            // 与 UpdateCameraBarcodeGuide 用同一套尺寸来源：一律按当前真正显示的那张图算比例，
+            // 这样拖动换算和摆框永远一致，不会出现"框在左边、拖的手感在右边"。
             double frameWidth = vm.CameraFrameSize.Width;
             double frameHeight = vm.CameraFrameSize.Height;
             if (vm.IsEditingSecondaryCameraPreview
-                && vm.SecondaryPreviewFrame is { PixelWidth: > 0, PixelHeight: > 0 } secondaryFrame)
+                && VideoImage.Source is System.Windows.Media.Imaging.BitmapSource displayed
+                && displayed.PixelWidth > 0
+                && displayed.PixelHeight > 0)
             {
-                frameWidth = secondaryFrame.PixelWidth;
-                frameHeight = secondaryFrame.PixelHeight;
+                frameWidth = displayed.PixelWidth;
+                frameHeight = displayed.PixelHeight;
             }
 
             return CameraBarcodeGuideLayout.GetVideoRect(
