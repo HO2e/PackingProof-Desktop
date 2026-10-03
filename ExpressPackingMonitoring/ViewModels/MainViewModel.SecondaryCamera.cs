@@ -795,6 +795,8 @@ namespace ExpressPackingMonitoring.ViewModels
                 OnPropertyChanged(nameof(PreviewImageSource));
                 // 框只在识别来源那一路出现：进出编辑态会改变它的显隐。
                 OnPropertyChanged(nameof(IsBarcodeGuideVisible));
+                // 画面尺寸在编辑态下由副摄帧决定，界面要据此重摆识别框。
+                OnPropertyChanged(nameof(CameraFrameSize));
                 // 编辑态由副摄画面接管预览，别让主画面的帧把它冲掉。
                 SuppressVideoPreviewUpdates = value;
             }
@@ -810,7 +812,10 @@ namespace ExpressPackingMonitoring.ViewModels
             private set
             {
                 if (SetProperty(ref _secondaryPreviewFrame, value))
+                {
                     OnPropertyChanged(nameof(PreviewImageSource));
+                    OnPropertyChanged(nameof(CameraFrameSize));
+                }
             }
         }
 

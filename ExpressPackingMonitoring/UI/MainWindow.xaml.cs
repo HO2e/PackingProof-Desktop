@@ -252,6 +252,16 @@ namespace ExpressPackingMonitoring.UI
                             // 开关副画面、或副路刚出第一帧时，拖动框要立刻摆好。
                             Dispatcher.BeginInvoke(new Action(() => UpdateSecondaryOverlayThumb(vm)));
                         }
+                        else if (args.PropertyName == nameof(MainViewModel.PreviewImageSource))
+                        {
+                            // 预览图源变了（进出副摄取景编辑、或副摄那一屏的第一帧到达）：
+                            // 识别框必须按当前这张图重新摆一次，否则会停留在上一张图的坐标上。
+                            Dispatcher.BeginInvoke(new Action(() =>
+                            {
+                                UpdateCameraBarcodeGuide(vm);
+                                UpdateSecondaryOverlayThumb(vm);
+                            }));
+                        }
                     };
                     // 窗口/视频区域大小变化时重新计算边框位置
                     VideoImage.SizeChanged += (_, __) =>
@@ -500,24 +510,9 @@ namespace ExpressPackingMonitoring.UI
                 return;
             }
 
-            // 副摄取景编辑态：预览区显示的是副摄整幅画面，识别框就按整幅画面摆放。
-            // 几何换成副摄那一组，拖动/缩放/夹紧仍复用主摄的换算，所以位置必然对得上。
-            bool onSecondary = vm.IsEditingSecondaryCameraPreview;
-            CameraBarcodeGuideGeometry geometry = onSecondary
-                ? vm.CurrentSecondaryCameraBarcodeGuideGeometry
-                : vm.CurrentCameraBarcodeGuideGeometry;
-            // 画面比例一律按"当前真正显示的那张图"算。
-            // 不能读 ViewModel 里那张副摄预览：它每 100ms 才发布一次，刚切进全屏时还是空的，
-            // 于是框会按主摄的比例摆——副摄是竖屏时表现就是"全屏之后偏左"。
-            if (onSecondary
-                && VideoImage.Source is System.Windows.Media.Imaging.BitmapSource displayed
-                && displayed.PixelWidth > 0
-                && displayed.PixelHeight > 0)
-            {
-                sourceW = displayed.PixelWidth;
-                sourceH = displayed.PixelHeight;
-            }
-
+            // 这里不做任何"主摄还是副摄"的判断：编辑副摄时 ViewModel 已经把
+            // 当前几何与当前画面尺寸切换成副摄的，摆框逻辑与主摄完全同一条路径。
+            CameraBarcodeGuideGeometry geometry = vm.CurrentCameraBarcodeGuideGeometry;
             Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(sourceW, sourceH, actualW, actualH);
             Rect guideRect = CameraBarcodeGuideLayout.ToDisplayRect(geometry, videoRect);
             if (guideRect.IsEmpty)
@@ -569,14 +564,7 @@ namespace ExpressPackingMonitoring.UI
             if (DataContext is not MainViewModel vm)
                 return;
 
-            if (vm.IsEditingSecondaryCameraPreview)
-            {
-                vm.ApplySecondaryCameraBarcodeGuideGeometry(
-                    vm.CurrentSecondaryCameraBarcodeGuideGeometry,
-                    persist: true);
-                return;
-            }
-
+            // 编辑副摄时 ViewModel 会把读写都落到副摄那一组，这里无需分支。
             vm.ApplyCameraBarcodeGuideGeometry(vm.CurrentCameraBarcodeGuideGeometry, persist: true);
         }
 
@@ -594,17 +582,8 @@ namespace ExpressPackingMonitoring.UI
             if (DataContext is not MainViewModel vm)
                 return;
 
-            if (vm.IsEditingSecondaryCameraPreview)
-            {
-                vm.ApplySecondaryCameraBarcodeGuideGeometry(
-                    adjust(vm.CurrentSecondaryCameraBarcodeGuideGeometry),
-                    persist: false);
-            }
-            else
-            {
-                vm.ApplyCameraBarcodeGuideGeometry(adjust(vm.CurrentCameraBarcodeGuideGeometry), persist: false);
-            }
-
+            // 编辑副摄时 ViewModel 会把读写都落到副摄那一组，这里无需分支。
+            vm.ApplyCameraBarcodeGuideGeometry(adjust(vm.CurrentCameraBarcodeGuideGeometry), persist: false);
             UpdateCameraBarcodeGuide(vm);
         }
 
@@ -614,22 +593,10 @@ namespace ExpressPackingMonitoring.UI
             if (DataContext is not MainViewModel vm)
                 return Rect.Empty;
 
-            // 与 UpdateCameraBarcodeGuide 用同一套尺寸来源：一律按当前真正显示的那张图算比例，
-            // 这样拖动换算和摆框永远一致，不会出现"框在左边、拖的手感在右边"。
-            double frameWidth = vm.CameraFrameSize.Width;
-            double frameHeight = vm.CameraFrameSize.Height;
-            if (vm.IsEditingSecondaryCameraPreview
-                && VideoImage.Source is System.Windows.Media.Imaging.BitmapSource displayed
-                && displayed.PixelWidth > 0
-                && displayed.PixelHeight > 0)
-            {
-                frameWidth = displayed.PixelWidth;
-                frameHeight = displayed.PixelHeight;
-            }
-
+            // 与 UpdateCameraBarcodeGuide 用同一个尺寸来源（编辑副摄时 ViewModel 已切换）。
             return CameraBarcodeGuideLayout.GetVideoRect(
-                frameWidth,
-                frameHeight,
+                vm.CameraFrameSize.Width,
+                vm.CameraFrameSize.Height,
                 VideoImage.ActualWidth,
                 VideoImage.ActualHeight);
         }

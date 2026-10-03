@@ -52,11 +52,18 @@ namespace ExpressPackingMonitoring.ViewModels
             && !IsZoomingActive;
 
         /// <summary>当前生效的识别框几何</summary>
-        public CameraBarcodeGuideGeometry CurrentCameraBarcodeGuideGeometry => new(
-            Config?.CameraBarcodeGuideWidthRatio ?? CameraBarcodeGuideGeometry.Default.WidthRatio,
-            Config?.CameraBarcodeGuideHeightRatio ?? CameraBarcodeGuideGeometry.Default.HeightRatio,
-            Config?.CameraBarcodeGuideOffsetX ?? CameraBarcodeGuideGeometry.Default.OffsetX,
-            Config?.CameraBarcodeGuideOffsetY ?? CameraBarcodeGuideGeometry.Default.OffsetY);
+        /// <remarks>
+        /// 正在编辑副摄取景时，这里返回的是副摄那一组几何 —— 界面因此完全不用区分为哪一路，
+        /// 走的就是主摄那套已经验证过的摆放与拖动逻辑，只是数据换成了副摄的。
+        /// </remarks>
+        public CameraBarcodeGuideGeometry CurrentCameraBarcodeGuideGeometry =>
+            IsEditingSecondaryCameraPreview
+                ? CurrentSecondaryCameraBarcodeGuideGeometry
+                : new CameraBarcodeGuideGeometry(
+                    Config?.CameraBarcodeGuideWidthRatio ?? CameraBarcodeGuideGeometry.Default.WidthRatio,
+                    Config?.CameraBarcodeGuideHeightRatio ?? CameraBarcodeGuideGeometry.Default.HeightRatio,
+                    Config?.CameraBarcodeGuideOffsetX ?? CameraBarcodeGuideGeometry.Default.OffsetX,
+                    Config?.CameraBarcodeGuideOffsetY ?? CameraBarcodeGuideGeometry.Default.OffsetY);
 
         /// <summary>
         /// 主界面拖动识别框后写回配置。拖动过程即时生效但不落盘，松手时才保存，
@@ -64,6 +71,13 @@ namespace ExpressPackingMonitoring.ViewModels
         /// </summary>
         public void ApplyCameraBarcodeGuideGeometry(CameraBarcodeGuideGeometry geometry, bool persist)
         {
+            // 编辑副摄时写回副摄那一组，其余情况写回主摄的。
+            if (IsEditingSecondaryCameraPreview)
+            {
+                ApplySecondaryCameraBarcodeGuideGeometry(geometry, persist);
+                return;
+            }
+
             if (Config == null)
                 return;
 

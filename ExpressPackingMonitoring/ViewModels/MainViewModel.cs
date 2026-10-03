@@ -509,7 +509,18 @@ namespace ExpressPackingMonitoring.ViewModels
         public System.Windows.Rect LastZoomRect { get => _lastZoomRect; private set => SetProperty(ref _lastZoomRect, value); }
 
         private System.Windows.Size _cameraFrameSize;
-        public System.Windows.Size CameraFrameSize { get => _cameraFrameSize; private set => SetProperty(ref _cameraFrameSize, value); }
+        /// <summary>
+        /// 当前画面尺寸。编辑副摄取景时返回副摄帧的尺寸 —— 界面算取景矩形用的是它，
+        /// 所以副摄取景那一屏天然贴合，不需要界面那边再判断在用哪一路。
+        /// </summary>
+        public System.Windows.Size CameraFrameSize
+        {
+            get => IsEditingSecondaryCameraPreview
+                && SecondaryPreviewFrame is { PixelWidth: > 0, PixelHeight: > 0 } secondaryFrame
+                    ? new System.Windows.Size(secondaryFrame.PixelWidth, secondaryFrame.PixelHeight)
+                    : _cameraFrameSize;
+            private set => SetProperty(ref _cameraFrameSize, value);
+        }
 
         private double? _previewZoomScale;
         public double? PreviewZoomScale { get => _previewZoomScale; set => SetProperty(ref _previewZoomScale, value); }
