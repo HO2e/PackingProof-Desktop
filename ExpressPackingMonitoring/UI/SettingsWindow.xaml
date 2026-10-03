@@ -1223,7 +1223,7 @@
                                                     </Grid.ColumnDefinitions>
                                                     <StackPanel Margin="0,0,16,0">
                                                         <TextBlock Text="分辨率" Style="{StaticResource FieldLabelStyle}"/>
-                                                        <TextBlock Text="越高越清晰，文件也越大" Style="{StaticResource FieldHintStyle}"/>
+                                                        <TextBlock Text="副画面只是小窗，不用选太高" Style="{StaticResource FieldHintStyle}"/>
                                                     </StackPanel>
                                                     <ComboBox Grid.Column="2"
                                                               ItemsSource="{Binding Resolutions}"
@@ -1241,7 +1241,7 @@
                                                     </Grid.ColumnDefinitions>
                                                     <StackPanel Margin="0,0,16,0">
                                                         <TextBlock Text="帧率" Style="{StaticResource FieldLabelStyle}"/>
-                                                        <TextBlock Text="越高越流畅，也更占空间" Style="{StaticResource FieldHintStyle}"/>
+                                                        <TextBlock Text="越高越流畅，但也更吃性能" Style="{StaticResource FieldHintStyle}"/>
                                                     </StackPanel>
                                                     <ComboBox Grid.Column="2"
                                                               ItemsSource="{Binding FpsOptions}"

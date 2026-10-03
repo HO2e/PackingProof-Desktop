@@ -1520,4 +1520,6 @@
   <data name="主画面" xml:space="preserve"><value>主画面</value></data>
   <data name="副画面" xml:space="preserve"><value>副画面</value></data>
 <data name="这一路不接就选“无”" xml:space="preserve"><value>这一路不接就选“无”</value></data>
+<data name="副画面只是小窗，不用选太高" xml:space="preserve"><value>副画面只是小窗，不用选太高</value></data>
+<data name="越高越流畅，但也更吃性能" xml:space="preserve"><value>越高越流畅，但也更吃性能</value></data>
 </root>

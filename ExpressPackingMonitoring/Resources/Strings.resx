@@ -1518,4 +1518,6 @@
   <data name="主画面" xml:space="preserve"><value>Main view</value></data>
   <data name="副画面" xml:space="preserve"><value>Secondary view</value></data>
 <data name="这一路不接就选“无”" xml:space="preserve"><value>Choose "None" to leave this overlay unused</value></data>
+<data name="副画面只是小窗，不用选太高" xml:space="preserve"><value>The overlay is a small window, a low resolution is enough</value></data>
+<data name="越高越流畅，但也更吃性能" xml:space="preserve"><value>Higher is smoother, but also costs more CPU</value></data>
 </root>
