@@ -199,8 +199,16 @@ namespace ExpressPackingMonitoring.ViewModels
             get => _isCameraSleeping;
             private set
             {
-                if (SetProperty(ref _isCameraSleeping, value))
-                    OnPropertyChanged(nameof(IsCameraBarcodeGuideEditable));
+                if (!SetProperty(ref _isCameraSleeping, value))
+                    return;
+
+                OnPropertyChanged(nameof(IsCameraBarcodeGuideEditable));
+                // 副画面跟着摄像头一起休眠/唤醒：主画面已经黑屏时副画面没有意义，还白耗一路采集。
+                // 唤醒走的是"先 StartCamera 再放开标记"，所以这里启动副路时主路已经就绪。
+                if (value)
+                    StopSecondaryCamera();
+                else
+                    StartSecondaryCamera();
             }
         }
         private Task _cameraIdleWatchdogTask;
@@ -604,6 +612,8 @@ namespace ExpressPackingMonitoring.ViewModels
                     OnPropertyChanged(nameof(ComputerDisplayName));
                     OnPropertyChanged(nameof(ScanInputPlaceholder));
                     OnPropertyChanged(nameof(IsPreRecordBufferVisible));
+                    OnPropertyChanged(nameof(IsSecondaryCameraOverlayVisible));
+                    OnPropertyChanged(nameof(IsBarcodeGuideVisible));
                     PublishPreRecordBufferStatus(force: true);
                 }
             }
@@ -820,6 +830,7 @@ namespace ExpressPackingMonitoring.ViewModels
             _cts?.Cancel();
             _cameraBarcodeFeedbackCts?.Cancel();
             _previewAlertCts?.Cancel();
+            try { StopSecondaryCamera(); } catch { }
             try { _cameraBarcodeRecognition?.Dispose(); } catch { }
             try { _cameraPairingQrDecoder.Dispose(); } catch { }
             try { _uiHeartbeatTimer?.Stop(); } catch { }

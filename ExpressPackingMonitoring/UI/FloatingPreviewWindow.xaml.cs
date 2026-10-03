@@ -43,6 +43,7 @@ namespace ExpressPackingMonitoring.UI
         private IReadOnlyList<AudioEndpointInfo>? _playbackCache;
         private FloatingPreviewCorner _cornerPreference = FloatingPreviewCorner.BottomRight;
         private double _appliedFrameAspect;
+        private double _configuredOpacity = 1.0;
         private DispatcherTimer? _noticeTimer;
         private bool _closedByOwner;
 
@@ -140,8 +141,24 @@ namespace ExpressPackingMonitoring.UI
         /// <summary>按上次关闭时判定的角落贴回去，而不是永远固定在右下角。</summary>
         private void PlaceInsideWorkArea()
         {
+            _configuredOpacity = _viewModel.FloatingPreviewOpacity;
+            Opacity = _configuredOpacity;
+
+            // 记住的是宽度；高度由 SyncWindowToFrameAspectRatio 跟着画面比例算。
+            double savedWidth = _viewModel.FloatingPreviewWidth;
+            if (double.IsFinite(savedWidth) && savedWidth > 0)
+                Width = savedWidth;
+
             _cornerPreference = FloatingPreviewPlacement.Parse(_viewModel.FloatingPreviewCorner);
             ApplyCornerPlacement(_cornerPreference);
+        }
+
+        /// <summary>不透明度改完立即生效；鼠标正悬停时不覆盖"临时看清"用的 1.0。</summary>
+        public void ApplyConfiguredOpacity()
+        {
+            _configuredOpacity = _viewModel.FloatingPreviewOpacity;
+            if (!IsMouseOver)
+                Opacity = _configuredOpacity;
         }
 
         private void ApplyCornerPlacement(FloatingPreviewCorner corner)
@@ -321,6 +338,8 @@ namespace ExpressPackingMonitoring.UI
         {
             base.OnMouseEnter(e);
             ControlLayer.Visibility = Visibility.Visible;
+            // 调淡以后悬停临时恢复不透明，否则连单号和状态灯都看不清。
+            Opacity = 1.0;
             NotifyUserActivity();
         }
 
@@ -328,6 +347,7 @@ namespace ExpressPackingMonitoring.UI
         {
             base.OnMouseLeave(e);
             ControlLayer.Visibility = Visibility.Collapsed;
+            Opacity = _configuredOpacity;
         }
 
         protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
@@ -522,6 +542,7 @@ namespace ExpressPackingMonitoring.UI
         protected override void OnClosed(EventArgs e)
         {
             PersistCornerPreference();
+            PersistSizePreference();
             _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
             _viewModel.FloatingPreviewNoticeRequested -= OnNoticeRequested;
             _viewModel.ReportFloatingPreviewDisplayWidth(0);
@@ -551,6 +572,22 @@ namespace ExpressPackingMonitoring.UI
             catch (Exception ex)
             {
                 RuntimeLog.Warn("FloatingPreview", $"记录小窗停靠角落失败：{ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 关闭时记住窗口宽度。高度不记：它由 SyncWindowToFrameAspectRatio 跟着画面比例算，
+        /// 记下来反而会在换摄像头或换分辨率时把画面拉变形。
+        /// </summary>
+        private void PersistSizePreference()
+        {
+            try
+            {
+                _viewModel.SaveFloatingPreviewWidth(Width);
+            }
+            catch (Exception ex)
+            {
+                RuntimeLog.Warn("FloatingPreview", $"记录小窗宽度失败：{ex.Message}");
             }
         }
 

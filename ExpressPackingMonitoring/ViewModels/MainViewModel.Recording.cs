@@ -837,6 +837,8 @@ namespace ExpressPackingMonitoring.ViewModels
                                         watermarkTime = preRecordTimestamps[preFrameIndex];
                                     ApplyWatermarkToFrame(preFrame, watermarkTime, _recordingOrderId, Array.Empty<string>());
                                 }
+                                // 预录帧也要贴上副画面，否则录像开头几秒只有主画面，与后面接不上。
+                                ComposeSecondaryCameraOverlayIfNeeded(preFrame, previewPublishDue: true);
                                 _recordingFramePipelineDiagnostics.Enter(
                                     RecordingFramePipelineStage.PreRecordEnqueue,
                                     preFrameIndex);

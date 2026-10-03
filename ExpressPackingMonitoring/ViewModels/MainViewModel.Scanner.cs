@@ -324,11 +324,17 @@ namespace ExpressPackingMonitoring.ViewModels
                 guideIntervalProvider: () => CameraBarcodeSpeed.GuideIntervalFor(
                     Config.CameraBarcodeRecognitionSpeed,
                     _actualCameraFps),
-                guideGeometryProvider: () => new CameraBarcodeGuideGeometry(
-                    Config.CameraBarcodeGuideWidthRatio,
-                    Config.CameraBarcodeGuideHeightRatio,
-                    Config.CameraBarcodeGuideOffsetX,
-                    Config.CameraBarcodeGuideOffsetY),
+                guideGeometryProvider: () =>
+                    // 副画面识别按整帧找条码：取景框比例是为主画面构图调的（比如右上角一小块），
+                    // 原样套到副画面上会整个错位，条码落在框外就永远解不出来。
+                    // 副画面本来就是"面单特写"，整帧解码命中率最高。
+                    ShouldUseSecondaryCameraForBarcode
+                        ? new CameraBarcodeGuideGeometry(1.0, 1.0, 0, 0)
+                        : new CameraBarcodeGuideGeometry(
+                            Config.CameraBarcodeGuideWidthRatio,
+                            Config.CameraBarcodeGuideHeightRatio,
+                            Config.CameraBarcodeGuideOffsetX,
+                            Config.CameraBarcodeGuideOffsetY),
                 confirmationHitsProvider: () => Config.CameraSameBarcodeConfirmationHits);
             _cameraBarcodeRecognition.StatusChanged += OnCameraBarcodeStatusChanged;
             _cameraBarcodeRecognition.BarcodeConfirmedWithGeometry += OnCameraBarcodeConfirmedWithGeometry;
@@ -338,8 +344,9 @@ namespace ExpressPackingMonitoring.ViewModels
             _cameraBarcodeRecognition.BarcodeRecognized += _ => _speechService?.PlayShortBeep();
         }
 
-        private bool CanSubmitCameraBarcode()
-        {
+        private string _lastBarcodeSourceLogState = "";
+
+        private bool CanSubmitCameraBarcode()        {
             return Config?.EnableCameraBarcodeRecognition == true
                 && !_isDisposed
                 && !_shutdownRequested
@@ -348,12 +355,63 @@ namespace ExpressPackingMonitoring.ViewModels
                 && !IsBusy;
         }
 
-        private void TrySubmitCameraBarcodeFrame(Mat frame)
+        /// <summary>
+        /// 提交一帧给「摄像头自动识别面单」。
+        /// <paramref name="fromSecondaryCamera"/> 标明这一帧来自哪一路：识别来源是二选一，
+        /// 两路都提交会让稳定性追踪器在两种画面之间反复归零，反而谁都认不出来。
+        /// </summary>
+        private void TrySubmitCameraBarcodeFrame(Mat frame, bool fromSecondaryCamera = false)
         {
+            bool shouldUseSecondary = ShouldUseSecondaryCameraForBarcode;
+
+            if (fromSecondaryCamera != shouldUseSecondary)
+            {
+                LogBarcodeSubmitDiagnostic(fromSecondaryCamera, shouldUseSecondary, accepted: false, "来源不匹配");
+                return;
+            }
+
             if (!CanSubmitCameraBarcode())
+            {
+                LogBarcodeSubmitDiagnostic(fromSecondaryCamera, shouldUseSecondary, accepted: false, "前置条件不满足");
+                return;
+            }
+
+            // 副画面强制解码：面单放好后副画面是静止的，不跳过运动门控就永远认不出来。
+            bool accepted = _cameraBarcodeRecognition?.TrySubmitFrame(
+                frame,
+                forceDecode: fromSecondaryCamera) == true;
+            LogBarcodeSubmitDiagnostic(
+                fromSecondaryCamera,
+                shouldUseSecondary,
+                accepted,
+                accepted ? "已提交" : "识别服务拒绝");
+        }
+
+        /// <summary>
+        /// 面单识别来源诊断：只在状态发生变化时记一条，用来定位
+        /// "副画面放面单不识别"卡在哪一环（来源不匹配 / 前置条件不满足 / 识别服务拒绝 / 已提交）。
+        /// </summary>
+        private void LogBarcodeSubmitDiagnostic(
+            bool fromSecondary,
+            bool shouldUseSecondary,
+            bool accepted,
+            string reason)
+        {
+            // 只看"来源决策"本身的变化：主路/副路是每帧交替调用同一入口的，
+            // 把调用方或 accepted 放进状态键都会变成每帧一条、把日志刷爆。
+            string state = $"use={shouldUseSecondary}|hasFrame={HasSecondaryCameraFrame} "
+                + $"|cfg={Config?.CameraBarcodeRecognitionSource}";
+            if (string.Equals(state, _lastBarcodeSourceLogState, StringComparison.Ordinal))
                 return;
 
-            _cameraBarcodeRecognition?.TrySubmitFrame(frame);
+            _lastBarcodeSourceLogState = state;
+            RuntimeLog.Info(
+                "BarcodeSource",
+                $"识别提交状态变化 source={(fromSecondary ? "副画面" : "主画面")} "
+                + $"useSecondary={shouldUseSecondary} accepted={accepted} reason={reason} "
+                + $"hasSecondaryFrame={HasSecondaryCameraFrame} "
+                + $"enableSecondary={Config?.EnableSecondaryCamera} "
+                + $"configSource={Config?.CameraBarcodeRecognitionSource}");
         }
 
         public async Task<string> ScanHostPairingQrAsync(CancellationToken cancellationToken)

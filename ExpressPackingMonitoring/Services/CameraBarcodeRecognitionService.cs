@@ -1487,7 +1487,12 @@ internal sealed class CameraBarcodeRecognitionService : IDisposable
         _workerTask = Task.Run(ProcessLoopAsync);
     }
 
-    public bool TrySubmitFrame(Mat frame)
+    /// <param name="forceDecode">
+    /// 跳过运动门控强制解码。副画面识别要靠它：面单在副摄像头前放好之后画面是静止的，
+    /// 运动门控会判定"没有变化"而停止解码，静止的条码就永远认不出来。
+    /// 提交本身仍受 guideInterval 节流，不会变成每帧都解码。
+    /// </param>
+    public bool TrySubmitFrame(Mat frame, bool forceDecode = false)
     {
         if (_disposed || frame == null || frame.IsDisposed || frame.Empty())
             return false;
@@ -1505,8 +1510,9 @@ internal sealed class CameraBarcodeRecognitionService : IDisposable
                 return false;
 
             _lastAcceptedAt = now;
-            bool forceDecode = now.UtcTicks <= Volatile.Read(ref _forceDecodeUntilUtcTicks);
-            if (!_motionGate.ShouldDecode(frame, now, forceDecode))
+            bool shouldForceDecode = forceDecode
+                || now.UtcTicks <= Volatile.Read(ref _forceDecodeUntilUtcTicks);
+            if (!_motionGate.ShouldDecode(frame, now, shouldForceDecode))
                 return false;
 
             replacement = frame.Clone();
