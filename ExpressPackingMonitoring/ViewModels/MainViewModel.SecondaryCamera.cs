@@ -848,6 +848,38 @@ namespace ExpressPackingMonitoring.ViewModels
             config.SecondaryCameraOverlayTopRatio = top;
         }
 
+        /// <summary>
+        /// 拖动画中画右下角把手改大小：只改内存配置，下一帧合成立刻跟着变，松手才落盘。
+        /// 与设置页原先是同一个字段（SecondaryCameraOverlayWidthRatio），现在只保留这一个入口。
+        /// </summary>
+        internal void SetSecondaryCameraOverlayWidth(double widthRatio)
+        {
+            if (Config is not { } config)
+                return;
+
+            config.SecondaryCameraOverlayWidthRatio =
+                SecondaryCameraOverlayPolicy.NormalizeWidthRatio(widthRatio);
+        }
+
+        /// <summary>把拖动改出来的副画面大小落盘。</summary>
+        internal void SaveSecondaryCameraOverlayWidth()
+        {
+            if (Config is not { } config)
+                return;
+
+            double widthRatio = config.SecondaryCameraOverlayWidthRatio;
+            if (!WorkstationConfigStore.TryUpdate(
+                    saved => saved.SecondaryCameraOverlayWidthRatio = widthRatio,
+                    out AppConfig savedConfig,
+                    out string error))
+            {
+                RuntimeLog.Warn("SecondaryCamera", $"副画面大小保存失败：{error}");
+                return;
+            }
+
+            Config.SecondaryCameraOverlayWidthRatio = savedConfig.SecondaryCameraOverlayWidthRatio;
+        }
+
         /// <summary>把拖动结果落盘，下次启动还在同一位置。</summary>
         internal void SaveSecondaryCameraOverlayPosition()
         {

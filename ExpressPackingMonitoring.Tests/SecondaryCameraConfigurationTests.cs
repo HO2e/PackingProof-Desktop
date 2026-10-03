@@ -253,7 +253,6 @@ public sealed class SecondaryCameraConfigurationTests
             StringComparison.Ordinal);
         Assert.DoesNotContain("SecondaryCameraCheckBox", settings, StringComparison.Ordinal);
         Assert.Contains("{Binding Config.SecondaryNetworkCameraUrl", settings, StringComparison.Ordinal);
-        Assert.Contains("{Binding Config.SecondaryCameraOverlayWidthRatio", settings, StringComparison.Ordinal);
         Assert.Contains("{Binding Config.SecondaryResolutionPreset", settings, StringComparison.Ordinal);
     }
 

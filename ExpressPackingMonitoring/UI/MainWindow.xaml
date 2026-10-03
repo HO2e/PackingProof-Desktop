@@ -673,6 +673,31 @@
                                 </ControlTemplate>
                             </Thumb.Template>
                         </Thumb>
+
+                        <!--
+                            画中画右下角把手：按住拖动直接改副画面大小。
+                            大小不再放进设置页，就在画面上拖。
+                        -->
+                        <Thumb x:Name="SecondaryOverlayResizeThumb"
+                               Panel.ZIndex="16"
+                               Width="16"
+                               Height="16"
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Top"
+                               Cursor="SizeNWSE"
+                               Visibility="Collapsed"
+                               DragDelta="SecondaryOverlayResizeThumb_DragDelta"
+                               DragCompleted="SecondaryOverlayResizeThumb_DragCompleted"
+                               ToolTip="按住拖动可调整副画面大小">
+                            <Thumb.Template>
+                                <ControlTemplate TargetType="Thumb">
+                                    <Border Background="{StaticResource AccentBlue}"
+                                            CornerRadius="3"
+                                            BorderBrush="{StaticResource TextOnAccent}"
+                                            BorderThickness="1"/>
+                                </ControlTemplate>
+                            </Thumb.Template>
+                        </Thumb>
                     </Grid>
                 </Border>
 

@@ -1219,31 +1219,6 @@
                                         </ComboBox>
                                     </Grid>
 
-                                    <Grid Style="{StaticResource SettingRowStyle}"
-                                          Visibility="{Binding IsSecondaryCameraConfigured, Converter={StaticResource BoolToVisibility}}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="260"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="画中画大小" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="副画面占主画面的宽度比例" Style="{StaticResource FieldHintStyle}"/>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="2">
-                                            <Grid>
-                                                <TextBlock Text="更小" Style="{StaticResource SliderEndLabelStyle}" HorizontalAlignment="Left"/>
-                                                <TextBlock Text="{Binding ElementName=SecondaryCameraOverlayRatioSlider, Path=Value, StringFormat={}{0:P0}}"
-                                                           Style="{StaticResource SliderValueTextStyle}"
-                                                           HorizontalAlignment="Center"/>
-                                                <TextBlock Text="更大" Style="{StaticResource SliderEndLabelStyle}" HorizontalAlignment="Right"/>
-                                            </Grid>
-                                            <Slider x:Name="SecondaryCameraOverlayRatioSlider"
-                                                    Style="{StaticResource SettingsSliderStyle}"
-                                                    Minimum="0.1" Maximum="0.5" TickFrequency="0.05"
-                                                    Value="{Binding Config.SecondaryCameraOverlayWidthRatio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                        </StackPanel>
-                                    </Grid>
                                 </StackPanel>
                             </Border>
 

@@ -328,6 +328,9 @@ namespace ExpressPackingMonitoring.UI
         /// </summary>
         private void UpdateSecondaryOverlayThumb(MainViewModel vm)
         {
+            // 先收起把手：下面任何一条提前返回（没有副帧、没有预览）都不该留下一个悬空的把手。
+            SecondaryOverlayResizeThumb.Visibility = Visibility.Collapsed;
+
             if (!vm.IsSecondaryCameraOverlayVisible
                 || vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
             {
@@ -362,6 +365,44 @@ namespace ExpressPackingMonitoring.UI
                 0,
                 0);
             SecondaryOverlayDragThumb.Visibility = Visibility.Visible;
+
+            // 右下角把手贴在画中画右下角上，拖它就是改大小。
+            SecondaryOverlayResizeThumb.Margin = new Thickness(
+                videoRect.X + ((rect.X + rect.Width) * scale) - (SecondaryOverlayResizeThumb.Width / 2),
+                videoRect.Y + ((rect.Y + rect.Height) * scale) - (SecondaryOverlayResizeThumb.Height / 2),
+                0,
+                0);
+            SecondaryOverlayResizeThumb.Visibility = Visibility.Visible;
+        }
+
+        /// <summary>拖右下角把手改副画面大小：只按横向位移换算宽度比例，高度跟着画面比例走。</summary>
+        private void SecondaryOverlayResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            if (DataContext is not MainViewModel vm)
+                return;
+            if (vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
+                return;
+
+            Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(
+                frame.PixelWidth,
+                frame.PixelHeight,
+                VideoImage.ActualWidth,
+                VideoImage.ActualHeight);
+            if (videoRect.IsEmpty || videoRect.Width <= 0)
+                return;
+            if (!vm.TryResolveSecondaryOverlayRect(frame.PixelWidth, frame.PixelHeight, out SecondaryCameraOverlayRect current))
+                return;
+
+            double scale = videoRect.Width / frame.PixelWidth;
+            double targetWidthPixels = current.Width + (e.HorizontalChange / scale);
+            vm.SetSecondaryCameraOverlayWidth(targetWidthPixels / frame.PixelWidth);
+            UpdateSecondaryOverlayThumb(vm);
+        }
+
+        private void SecondaryOverlayResizeThumb_DragCompleted(object sender, DragCompletedEventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+                vm.SaveSecondaryCameraOverlayWidth();
         }
 
         /// <summary>拖动中实时改变合成位置：预览下一帧就跟着动，松手才落盘。</summary>
