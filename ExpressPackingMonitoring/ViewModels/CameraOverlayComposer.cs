@@ -74,8 +74,11 @@ namespace ExpressPackingMonitoring.ViewModels
             return true;
         }
 
-        /// <summary>圆角半径：按小窗短边取比例，保证和识别框的圆角观感一致，不随分辨率跑偏。</summary>
-        private static int ResolveCornerRadius(int width, int height) =>
+        /// <summary>
+        /// 圆角半径：按小窗短边取比例，保证和识别框的圆角观感一致，不随分辨率跑偏。
+        /// 界面上的画中画拖动框也用这个值（换算到屏幕尺寸），两边圆角才对得上。
+        /// </summary>
+        internal static int ResolveCornerRadius(int width, int height) =>
             Math.Clamp((int)Math.Round(Math.Min(width, height) * 0.02), 4, 48);
 
         /// <summary>

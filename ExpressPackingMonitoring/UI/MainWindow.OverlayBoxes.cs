@@ -27,6 +27,8 @@ namespace ExpressPackingMonitoring.UI
             internal required int ChannelNumber { get; init; }
             internal required Thumb Drag { get; init; }
             internal required Thumb Resize { get; init; }
+            /// <summary>鼠标是否停在这一路画中画（含右下角把手）上：把手只在悬浮时出现。</summary>
+            internal bool Hovered;
         }
 
         private readonly Dictionary<int, OverlayBoxControls> _overlayBoxControls = new();
@@ -88,6 +90,8 @@ namespace ExpressPackingMonitoring.UI
             };
             resize.DragDelta += OverlayResize_DragDelta;
             resize.DragCompleted += OverlayResize_DragCompleted;
+            resize.MouseEnter += OverlayBox_MouseEnter;
+            resize.MouseLeave += OverlayBox_MouseLeave;
 
             SecondaryOverlayBoxLayer.Children.Add(drag);
             SecondaryOverlayBoxLayer.Children.Add(resize);
@@ -101,7 +105,7 @@ namespace ExpressPackingMonitoring.UI
 
         private void UpdateOverlayBox(MainViewModel vm, OverlayBoxControls controls)
         {
-            controls.Resize.Visibility = Visibility.Collapsed;
+            controls.Resize.Visibility = controls.Hovered ? Visibility.Visible : Visibility.Collapsed;
 
             // 取景编辑态下预览显示的是那一路的整幅画面，画中画的位置/大小框这时候没有意义。
             if (vm.IsEditingOverlayPreview)
@@ -160,8 +164,14 @@ namespace ExpressPackingMonitoring.UI
                 controls.Resize.Width,
                 controls.Resize.Height);
 
+            // 圆角跟合成本身用同一个半径（换算到当前预览缩放），框和画面才对得上。
+            int cornerRadius = Math.Max(
+                1,
+                (int)Math.Round(CameraOverlayComposer.ResolveCornerRadius(rect.Width, rect.Height) * scale));
+            OverlayBoxVisual.SetCornerRadius(controls.Drag, new CornerRadius(cornerRadius));
+
             controls.Drag.Visibility = Visibility.Visible;
-            controls.Resize.Visibility = Visibility.Visible;
+            controls.Resize.Visibility = controls.Hovered ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private static void Place(FrameworkElement element, double left, double top, double width, double height)
@@ -262,17 +272,48 @@ namespace ExpressPackingMonitoring.UI
             if (sender is Thumb { Tag: int channelNumber }
                 && _overlayBoxControls.TryGetValue(channelNumber, out OverlayBoxControls? controls))
             {
+                controls.Hovered = true;
                 controls.Drag.BorderBrush = TryFindResource("AccentBlue") as Brush;
+                controls.Resize.Visibility = Visibility.Visible;
             }
         }
 
         private void OverlayBox_MouseLeave(object sender, MouseEventArgs e)
         {
-            if (sender is Thumb { Tag: int channelNumber }
-                && _overlayBoxControls.TryGetValue(channelNumber, out OverlayBoxControls? controls))
+            if (sender is not Thumb { Tag: int channelNumber }
+                || !_overlayBoxControls.TryGetValue(channelNumber, out OverlayBoxControls? controls))
             {
-                controls.Drag.BorderBrush = TryFindResource("TransparentBrush") as Brush;
+                return;
             }
+
+            // 鼠标可能只是移到了右下角把手上：把手探出框外，这一下也算"还停在画中画上"。
+            // 不加这个判断，把手会在鼠标够到它之前就收起来，等于点不中。
+            if (controls.Drag.IsMouseOver || controls.Resize.IsMouseOver)
+                return;
+
+            controls.Hovered = false;
+            controls.Drag.BorderBrush = TryFindResource("TransparentBrush") as Brush;
+            controls.Resize.Visibility = Visibility.Collapsed;
         }
+    }
+
+    /// <summary>
+    /// 画中画拖动框的附加属性。拖动框外观是 ControlTemplate 里的 Border，
+    /// 模板里没法直接写"跟着合成圆角走"的值，所以用附加属性传给模板绑定。
+    /// </summary>
+    internal static class OverlayBoxVisual
+    {
+        internal static readonly DependencyProperty CornerRadiusProperty =
+            DependencyProperty.RegisterAttached(
+                "CornerRadius",
+                typeof(CornerRadius),
+                typeof(OverlayBoxVisual),
+                new PropertyMetadata(new CornerRadius(6)));
+
+        internal static void SetCornerRadius(DependencyObject element, CornerRadius value) =>
+            element.SetValue(CornerRadiusProperty, value);
+
+        internal static CornerRadius GetCornerRadius(DependencyObject element) =>
+            (CornerRadius)element.GetValue(CornerRadiusProperty);
     }
 }

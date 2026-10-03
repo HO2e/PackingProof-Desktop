@@ -48,10 +48,11 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Thumb">
+                        <!-- 圆角跟着合成画中画的圆角走（附加属性由代码写入） -->
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="6"/>
+                                CornerRadius="{Binding (ui:OverlayBoxVisual.CornerRadius), RelativeSource={RelativeSource TemplatedParent}}"/>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
