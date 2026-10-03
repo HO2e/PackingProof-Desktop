@@ -560,6 +560,13 @@
   <data name="将面单条形码放入引导框，可同时测试摄像头画面和自动识别" xml:space="preserve"><value>送り状のバーコードをガイド枠に入れると、カメラ映像と自動認識を同時にテストできます</value></data>
   <data name="将面单条形码放入框内" xml:space="preserve"><value>送り状のバーコードを枠内に入れてください</value></data>
   <data name="主摄像头" xml:space="preserve"><value>メインカメラ</value></data>
+  <data name="画面旋转" xml:space="preserve"><value>画面の回転</value></data>
+  <data name="副画面旋转" xml:space="preserve"><value>サブ画面の回転</value></data>
+  <data name="决定录出来的视频方向" xml:space="preserve"><value>録画される映像の向きを決めます</value></data>
+  <data name="决定画中画的方向" xml:space="preserve"><value>ピクチャインピクチャの向きを決めます</value></data>
+  <data name="不旋转" xml:space="preserve"><value>回転なし</value></data>
+  <data name="旋转 90°" xml:space="preserve"><value>90° 回転</value></data>
+  <data name="旋转 270°" xml:space="preserve"><value>270° 回転</value></data>
   <data name="识别摄像头" xml:space="preserve"><value>認識用カメラ</value></data>
   <data name="选择用哪一路摄像头识别面单条码" xml:space="preserve"><value>どのカメラで送り状のバーコードを認識するかを選択します</value></data>
   <data name="帧率" xml:space="preserve"><value>フレームレート</value></data>

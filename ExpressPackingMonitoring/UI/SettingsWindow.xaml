@@ -1155,19 +1155,18 @@
                                             <ColumnDefinition Width="260"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="画面方向" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转"
-                                                       Style="{StaticResource FieldHintStyle}"/>
+                                            <TextBlock Text="画面旋转" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="决定录出来的视频方向" Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <ComboBox x:Name="CameraRotationComboBox"
                                                   Grid.Column="2"
                                                   SelectedValuePath="Tag"
                                                   SelectedValue="{Binding Config.CameraRotationDegrees, Mode=TwoWay}"
                                                   AutomationProperties.Name="摄像头画面方向">
-                                            <ComboBoxItem Tag="0" Content="正装（0°）"/>
-                                            <ComboBoxItem Tag="90" Content="顺时针 90°"/>
-                                            <ComboBoxItem Tag="180" Content="倒装（180°）"/>
-                                            <ComboBoxItem Tag="270" Content="顺时针 270°"/>
+                                            <ComboBoxItem Tag="0" Content="不旋转"/>
+                                            <ComboBoxItem Tag="90" Content="旋转 90°"/>
+                                            <ComboBoxItem Tag="180" Content="旋转 180°"/>
+                                            <ComboBoxItem Tag="270" Content="旋转 270°"/>
                                         </ComboBox>
                                     </Grid>
                                 </StackPanel>
@@ -1255,17 +1254,17 @@
                                             <ColumnDefinition Width="260"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
-                                            <TextBlock Text="副画面方向" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="横装或竖装时按 90° 一档调整" Style="{StaticResource FieldHintStyle}"/>
+                                            <TextBlock Text="副画面旋转" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="决定画中画的方向" Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <ComboBox x:Name="SecondaryCameraRotationComboBox"
                                                   Grid.Column="2"
                                                   SelectedValuePath="Tag"
                                                   SelectedValue="{Binding Config.SecondaryCameraRotationDegrees, Mode=TwoWay}">
-                                            <ComboBoxItem Tag="0" Content="正装（0°）"/>
-                                            <ComboBoxItem Tag="90" Content="顺时针 90°"/>
-                                            <ComboBoxItem Tag="180" Content="倒装（180°）"/>
-                                            <ComboBoxItem Tag="270" Content="顺时针 270°"/>
+                                            <ComboBoxItem Tag="0" Content="不旋转"/>
+                                            <ComboBoxItem Tag="90" Content="旋转 90°"/>
+                                            <ComboBoxItem Tag="180" Content="旋转 180°"/>
+                                            <ComboBoxItem Tag="270" Content="旋转 270°"/>
                                         </ComboBox>
                                     </Grid>
 

@@ -44,8 +44,8 @@ public sealed class CameraFrameOrientationTests
             "UI",
             "SettingsWindow.xaml"));
 
-        Assert.Contains("Text=\"画面方向\"", xaml, StringComparison.Ordinal);
-        Assert.Contains("Text=\"副画面方向\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Text=\"画面旋转\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Text=\"副画面旋转\"", xaml, StringComparison.Ordinal);
         Assert.Contains("{Binding Config.CameraRotationDegrees", xaml, StringComparison.Ordinal);
         Assert.Contains("{Binding Config.SecondaryCameraRotationDegrees", xaml, StringComparison.Ordinal);
         Assert.Contains("Tag=\"90\"", xaml, StringComparison.Ordinal);

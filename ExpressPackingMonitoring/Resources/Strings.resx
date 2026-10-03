@@ -560,6 +560,13 @@
   <data name="将面单条形码放入引导框，可同时测试摄像头画面和自动识别" xml:space="preserve"><value>Place the shipping-label barcode inside the guide to test the camera and recognition</value></data>
   <data name="将面单条形码放入框内" xml:space="preserve"><value>Place the shipping-label barcode inside the guide</value></data>
   <data name="主摄像头" xml:space="preserve"><value>Main camera</value></data>
+  <data name="画面旋转" xml:space="preserve"><value>Image rotation</value></data>
+  <data name="副画面旋转" xml:space="preserve"><value>Secondary rotation</value></data>
+  <data name="决定录出来的视频方向" xml:space="preserve"><value>Determines the orientation of the recorded video</value></data>
+  <data name="决定画中画的方向" xml:space="preserve"><value>Determines the orientation of the picture-in-picture</value></data>
+  <data name="不旋转" xml:space="preserve"><value>No rotation</value></data>
+  <data name="旋转 90°" xml:space="preserve"><value>Rotate 90°</value></data>
+  <data name="旋转 270°" xml:space="preserve"><value>Rotate 270°</value></data>
   <data name="识别摄像头" xml:space="preserve"><value>Recognition camera</value></data>
   <data name="选择用哪一路摄像头识别面单条码" xml:space="preserve"><value>Choose which camera recognizes the shipping-label barcode</value></data>
   <data name="帧率" xml:space="preserve"><value>Frame rate</value></data>
