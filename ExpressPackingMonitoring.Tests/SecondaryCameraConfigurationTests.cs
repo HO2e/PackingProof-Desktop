@@ -362,6 +362,43 @@ public sealed class SecondaryCameraConfigurationTests
         Assert.Contains("public bool TrySubmitFrame(Mat frame, bool forceDecode = false)", service, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// 画中画是直接画进帧里的，界面那个拖动框必须跟着"实际合成落位"重摆：
+    /// 少了这条通知，框会停在上一帧的位置，用户看到的就是"主画面上副摄的框偏了"。
+    /// </summary>
+    [Fact]
+    public void SecondaryOverlayThumbFollowsComposedPlacement()
+    {
+        string secondary = ReadProjectFile(Path.Combine("ViewModels", "MainViewModel.SecondaryCamera.cs"));
+        Assert.Contains("NotifySecondaryOverlayPlacementChanged", secondary, StringComparison.Ordinal);
+        Assert.Contains("SecondaryOverlayPlacementVersion", secondary, StringComparison.Ordinal);
+
+        string window = ReadProjectFile(Path.Combine("UI", "MainWindow.xaml.cs"));
+        Assert.Contains(
+            "nameof(MainViewModel.SecondaryOverlayPlacementVersion)",
+            window,
+            StringComparison.Ordinal);
+        Assert.Contains("UpdateSecondaryOverlayThumb(vm)", window, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// 画中画拖动框必须按"画面在父容器里的实际位置"换算，不能直接拿画面矩形当父容器坐标：
+    /// VideoImage 被 Uniform 居中摆放后，四周留出的黑边同样占父容器坐标；
+    /// 少这一步换算，框就会整体偏出画面、压到黑边上（现场反馈"画中画框超出摄像头画面"）。
+    /// </summary>
+    [Fact]
+    public void SecondaryOverlayThumbMapsIntoTheImageCoordinateSpace()
+    {
+        string window = ReadProjectFile(Path.Combine("UI", "MainWindow.xaml.cs"));
+
+        Assert.Contains("VideoImage.TranslatePoint", window, StringComparison.Ordinal);
+        Assert.Contains("overlayHost", window, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "videoRect.X + (rect.X * scale)",
+            window,
+            StringComparison.Ordinal);
+    }
+
     /// <summary>默认必须是"还没拖动过"，否则首次启动副画面就会跑到左上角。</summary>
     [Fact]
     public void SecondaryOverlayPositionStartsUnset()

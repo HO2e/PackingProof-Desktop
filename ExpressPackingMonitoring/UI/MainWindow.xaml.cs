@@ -252,6 +252,12 @@ namespace ExpressPackingMonitoring.UI
                             // 开关副画面、或副路刚出第一帧时，拖动框要立刻摆好。
                             Dispatcher.BeginInvoke(new Action(() => UpdateSecondaryOverlayThumb(vm)));
                         }
+                        else if (args.PropertyName == nameof(MainViewModel.SecondaryOverlayPlacementVersion))
+                        {
+                            // 副画面在帧里的落位变了（改裁剪、进出取景编辑、拖动大小/位置）：
+                            // 拖动框必须跟着重摆，否则会停在上一帧的位置，和画面对不上。
+                            Dispatcher.BeginInvoke(new Action(() => UpdateSecondaryOverlayThumb(vm)));
+                        }
                         else if (args.PropertyName == nameof(MainViewModel.PreviewImageSource))
                         {
                             // 预览图源变了（进出副摄取景编辑、或副摄那一屏的第一帧到达）：
@@ -372,21 +378,33 @@ namespace ExpressPackingMonitoring.UI
                 return;
             }
 
+            // VideoImage 在父容器里不一定从 (0,0) 开始：画面按 Uniform 居中摆放，
+            // 四周留出的黑边同样占父容器的坐标。拖动框是父容器的子元素，
+            // Margin 必须换算到父容器坐标系，否则整块框会比画面偏出这段黑边。
+            if (SecondaryOverlayDragThumb.Parent is not UIElement overlayHost)
+            {
+                SecondaryOverlayDragThumb.Visibility = Visibility.Collapsed;
+                return;
+            }
+            Point videoOrigin = VideoImage.TranslatePoint(
+                new Point(videoRect.X, videoRect.Y),
+                overlayHost);
+
             // 帧坐标 → 预览控件坐标（Uniform 缩放，两边黑边已由 videoRect 扣掉）。
             double scale = videoRect.Width / frame.PixelWidth;
             SecondaryOverlayDragThumb.Width = rect.Width * scale;
             SecondaryOverlayDragThumb.Height = rect.Height * scale;
             SecondaryOverlayDragThumb.Margin = new Thickness(
-                videoRect.X + (rect.X * scale),
-                videoRect.Y + (rect.Y * scale),
+                videoOrigin.X + (rect.X * scale),
+                videoOrigin.Y + (rect.Y * scale),
                 0,
                 0);
             SecondaryOverlayDragThumb.Visibility = Visibility.Visible;
 
             // 右下角把手贴在画中画右下角上，拖它就是改大小。
             SecondaryOverlayResizeThumb.Margin = new Thickness(
-                videoRect.X + ((rect.X + rect.Width) * scale) - (SecondaryOverlayResizeThumb.Width / 2),
-                videoRect.Y + ((rect.Y + rect.Height) * scale) - (SecondaryOverlayResizeThumb.Height / 2),
+                videoOrigin.X + ((rect.X + rect.Width) * scale) - (SecondaryOverlayResizeThumb.Width / 2),
+                videoOrigin.Y + ((rect.Y + rect.Height) * scale) - (SecondaryOverlayResizeThumb.Height / 2),
                 0,
                 0);
             SecondaryOverlayResizeThumb.Visibility = Visibility.Visible;

@@ -48,6 +48,20 @@ namespace ExpressPackingMonitoring.ViewModels
         /// </summary>
         private SecondaryCameraOverlayRect? _lastComposedOverlayRect;
         private (int Width, int Height) _lastComposedFrameSize;
+        private int _secondaryOverlayPlacementVersion;
+
+        /// <summary>
+        /// 副画面实际落位的版本号。合成位置一变就自增并通知界面重摆拖动框 ——
+        /// 副画面是直接画进帧里的，界面那个拖动框平时不跟着每帧走，
+        /// 不在这里通知就会停在上一帧的位置，看起来就是"框和画面对不上"。
+        /// </summary>
+        public int SecondaryOverlayPlacementVersion => _secondaryOverlayPlacementVersion;
+
+        private void NotifySecondaryOverlayPlacementChanged()
+        {
+            _secondaryOverlayPlacementVersion++;
+            OnPropertyChanged(nameof(SecondaryOverlayPlacementVersion));
+        }
 
         private bool _hasSecondaryCameraFrame;
 
@@ -719,8 +733,14 @@ namespace ExpressPackingMonitoring.ViewModels
                             config.SecondaryCameraOverlayTopRatio,
                             allowUpscale: false))
                     {
+                        bool placementChanged = _lastComposedOverlayRect != composedRect
+                            || _lastComposedFrameSize != (frame.Width, frame.Height);
                         _lastComposedOverlayRect = composedRect;
                         _lastComposedFrameSize = (frame.Width, frame.Height);
+                        // 落位变了要立刻叫界面重摆拖动框。副画面是画进帧里的，界面那个框
+                        // 平时不跟着每帧走，只在这里通知才不会停在上一帧的位置、和画面错开。
+                        if (placementChanged)
+                            NotifySecondaryOverlayPlacementChanged();
                     }
                 }
                 catch (Exception ex)
