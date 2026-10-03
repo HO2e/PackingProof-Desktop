@@ -8,7 +8,7 @@ namespace ExpressPackingMonitoring.Tests;
 /// 副画面合成必须真的写进主帧的右下角、不能动其它区域，也不能在输入异常时破坏主帧。
 /// 用纯 OpenCV 的假帧验证，不需要摄像头。
 /// </summary>
-public sealed class SecondaryCameraFrameComposerTests
+public sealed class CameraOverlayComposerTests
 {
     private const double WidthRatio = 0.25;
     private const int Margin = 16;
@@ -19,9 +19,9 @@ public sealed class SecondaryCameraFrameComposerTests
         using var main = new Mat(1080, 1920, MatType.CV_8UC3, new Scalar(0, 0, 0));
         using var secondary = new Mat(480, 640, MatType.CV_8UC3, new Scalar(255, 255, 255));
 
-        Assert.True(SecondaryCameraFrameComposer.TryCompose(main, secondary, WidthRatio, Margin));
+        Assert.True(CameraOverlayComposer.TryCompose(main, secondary, WidthRatio, Margin));
 
-        SecondaryCameraOverlayRect rect = SecondaryCameraOverlayPolicy
+        CameraOverlayRect rect = CameraOverlayLayout
             .Resolve(1920, 1080, 640, 480, WidthRatio, Margin)!.Value;
 
         using var inside = new Mat(main, new Rect(rect.X + 12, rect.Y + 12, 24, 24));
@@ -42,9 +42,9 @@ public sealed class SecondaryCameraFrameComposerTests
         // 4:3 副画面
         using var secondary = new Mat(480, 640, MatType.CV_8UC3, new Scalar(255, 255, 255));
 
-        Assert.True(SecondaryCameraFrameComposer.TryCompose(main, secondary, WidthRatio, Margin));
+        Assert.True(CameraOverlayComposer.TryCompose(main, secondary, WidthRatio, Margin));
 
-        SecondaryCameraOverlayRect rect = SecondaryCameraOverlayPolicy
+        CameraOverlayRect rect = CameraOverlayLayout
             .Resolve(1920, 1080, 640, 480, WidthRatio, Margin)!.Value;
 
         Assert.Equal(4.0 / 3.0, (double)rect.Width / rect.Height, precision: 2);
@@ -61,9 +61,9 @@ public sealed class SecondaryCameraFrameComposerTests
         // 小窗用纯白，方便区分"贴上去的内容"和"被圆角裁掉后露出的主画面"
         using var secondary = new Mat(400, 600, MatType.CV_8UC3, new Scalar(255, 255, 255));
 
-        Assert.True(SecondaryCameraFrameComposer.TryCompose(main, secondary, widthRatio: 0.5, margin: 16));
+        Assert.True(CameraOverlayComposer.TryCompose(main, secondary, widthRatio: 0.5, margin: 16));
 
-        SecondaryCameraOverlayRect rect = SecondaryCameraOverlayPolicy
+        CameraOverlayRect rect = CameraOverlayLayout
             .Resolve(1280, 800, 600, 400, widthRatio: 0.5, margin: 16)!.Value;
 
         // 顶边中段：小窗内容 + 内侧边框，必须是白的
@@ -96,7 +96,7 @@ public sealed class SecondaryCameraFrameComposerTests
         using var main = new Mat(720, 1280, MatType.CV_8UC3, new Scalar(0, 0, 0));
         using var gray = new Mat(480, 640, MatType.CV_8UC1, new Scalar(255));
 
-        Assert.True(SecondaryCameraFrameComposer.TryCompose(main, gray, WidthRatio, Margin));
+        Assert.True(CameraOverlayComposer.TryCompose(main, gray, WidthRatio, Margin));
     }
 
     [Fact]
@@ -105,8 +105,8 @@ public sealed class SecondaryCameraFrameComposerTests
         using var main = new Mat(1080, 1920, MatType.CV_8UC3, new Scalar(10, 20, 30));
         using var empty = new Mat();
 
-        Assert.False(SecondaryCameraFrameComposer.TryCompose(main, empty, WidthRatio, Margin));
-        Assert.False(SecondaryCameraFrameComposer.TryCompose(empty, main, WidthRatio, Margin));
+        Assert.False(CameraOverlayComposer.TryCompose(main, empty, WidthRatio, Margin));
+        Assert.False(CameraOverlayComposer.TryCompose(empty, main, WidthRatio, Margin));
 
         // 主帧仍保持原样（没有副画面没有任何副作用）
         Assert.Equal(10, Cv2.Mean(main).Val0, precision: 3);
@@ -119,6 +119,6 @@ public sealed class SecondaryCameraFrameComposerTests
         using var main = new Mat(80, 120, MatType.CV_8UC3, new Scalar(0, 0, 0));
         using var secondary = new Mat(480, 640, MatType.CV_8UC3, new Scalar(255, 255, 255));
 
-        Assert.False(SecondaryCameraFrameComposer.TryCompose(main, secondary, WidthRatio, Margin));
+        Assert.False(CameraOverlayComposer.TryCompose(main, secondary, WidthRatio, Margin));
     }
 }

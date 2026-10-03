@@ -3,7 +3,7 @@ namespace ExpressPackingMonitoring.ViewModels
     using ExpressPackingMonitoring.Config;
 
     /// <summary>副画面在主画面里的落位与目标尺寸（像素，原点在主帧左上角）。</summary>
-    internal readonly record struct SecondaryCameraOverlayRect(int X, int Y, int Width, int Height);
+    internal readonly record struct CameraOverlayRect(int X, int Y, int Width, int Height);
 
     /// <summary>
     /// 第二路摄像头画面贴到主画面右下角的落位规则。纯计算，便于在没有摄像头的情况下回归。
@@ -12,16 +12,16 @@ namespace ExpressPackingMonitoring.ViewModels
     /// 算出来比主画面还高时反过来按高度定宽，保证副画面永远完整落在画面内。
     /// 尺寸非法或太小时返回 null，调用方按"没有副画面"处理，绝不画出一个越界的 ROI。
     /// </summary>
-    internal static class SecondaryCameraOverlayPolicy
+    internal static class CameraOverlayLayout
     {
         /// <summary>副画面宽度占主画面宽度的默认比例。</summary>
-        internal const double DefaultWidthRatio = AppConfig.DefaultSecondaryOverlayWidthRatio;
+        internal const double DefaultWidthRatio = AppConfig.DefaultOverlayWidthRatio;
 
-        internal const double MinimumWidthRatio = AppConfig.MinimumSecondaryOverlayWidthRatio;
-        internal const double MaximumWidthRatio = AppConfig.MaximumSecondaryOverlayWidthRatio;
+        internal const double MinimumWidthRatio = AppConfig.MinimumOverlayWidthRatio;
+        internal const double MaximumWidthRatio = AppConfig.MaximumOverlayWidthRatio;
 
         /// <summary>距右下角的留白。</summary>
-        internal const int DefaultMargin = AppConfig.DefaultSecondaryOverlayMargin;
+        internal const int DefaultMargin = AppConfig.DefaultOverlayMargin;
 
         /// <summary>比这还窄就没有可辨认的画面了，直接不叠加。</summary>
         internal const int MinimumOverlayWidth = 48;
@@ -41,7 +41,7 @@ namespace ExpressPackingMonitoring.ViewModels
         /// 算出副画面该贴在哪、多大。返回 null 表示这一帧不叠加。
         /// 位置未自定义（哨兵值）时贴右下角；用户拖动过后按归一化比例落位，并夹在画面内。
         /// </summary>
-        internal static SecondaryCameraOverlayRect? Resolve(
+        internal static CameraOverlayRect? Resolve(
             int frameWidth,
             int frameHeight,
             int overlaySourceWidth,
@@ -91,10 +91,10 @@ namespace ExpressPackingMonitoring.ViewModels
                 int customY = (int)Math.Round(topRatio * frameHeight);
                 customX = Math.Clamp(customX, 0, Math.Max(0, frameWidth - targetWidth));
                 customY = Math.Clamp(customY, 0, Math.Max(0, frameHeight - targetHeight));
-                return new SecondaryCameraOverlayRect(customX, customY, targetWidth, targetHeight);
+                return new CameraOverlayRect(customX, customY, targetWidth, targetHeight);
             }
 
-            return new SecondaryCameraOverlayRect(
+            return new CameraOverlayRect(
                 frameWidth - safeMargin - targetWidth,
                 frameHeight - safeMargin - targetHeight,
                 targetWidth,

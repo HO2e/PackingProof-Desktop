@@ -241,9 +241,9 @@ namespace ExpressPackingMonitoring.UI
                 // 副摄取景编辑时必须有一条可靠的退出路径：Esc 与"完成"等效。
                 if (e.Key == Key.Escape
                     && DataContext is MainViewModel vm
-                    && vm.IsEditingSecondaryCameraPreview)
+                    && vm.IsEditingOverlayPreview)
                 {
-                    vm.ExitSecondaryCameraPreviewEdit();
+                    vm.ExitOverlayPreviewEdit();
                     UpdateSecondaryOverlayThumb(vm);
                     UpdateCameraBarcodeGuide(vm);
                     e.Handled = true;
@@ -260,8 +260,8 @@ namespace ExpressPackingMonitoring.UI
                         {
                             Dispatcher.BeginInvoke(new Action(() => UpdateCameraOverlays(vm)));
                         }
-                        else if (args.PropertyName == nameof(MainViewModel.IsSecondaryCameraOverlayVisible)
-                            || args.PropertyName == nameof(MainViewModel.HasSecondaryCameraFrame))
+                        else if (args.PropertyName == nameof(MainViewModel.IsOverlayVisible)
+                            || args.PropertyName == nameof(MainViewModel.HasOverlayFrame))
                         {
                             // 开关副画面、或副路刚出第一帧时，拖动框要立刻摆好。
                             // 识别框贴到画中画上时，框和小锁提示也要跟着挪。
@@ -271,7 +271,7 @@ namespace ExpressPackingMonitoring.UI
                                 UpdateCameraBarcodeGuide(vm);
                             }));
                         }
-                        else if (args.PropertyName == nameof(MainViewModel.SecondaryOverlayPlacementVersion))
+                        else if (args.PropertyName == nameof(MainViewModel.OverlayPlacementVersion))
                         {
                             // 副画面在帧里的落位变了（改裁剪、进出取景编辑、拖动大小/位置）：
                             // 拖动框必须跟着重摆；识别框贴在画中画上时也要一起重摆，否则反馈框会错位。
@@ -354,6 +354,11 @@ namespace ExpressPackingMonitoring.UI
             vm.ReportMainPreviewVisibility(true);
         }
 
+        /// <summary>
+        /// 预览里那个画中画拖动框当前绑定的通道号。
+        /// 现在只有一路叠加画面，频道化的下一步再按通道各生成一个框。
+        /// </summary>
+        private const int PreviewOverlayChannelNumber = 1;
         private void UpdateCameraOverlays(MainViewModel vm)
         {
             UpdateCameraBarcodeGuide(vm);
@@ -362,7 +367,7 @@ namespace ExpressPackingMonitoring.UI
 
         /// <summary>
         /// 把副画面拖动框摆到副画面当前所在的位置。
-        /// 位置和尺寸都来自 <see cref="MainViewModel.TryResolveSecondaryOverlayRect"/>，
+        /// 位置和尺寸都来自 <see cref="MainViewModel.TryResolveOverlayRect"/>，
         /// 与合成用的是同一套策略，所以框住哪里、画面就画在哪里。
         /// </summary>
         private void UpdateSecondaryOverlayThumb(MainViewModel vm)
@@ -371,13 +376,13 @@ namespace ExpressPackingMonitoring.UI
             SecondaryOverlayResizeThumb.Visibility = Visibility.Collapsed;
 
             // 副摄取景编辑态下预览显示的是副摄整幅画面，画中画的位置/大小框这时候没有意义。
-            if (vm.IsEditingSecondaryCameraPreview)
+            if (vm.IsEditingOverlayPreview)
             {
                 SecondaryOverlayDragThumb.Visibility = Visibility.Collapsed;
                 return;
             }
 
-            if (!vm.IsSecondaryCameraOverlayVisible
+            if (!vm.IsOverlayVisible
                 || vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
             {
                 SecondaryOverlayDragThumb.Visibility = Visibility.Collapsed;
@@ -395,7 +400,7 @@ namespace ExpressPackingMonitoring.UI
                 return;
             }
 
-            if (!vm.TryResolveSecondaryOverlayRect(frame.PixelWidth, frame.PixelHeight, out SecondaryCameraOverlayRect rect))
+            if (!vm.TryResolveOverlayRect(PreviewOverlayChannelNumber, frame.PixelWidth, frame.PixelHeight, out CameraOverlayRect rect))
             {
                 SecondaryOverlayDragThumb.Visibility = Visibility.Collapsed;
                 return;
@@ -448,19 +453,19 @@ namespace ExpressPackingMonitoring.UI
                 VideoImage.ActualHeight);
             if (videoRect.IsEmpty || videoRect.Width <= 0)
                 return;
-            if (!vm.TryResolveSecondaryOverlayRect(frame.PixelWidth, frame.PixelHeight, out SecondaryCameraOverlayRect current))
+            if (!vm.TryResolveOverlayRect(PreviewOverlayChannelNumber, frame.PixelWidth, frame.PixelHeight, out CameraOverlayRect current))
                 return;
 
             double scale = videoRect.Width / frame.PixelWidth;
             double targetWidthPixels = current.Width + (e.HorizontalChange / scale);
-            vm.SetSecondaryCameraOverlayWidth(targetWidthPixels / frame.PixelWidth);
+            vm.SetOverlayWidth(PreviewOverlayChannelNumber, targetWidthPixels / frame.PixelWidth);
             UpdateSecondaryOverlayThumb(vm);
         }
 
         private void SecondaryOverlayResizeThumb_DragCompleted(object sender, DragCompletedEventArgs e)
         {
             if (DataContext is MainViewModel vm)
-                vm.SaveSecondaryCameraOverlayWidth();
+                vm.SaveOverlayWidth(PreviewOverlayChannelNumber);
         }
 
         /// <summary>拖动中实时改变合成位置：预览下一帧就跟着动，松手才落盘。</summary>
@@ -478,7 +483,7 @@ namespace ExpressPackingMonitoring.UI
                 VideoImage.ActualHeight);
             if (videoRect.IsEmpty || videoRect.Width <= 0)
                 return;
-            if (!vm.TryResolveSecondaryOverlayRect(frame.PixelWidth, frame.PixelHeight, out SecondaryCameraOverlayRect current))
+            if (!vm.TryResolveOverlayRect(PreviewOverlayChannelNumber, frame.PixelWidth, frame.PixelHeight, out CameraOverlayRect current))
                 return;
 
             // 控件像素增量 → 帧像素增量，再交给 ViewModel 夹紧落位。
@@ -486,7 +491,7 @@ namespace ExpressPackingMonitoring.UI
             double frameX = current.X + (e.HorizontalChange / scale);
             double frameY = current.Y + (e.VerticalChange / scale);
 
-            vm.SetSecondaryCameraOverlayPosition(frameX, frameY, frame.PixelWidth, frame.PixelHeight);
+            vm.SetOverlayPosition(PreviewOverlayChannelNumber, frameX, frameY, frame.PixelWidth, frame.PixelHeight);
             UpdateSecondaryOverlayThumb(vm);
         }
 
@@ -498,13 +503,13 @@ namespace ExpressPackingMonitoring.UI
             // 没有实际位移 = 单击画中画：进入副摄取景编辑（就像点图片进裁剪）。
             if (Math.Abs(e.HorizontalChange) < 2 && Math.Abs(e.VerticalChange) < 2)
             {
-                vm.EnterSecondaryCameraPreviewEdit();
+                vm.EnterOverlayPreviewEdit(PreviewOverlayChannelNumber);
                 UpdateSecondaryOverlayThumb(vm);
                 UpdateCameraBarcodeGuide(vm);
                 return;
             }
 
-            vm.SaveSecondaryCameraOverlayPosition();
+            vm.SaveOverlayPosition(PreviewOverlayChannelNumber);
         }
 
         /// <summary>退出副摄取景编辑，回到正常预览。</summary>
@@ -513,7 +518,7 @@ namespace ExpressPackingMonitoring.UI
             if (DataContext is not MainViewModel vm)
                 return;
 
-            vm.ExitSecondaryCameraPreviewEdit();
+            vm.ExitOverlayPreviewEdit();
             UpdateSecondaryOverlayThumb(vm);
             UpdateCameraBarcodeGuide(vm);
         }
@@ -559,13 +564,13 @@ namespace ExpressPackingMonitoring.UI
             // 识别输入来自副摄（且不在取景编辑屏）：框贴到画中画上。
             // 画中画显示的就是"框内那块裁剪"，所以框等于画中画本身；
             // 绿/黄识别状态和提示文字都落在这块上，识别反馈不会丢。
-            if (!vm.IsEditingSecondaryCameraPreview
-                && vm.ShouldUseSecondaryCameraForBarcode
+            if (!vm.IsEditingOverlayPreview
+                && vm.ShouldUseOverlayChannelForBarcode
                 && vm.VideoFrame is { PixelWidth: > 0, PixelHeight: > 0 } overlayFrame
-                && vm.TryResolveSecondaryOverlayRect(
+                && vm.TryResolveOverlayRect(PreviewOverlayChannelNumber, 
                     overlayFrame.PixelWidth,
                     overlayFrame.PixelHeight,
-                    out SecondaryCameraOverlayRect overlay))
+                    out CameraOverlayRect overlay))
             {
                 double overlayScale = videoRect.Width / overlayFrame.PixelWidth;
                 videoRect = new Rect(
@@ -610,14 +615,14 @@ namespace ExpressPackingMonitoring.UI
         /// </summary>
         private Rect? ResolveSecondaryOverlayOccluder(MainViewModel vm, double actualW, double actualH)
         {
-            if (vm.IsEditingSecondaryCameraPreview || vm.ShouldUseSecondaryCameraForBarcode)
+            if (vm.IsEditingOverlayPreview || vm.ShouldUseOverlayChannelForBarcode)
                 return null;
-            if (!vm.IsSecondaryCameraOverlayVisible
+            if (!vm.IsOverlayVisible
                 || vm.VideoFrame is not { PixelWidth: > 0, PixelHeight: > 0 } frame)
             {
                 return null;
             }
-            if (!vm.TryResolveSecondaryOverlayRect(frame.PixelWidth, frame.PixelHeight, out SecondaryCameraOverlayRect overlay))
+            if (!vm.TryResolveOverlayRect(PreviewOverlayChannelNumber, frame.PixelWidth, frame.PixelHeight, out CameraOverlayRect overlay))
                 return null;
 
             Rect videoRect = CameraBarcodeGuideLayout.GetVideoRect(

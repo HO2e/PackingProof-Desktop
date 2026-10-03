@@ -50,18 +50,18 @@ namespace ExpressPackingMonitoring.ViewModels
             && !IsCameraBarcodeGuideLocked
             && !IsCameraSleeping
             && !IsZoomingActive
-            // 识别输入来自副摄时，框只是画中画上的状态反馈；
-            // 副摄的取景要在"点画中画"打开的编辑屏里改，避免在主画面上误拖框改错几何。
-            && (!ShouldUseSecondaryCameraForBarcode || IsEditingSecondaryCameraPreview);
+            // 识别输入来自叠加画面时，框只是画中画上的状态反馈；
+            // 那一路的取景要在"点画中画"打开的编辑屏里改，避免在主画面上误拖框改错几何。
+            && (!ShouldUseOverlayChannelForBarcode || IsEditingOverlayPreview);
 
         /// <summary>当前生效的识别框几何</summary>
         /// <remarks>
-        /// 正在编辑副摄取景时，这里返回的是副摄那一组几何 —— 界面因此完全不用区分为哪一路，
-        /// 走的就是主摄那套已经验证过的摆放与拖动逻辑，只是数据换成了副摄的。
+        /// 正在编辑某一路叠加画面的取景时，这里返回的是那一路的一组几何 —— 界面因此完全不用区分为哪一路，
+        /// 走的就是主摄那套已经验证过的摆放与拖动逻辑，只是数据换成了那一路的。
         /// </remarks>
         public CameraBarcodeGuideGeometry CurrentCameraBarcodeGuideGeometry =>
-            IsEditingSecondaryCameraPreview
-                ? CurrentSecondaryCameraBarcodeGuideGeometry
+            IsEditingOverlayPreview
+                ? CurrentOverlayGuideGeometry
                 : new CameraBarcodeGuideGeometry(
                     Config?.CameraBarcodeGuideWidthRatio ?? CameraBarcodeGuideGeometry.Default.WidthRatio,
                     Config?.CameraBarcodeGuideHeightRatio ?? CameraBarcodeGuideGeometry.Default.HeightRatio,
@@ -74,10 +74,10 @@ namespace ExpressPackingMonitoring.ViewModels
         /// </summary>
         public void ApplyCameraBarcodeGuideGeometry(CameraBarcodeGuideGeometry geometry, bool persist)
         {
-            // 编辑副摄时写回副摄那一组，其余情况写回主摄的。
-            if (IsEditingSecondaryCameraPreview)
+            // 编辑叠加画面时写回那一路的一组，其余情况写回主摄的。
+            if (IsEditingOverlayPreview && _editingOverlayChannelNumber > 0)
             {
-                ApplySecondaryCameraBarcodeGuideGeometry(geometry, persist);
+                ApplyOverlayBarcodeGuideGeometry(_editingOverlayChannelNumber, geometry, persist);
                 return;
             }
 

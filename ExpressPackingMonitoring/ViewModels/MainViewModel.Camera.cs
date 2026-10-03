@@ -1072,7 +1072,7 @@ namespace ExpressPackingMonitoring.ViewModels
                         MarkRecordingFramePipelineStage(RecordingFramePipelineStage.PairingQr, currentFrameSequence);
                         TrySubmitCameraPairingQrFrame(currentFrame);
                         MarkRecordingFramePipelineStage(RecordingFramePipelineStage.BarcodeRecognition, currentFrameSequence);
-                        TrySubmitCameraBarcodeFrame(currentFrame);
+                        TrySubmitCameraBarcodeFrame(currentFrame, 0);
                         Mat processedFrame = currentFrame;
                         MarkRecordingFramePipelineStage(RecordingFramePipelineStage.FrameMetadata, currentFrameSequence);
                         CameraFrameSize = new System.Windows.Size(currentFrame.Width, currentFrame.Height);
@@ -1209,7 +1209,7 @@ namespace ExpressPackingMonitoring.ViewModels
 
                         // 先合成副画面、后画水印：水印承载时间戳与单号，是取证核心，必须永远压在
                         // 最上层。顺序反过来时，用户把副画面拖到右上角就会把水印盖掉。
-                        ComposeSecondaryCameraOverlayIfNeeded(processedFrame, previewPublishDue);
+                        ComposeOverlayChannelsIfNeeded(processedFrame, previewPublishDue);
 
                         // 水印直接画在处理循环独占的这一帧上；非录制状态只为真正要发布的预览帧绘制，
                         // 空闲降档时不会按摄像头满帧率反复画水印。

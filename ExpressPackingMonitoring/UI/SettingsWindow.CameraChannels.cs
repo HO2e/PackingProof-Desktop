@@ -44,7 +44,7 @@ namespace ExpressPackingMonitoring.UI
         private static List<CameraDeviceChoice> CreateSecondaryBaseChoices() =>
             new()
             {
-                new CameraDeviceChoice("无", AppConfig.SecondaryCameraSourceNone, "", -1)
+                new CameraDeviceChoice("无", AppConfig.OverlayChannelSourceNone, "", -1)
             };
 
         /// <summary>
@@ -119,14 +119,21 @@ namespace ExpressPackingMonitoring.UI
             return config.CameraMonikerString ?? "";
         }
 
-        /// <summary>副摄当前占用的设备；配置在用户选中那一刻就写好了，直接读即可。</summary>
+        /// <summary>
+        /// 设置页当前操作的那一路叠加画面（通道 1，即"副画面 1"）。
+        /// 配置里第一路永远存在（归一保证），下一提交再让页面按通道生成多张卡片。
+        /// </summary>
+        private CameraChannelConfig? OverlayChannel =>
+            Config is { CameraChannels.Count: > 0 } config ? config.CameraChannels[0] : null;
+
+        /// <summary>这一路当前占用的设备；配置在用户选中那一刻就写好了，直接读即可。</summary>
         private string LiveSecondaryMoniker()
         {
-            if (Config is not { } config)
+            if (OverlayChannel is not { } channel)
                 return "";
 
-            return string.Equals(NormalizedKind(config), "usb", StringComparison.Ordinal)
-                ? config.SecondaryCameraMonikerString ?? ""
+            return string.Equals(NormalizedKind(channel), "usb", StringComparison.Ordinal)
+                ? channel.MonikerString ?? ""
                 : "";
         }
 
@@ -179,9 +186,13 @@ namespace ExpressPackingMonitoring.UI
 
         private static void ClearSecondaryCameraSelection(AppConfig config)
         {
-            config.SecondaryCameraSourceKind = AppConfig.SecondaryCameraSourceNone;
-            config.SecondaryCameraIndex = -1;
-            config.SecondaryCameraMonikerString = "";
+            if (config.CameraChannels.Count == 0)
+                return;
+
+            CameraChannelConfig channel = config.CameraChannels[0];
+            channel.SourceKind = AppConfig.OverlayChannelSourceNone;
+            channel.Index = -1;
+            channel.MonikerString = "";
         }
 
         /// <summary>
@@ -262,10 +273,10 @@ namespace ExpressPackingMonitoring.UI
         {
             get
             {
-                if (Config is not { } config)
+                if (OverlayChannel is not { } channel)
                     return _secondaryChoices.FirstOrDefault();
 
-                string kind = NormalizedKind(config);
+                string kind = NormalizedKind(channel);
                 string moniker = LiveSecondaryMoniker();
                 return _secondaryChoices.FirstOrDefault(choice =>
                         string.Equals(choice.Kind, kind, StringComparison.Ordinal)
@@ -275,12 +286,12 @@ namespace ExpressPackingMonitoring.UI
             }
             set
             {
-                if (value == null || Config is not { } config || _syncingCameraChoices)
+                if (value == null || OverlayChannel is not { } channel || _syncingCameraChoices)
                     return;
 
-                config.SecondaryCameraSourceKind = value.Kind;
-                config.SecondaryCameraIndex = value.Index;
-                config.SecondaryCameraMonikerString = value.Kind == "usb" ? value.Moniker : "";
+                channel.SourceKind = value.Kind;
+                channel.Index = value.Index;
+                channel.MonikerString = value.Kind == "usb" ? value.Moniker : "";
 
                 SyncCameraChoices();
                 LoadSecondaryCameraFormats();
@@ -352,10 +363,10 @@ namespace ExpressPackingMonitoring.UI
                 : CameraFormatCatalog.Enumerate(moniker);
 
             SecondaryResolutionComboBox.ItemsSource = formats.Resolutions;
-            (int targetWidth, int targetHeight) = AppConfig.ResolveSecondaryFrameSize(
-                Config?.SecondaryResolutionPreset,
-                Config?.SecondaryFrameWidth ?? 0,
-                Config?.SecondaryFrameHeight ?? 0);
+            (int targetWidth, int targetHeight) = AppConfig.ResolveOverlayFrameSize(
+                OverlayChannel?.ResolutionPreset,
+                OverlayChannel?.FrameWidth ?? 0,
+                OverlayChannel?.FrameHeight ?? 0);
             SecondaryResolutionComboBox.SelectedItem =
                 formats.Resolutions.FirstOrDefault(r => r.Width == targetWidth && r.Height == targetHeight)
                 ?? formats.Resolutions.FirstOrDefault();
@@ -364,9 +375,9 @@ namespace ExpressPackingMonitoring.UI
                 .Select(f => new ComboBoxItem { Content = $"{f} FPS", Tag = f })
                 .ToList();
             SecondaryFpsComboBox.ItemsSource = fpsItems;
-            int currentFps = Config?.SecondaryFrameFps > 0
-                ? Config!.SecondaryFrameFps
-                : AppConfig.DefaultSecondaryFrameFps;
+            int currentFps = OverlayChannel?.FrameFps > 0
+                ? OverlayChannel!.FrameFps
+                : AppConfig.DefaultOverlayFrameFps;
             SecondaryFpsComboBox.SelectedItem =
                 fpsItems.FirstOrDefault(i => i.Tag is int fps && fps == currentFps)
                 ?? fpsItems.FirstOrDefault();
@@ -375,38 +386,38 @@ namespace ExpressPackingMonitoring.UI
         /// <summary>保存时把副摄分辨率/帧率的选择写回配置；预设字段按实际尺寸回填。</summary>
         internal void ApplySecondaryCameraFormatsToConfig()
         {
-            if (Config is not { } config)
+            if (OverlayChannel is not { } channel)
                 return;
 
             if (SecondaryResolutionComboBox?.SelectedItem is CameraResolutionOption resolution)
             {
-                config.SecondaryFrameWidth = resolution.Width;
-                config.SecondaryFrameHeight = resolution.Height;
-                config.SecondaryResolutionPreset = AppConfig.PresetForSize(resolution.Width, resolution.Height);
+                channel.FrameWidth = resolution.Width;
+                channel.FrameHeight = resolution.Height;
+                channel.ResolutionPreset = AppConfig.PresetForSize(resolution.Width, resolution.Height);
             }
 
             if (SecondaryFpsComboBox?.SelectedItem is ComboBoxItem fpsItem
                 && fpsItem.Tag is int fps
                 && fps > 0)
             {
-                config.SecondaryFrameFps = fps;
+                channel.FrameFps = fps;
             }
         }
 
         /// <summary>选了"无"之外的值就显示其余副摄选项。</summary>
         public bool IsSecondaryCameraConfigured =>
-            Config is { } config
-            && !string.Equals(NormalizedKind(config), AppConfig.SecondaryCameraSourceNone, StringComparison.Ordinal);
+            OverlayChannel is { } channel
+            && !string.Equals(NormalizedKind(channel), AppConfig.OverlayChannelSourceNone, StringComparison.Ordinal);
 
         /// <summary>选了"网络摄像头"才显示地址输入。</summary>
         public bool IsSecondaryNetworkCameraSelected =>
-            Config is { } config
-            && string.Equals(NormalizedKind(config), "network", StringComparison.Ordinal);
+            OverlayChannel is { } channel
+            && string.Equals(NormalizedKind(channel), "network", StringComparison.Ordinal);
 
-        private static string NormalizedKind(AppConfig config) =>
-            AppConfig.NormalizeSecondaryCameraSourceKind(
-                config.SecondaryCameraSourceKind,
-                config.SecondaryNetworkCameraUrl);
+        private static string NormalizedKind(CameraChannelConfig channel) =>
+            AppConfig.NormalizeOverlayChannelSourceKind(
+                channel.SourceKind,
+                channel.NetworkCameraUrl);
 
         private void Raise(string propertyName) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

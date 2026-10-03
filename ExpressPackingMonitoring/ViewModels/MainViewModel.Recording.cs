@@ -824,7 +824,7 @@ namespace ExpressPackingMonitoring.ViewModels
                                 // 预录帧在采集层就已经按配置角度旋转过，与实时帧是同一份画面，
                                 // 这里不再补旋转 —— 再转一次会把画面转回去。
                                 // 与实时帧同一顺序：先贴副画面、再画水印，水印永远在最上层。
-                                ComposeSecondaryCameraOverlayIfNeeded(preFrame, previewPublishDue: true);
+                                ComposeOverlayChannelsIfNeeded(preFrame, previewPublishDue: true);
                                 if (Config.EnableWatermark)
                                 {
                                     _recordingFramePipelineDiagnostics.Enter(

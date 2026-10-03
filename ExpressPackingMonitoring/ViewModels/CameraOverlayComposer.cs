@@ -9,7 +9,7 @@ namespace ExpressPackingMonitoring.ViewModels
     /// 不需要第二套发布管线，也不会出现"预览里有、录像里没有"的分叉。
     /// 条码识别在读帧阶段就已经跑完，副画面不会进入识别输入。
     /// </summary>
-    internal static class SecondaryCameraFrameComposer
+    internal static class CameraOverlayComposer
     {
         /// <summary>小窗边框像素宽度，让副画面从主画面里"浮"出来。</summary>
         private const int BorderThickness = 2;
@@ -32,7 +32,7 @@ namespace ExpressPackingMonitoring.ViewModels
             if (secondaryFrame == null || secondaryFrame.IsDisposed || secondaryFrame.Empty())
                 return false;
 
-            SecondaryCameraOverlayRect? target = SecondaryCameraOverlayPolicy.Resolve(
+            CameraOverlayRect? target = CameraOverlayLayout.Resolve(
                 frame.Width,
                 frame.Height,
                 secondaryFrame.Width,

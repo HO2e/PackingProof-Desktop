@@ -69,15 +69,15 @@ public sealed class CameraChannelChoiceUiTests
 
             secondary.SelectedItem = SecondaryItems(secondary).First(c => c.Moniker == "moniker-b");
 
-            Assert.Equal("moniker-b", config.SecondaryCameraMonikerString);
-            Assert.Equal("usb", config.SecondaryCameraSourceKind);
+            Assert.Equal("moniker-b", config.CameraChannels[0].MonikerString);
+            Assert.Equal("usb", config.CameraChannels[0].SourceKind);
             // 主摄列表立刻排除副摄刚占用的那台
             Assert.DoesNotContain(MainItems(main), c => c.Moniker == "moniker-b");
             Assert.Equal("moniker-a", SelectedMoniker(main));
 
             // 换回"无"以后，那台设备要能被主摄重新选到
             secondary.SelectedItem = SecondaryItems(secondary).First(c => c.Kind == "none");
-            Assert.Equal(AppConfig.SecondaryCameraSourceNone, config.SecondaryCameraSourceKind);
+            Assert.Equal(AppConfig.OverlayChannelSourceNone, config.CameraChannels[0].SourceKind);
             Assert.Contains(MainItems(main), c => c.Moniker == "moniker-b");
         });
     }
@@ -96,8 +96,8 @@ public sealed class CameraChannelChoiceUiTests
             // 主摄那台在完整清单里排第二：没有被挤到第一台才算没跳
             Assert.Equal(1, main.SelectedIndex);
 
-            Assert.Equal(AppConfig.SecondaryCameraSourceNone, config.SecondaryCameraSourceKind);
-            Assert.Equal("", config.SecondaryCameraMonikerString);
+            Assert.Equal(AppConfig.OverlayChannelSourceNone, config.CameraChannels[0].SourceKind);
+            Assert.Equal("", config.CameraChannels[0].MonikerString);
             Assert.Equal("无", SelectedSecondaryChoice(secondary).Name);
             Assert.DoesNotContain(SecondaryItems(secondary), c => c.Moniker == "moniker-b");
         });
@@ -225,13 +225,13 @@ public sealed class CameraChannelChoiceUiTests
             CameraSourceKind = "usb",
             CameraMonikerString = mainMoniker,
             // 索引与设备标识必须一致（生产里同一台设备就是这么存的）
-            CameraIndex = DeviceIndexOf(mainMoniker),
-            SecondaryCameraSourceKind = string.IsNullOrEmpty(secondaryMoniker)
-                ? AppConfig.SecondaryCameraSourceNone
-                : "usb",
-            SecondaryCameraMonikerString = secondaryMoniker,
-            SecondaryCameraIndex = DeviceIndexOf(secondaryMoniker)
+            CameraIndex = DeviceIndexOf(mainMoniker)
         };
+        config.CameraChannels[0].SourceKind = string.IsNullOrEmpty(secondaryMoniker)
+            ? AppConfig.OverlayChannelSourceNone
+            : "usb";
+        config.CameraChannels[0].MonikerString = secondaryMoniker;
+        config.CameraChannels[0].Index = DeviceIndexOf(secondaryMoniker);
         AppConfig.NormalizeAfterLoad(config);
         return config;
     }

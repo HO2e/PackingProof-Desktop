@@ -201,7 +201,7 @@ namespace ExpressPackingMonitoring.ViewModels
                     // 必须先切换到 nextConfig，录制结束后的 RestartCamera 才会读取新的网络摄像头地址/协议。
                     Config = nextConfig;
                     // 副画面独立于主路：换了副摄像头设备/开关就立刻按新配置重启这一路。
-                    RestartSecondaryCamera();
+                    RestartOverlayChannels();
                     RefreshArchiveBackupSummary();
                     if (computerNicknameChanged && IsRecordingWorkstation)
                         QueueRecordingWorkstationHeartbeat(force: true);

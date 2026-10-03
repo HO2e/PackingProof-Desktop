@@ -206,9 +206,9 @@ namespace ExpressPackingMonitoring.ViewModels
                 // 副画面跟着摄像头一起休眠/唤醒：主画面已经黑屏时副画面没有意义，还白耗一路采集。
                 // 唤醒走的是"先 StartCamera 再放开标记"，所以这里启动副路时主路已经就绪。
                 if (value)
-                    StopSecondaryCamera();
+                    StopOverlayChannels();
                 else
-                    StartSecondaryCamera();
+                    StartOverlayChannels();
             }
         }
         private Task _cameraIdleWatchdogTask;
@@ -300,7 +300,7 @@ namespace ExpressPackingMonitoring.ViewModels
         /// </summary>
         public string CameraBarcodeStatusText
         {
-            get => IsEditingSecondaryCameraPreview
+            get => IsEditingOverlayPreview
                 ? "拖动框调整副摄取景，点完成或按 Esc 退出"
                 : _cameraBarcodeStatusText;
             private set => SetProperty(ref _cameraBarcodeStatusText, value);
@@ -525,8 +525,8 @@ namespace ExpressPackingMonitoring.ViewModels
         /// </summary>
         public System.Windows.Size CameraFrameSize
         {
-            get => IsEditingSecondaryCameraPreview
-                && SecondaryPreviewFrame is { PixelWidth: > 0, PixelHeight: > 0 } secondaryFrame
+            get => IsEditingOverlayPreview
+                && OverlayPreviewFrame is { PixelWidth: > 0, PixelHeight: > 0 } secondaryFrame
                     ? new System.Windows.Size(secondaryFrame.PixelWidth, secondaryFrame.PixelHeight)
                     : _cameraFrameSize;
             private set => SetProperty(ref _cameraFrameSize, value);
@@ -641,8 +641,7 @@ namespace ExpressPackingMonitoring.ViewModels
                     OnPropertyChanged(nameof(ComputerDisplayName));
                     OnPropertyChanged(nameof(ScanInputPlaceholder));
                     OnPropertyChanged(nameof(IsPreRecordBufferVisible));
-                    OnPropertyChanged(nameof(IsSecondaryCameraOverlayVisible));
-                    OnPropertyChanged(nameof(IsSecondaryCameraConfigured));
+                    OnPropertyChanged(nameof(IsOverlayVisible));
                     OnPropertyChanged(nameof(IsBarcodeGuideVisible));
                     PublishPreRecordBufferStatus(force: true);
                 }
@@ -860,7 +859,7 @@ namespace ExpressPackingMonitoring.ViewModels
             _cts?.Cancel();
             _cameraBarcodeFeedbackCts?.Cancel();
             _previewAlertCts?.Cancel();
-            try { StopSecondaryCamera(); } catch { }
+            try { StopOverlayChannels(); } catch { }
             try { _cameraBarcodeRecognition?.Dispose(); } catch { }
             try { _cameraPairingQrDecoder.Dispose(); } catch { }
             try { _uiHeartbeatTimer?.Stop(); } catch { }

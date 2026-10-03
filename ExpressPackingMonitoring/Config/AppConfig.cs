@@ -145,28 +145,34 @@ namespace ExpressPackingMonitoring.Config
         /// <summary>智能特写停留时间的当前默认值（秒）</summary>
         public const double DefaultZoomDurationSeconds = 2.5;
 
-        /// <summary>副画面默认采集规格。面单特写是静物，720p 足够看清字样。</summary>
-        public const string DefaultSecondaryResolutionPreset = "720p";
+        /// <summary>叠加画面（画中画）默认采集规格。面单特写是静物，720p 足够看清字样。</summary>
+        public const string DefaultOverlayResolutionPreset = "720p";
 
         /// <summary>
-        /// 副画面默认帧率。取 30：摄像头普遍支持，Media Foundation 会就近协商到设备实际支持的档位，
-        /// 画面跟手；副画面本来就是静物特写，再高只会白吃带宽和解码。
+        /// 叠加画面默认帧率。取 30：摄像头普遍支持，Media Foundation 会就近协商到设备实际支持的档位，
+        /// 画面跟手；叠加画面本来就是静物特写，再高只会白吃带宽和解码。
         /// </summary>
-        public const int DefaultSecondaryFrameFps = 30;
+        public const int DefaultOverlayFrameFps = 30;
 
-        public const int MinimumSecondaryFrameFps = 1;
-        public const int MaximumSecondaryFrameFps = 60;
+        public const int MinimumOverlayFrameFps = 1;
+        public const int MaximumOverlayFrameFps = 60;
 
-        /// <summary>副摄默认旋转角度：副摄（手机/竖装摄像头）常见是竖装，默认转 90° 摆正。</summary>
-        public const int DefaultSecondaryRotationDegrees = 90;
+        /// <summary>叠加画面默认旋转角度：手机/竖装摄像头常见是竖装，默认转 90° 摆正。</summary>
+        public const int DefaultOverlayRotationDegrees = 90;
 
-        /// <summary>副摄识别框默认尺寸，与主摄同一套口径：占画面宽高的比例，偏移 0 表示居中。</summary>
-        public const double DefaultSecondaryGuideRatio = 0.85;
-        public const double MinimumSecondaryGuideRatio = 0.1;
-        public const double MaximumSecondaryGuideRatio = 1.0;
+        /// <summary>叠加画面识别框默认尺寸，与主摄同一套口径：占画面宽高的比例，偏移 0 表示居中。</summary>
+        public const double DefaultOverlayGuideRatio = 0.85;
+        public const double MinimumOverlayGuideRatio = 0.1;
+        public const double MaximumOverlayGuideRatio = 1.0;
 
-        /// <summary>副摄来源为"不接"的取值：设置页据此隐藏其余副摄选项。</summary>
-        public const string SecondaryCameraSourceNone = "none";
+        /// <summary>
+        /// 叠加画面最多几路。两路 USB 摄像头已经吃满多数机器的带宽，画中画再多也看不清，
+        /// 所以主摄之外固定最多再叠两路；要放宽只改这一处。
+        /// </summary>
+        public const int MaxOverlayChannels = 2;
+
+        /// <summary>叠加画面来源为"不接"的取值：设置页据此收起这一路的其余选项。</summary>
+        public const string OverlayChannelSourceNone = "none";
 
         /// <summary>
         /// 旋转角度未设置：老配置里只有"旋转 180°"开关，加载时按它推导出实际角度，
@@ -174,25 +180,19 @@ namespace ExpressPackingMonitoring.Config
         /// </summary>
         public const int UnsetRotationDegrees = -1;
 
-        /// <summary>副画面宽度占主画面的默认比例</summary>
-        public const double DefaultSecondaryOverlayWidthRatio = 0.25;
+        /// <summary>叠加画面宽度占主画面的默认比例</summary>
+        public const double DefaultOverlayWidthRatio = 0.25;
 
-        public const double MinimumSecondaryOverlayWidthRatio = 0.1;
-        public const double MaximumSecondaryOverlayWidthRatio = 0.5;
+        public const double MinimumOverlayWidthRatio = 0.1;
+        public const double MaximumOverlayWidthRatio = 0.5;
 
-        /// <summary>副画面距主画面右下角的默认留白（像素）</summary>
-        public const int DefaultSecondaryOverlayMargin = 16;
+        /// <summary>叠加画面距主画面右下角的默认留白（像素）</summary>
+        public const int DefaultOverlayMargin = 16;
 
-        public const int MaximumSecondaryOverlayMargin = 200;
+        public const int MaximumOverlayMargin = 200;
 
-        /// <summary>副画面位置未自定义的哨兵值：小于 0 一律按右下角自动摆放</summary>
+        /// <summary>叠加画面位置未自定义的哨兵值：小于 0 一律按右下角自动摆放</summary>
         public const double UnsetOverlayPosition = -1;
-
-        /// <summary>面单识别用主画面（默认）</summary>
-        public const string CameraBarcodeSourcePrimary = "primary";
-
-        /// <summary>面单识别改用副画面</summary>
-        public const string CameraBarcodeSourceSecondary = "secondary";
 
         /// <summary>历史默认值：老版本写过 3 秒，中间版本写过 1 秒，都会落进用户配置</summary>
         private static readonly double[] LegacyZoomDurationSeconds = [3.0, 1.0];
@@ -257,46 +257,17 @@ namespace ExpressPackingMonitoring.Config
         public string NetworkCameraUrl { get; set; } = "";
         public string NetworkCameraRtspTransport { get; set; } = "tcp";
 
-        // 第二路摄像头：叠在主画面右下角的副画面，预览与录像共用同一帧。
-        // 来源即开关：选"无"就是不接副摄，不再单独放一个开关。
+        // 叠加画面（画中画）：每个元素是一路，至少保留一路（没接也算一路，设置页才有卡片可显示），
+        // 最多 MaxOverlayChannels 路。来源即开关：这一路的来源是"无"就是没接。
         // 必须是**另一台**物理设备：同一台 USB 摄像头被两路同时打开时设备是独占的，
         // 会有一路拿不到画面甚至被判掉线。
-        public string SecondaryCameraSourceKind { get; set; } = SecondaryCameraSourceNone;
-        // 旧版本用的独立开关，只用于把老配置迁移成"来源"口径；保存时同步写回，降级回旧版本仍能识别。
-        public bool EnableSecondaryCamera { get; set; }
-        // 副摄来源口径的迁移版本。
-        public int SecondaryCameraSetupVersion { get; set; }
-        public string SecondaryCameraMonikerString { get; set; } = "";
-        public int SecondaryCameraIndex { get; set; } = 1;
-        public string SecondaryNetworkCameraUrl { get; set; } = "";
-        public string SecondaryNetworkCameraRtspTransport { get; set; } = "tcp";
-        /// <summary>副摄旋转角度（0/90/180/270），与主摄同一套口径。默认 90°（副摄常见竖装）。</summary>
-        public int SecondaryCameraRotationDegrees { get; set; } = DefaultSecondaryRotationDegrees;
-        // 副画面（第二路摄像头）的采集规格。面单特写是静物，默认 720p@10：
-        // 既保证面单清晰，又让两路同时采集的带宽、解码与合成成本都可控。
-        public string SecondaryResolutionPreset { get; set; } = DefaultSecondaryResolutionPreset;
-        // 副摄实际采集宽高：设置页像主摄一样枚举这台设备支持的档位后写这里；
-        // 0/0 表示没有枚举过，按上面的预设兜底。
-        public int SecondaryFrameWidth { get; set; }
-        public int SecondaryFrameHeight { get; set; }
-        public int SecondaryFrameFps { get; set; } = DefaultSecondaryFrameFps;
-        // 副摄识别框：与主摄同一套定义（宽高占画面的比例、偏移按四周留白）。
-        // 副画面显示整幅副摄画面，这个框只决定识别哪一块，在预览里直接拖。
-        public double SecondaryBarcodeGuideWidthRatio { get; set; } = DefaultSecondaryGuideRatio;
-        public double SecondaryBarcodeGuideHeightRatio { get; set; } = DefaultSecondaryGuideRatio;
-        public double SecondaryBarcodeGuideOffsetX { get; set; }
-        public double SecondaryBarcodeGuideOffsetY { get; set; }
-        // 副画面宽度占主画面的比例，以及距右下角的留白。
-        public double SecondaryCameraOverlayWidthRatio { get; set; } = DefaultSecondaryOverlayWidthRatio;
-        public int SecondaryCameraOverlayMargin { get; set; } = DefaultSecondaryOverlayMargin;
-        // 副画面左上角在主画面里的比例位置（0=贴左边/上边）。
-        // 未自定义时是 UnsetOverlayPosition，按右下角自动摆；用户拖动过就记这里。
-        public double SecondaryCameraOverlayLeftRatio { get; set; } = UnsetOverlayPosition;
-        public double SecondaryCameraOverlayTopRatio { get; set; } = UnsetOverlayPosition;
-        // 「摄像头自动识别面单」读哪一路画面："primary"=主画面（默认，行为与从前一致），
-        // "secondary"=改用副画面识别（副画面专门对准面单时的用法）。
-        // 副画面没出帧时会自动回退主画面，避免选了副路又连不上就完全无法识别。
-        public string CameraBarcodeRecognitionSource { get; set; } = CameraBarcodeSourcePrimary;
+        // 主摄像头不在这里：它是录像主链路，用的仍是上面的主摄字段。
+        public List<CameraChannelConfig> CameraChannels { get; set; } = new() { new CameraChannelConfig() };
+
+        // 「摄像头自动识别面单」读哪一路画面：0 = 主摄像头（默认，行为与从前一致），
+        // 1..n = 第 n 路叠加画面（专门对准面单的那台机位）。
+        // 叠加画面没出帧时会自动回退主画面，避免选了那一路又连不上就完全无法识别。
+        public int CameraBarcodeRecognitionChannel { get; set; }
 
         // 存储不同摄像头的配置：Key 为 MonikerString
         public Dictionary<string, CameraSettings> CameraConfigs { get; set; } = new();
@@ -728,163 +699,18 @@ namespace ExpressPackingMonitoring.Config
                 changed = true;
             }
 
-            // 第二路摄像头与主路同口径归一：来源判定、URL 去空白、传输方式、副画面比例与留白。
-            string normalizedSecondaryCameraSourceKind = NormalizeSecondaryCameraSourceKind(
-                config.SecondaryCameraSourceKind,
-                config.SecondaryNetworkCameraUrl);
-            if (!string.Equals(
-                    config.SecondaryCameraSourceKind,
-                    normalizedSecondaryCameraSourceKind,
-                    StringComparison.Ordinal))
-            {
-                config.SecondaryCameraSourceKind = normalizedSecondaryCameraSourceKind;
+            // 叠加画面（画中画）与主摄同口径归一：来源判定、URL、传输方式、旋转、档位、
+            // 识别框、画中画比例与落位。每一路各归一一次，加第三、第四路不用再写一份。
+            if (NormalizeCameraChannels(config))
                 changed = true;
-            }
 
-            // 兼容字段按来源同步：降级回旧版本时，"无"要写成一个关掉的开关。
-            bool legacyEnableSecondary = !string.Equals(
-                config.SecondaryCameraSourceKind,
-                SecondaryCameraSourceNone,
-                StringComparison.Ordinal);
-            if (config.EnableSecondaryCamera != legacyEnableSecondary)
+            // 识别来源是"能不能扫到面单"的关键开关，写坏的通道号必须回到主摄。
+            int normalizedBarcodeChannel = NormalizeBarcodeRecognitionChannel(
+                config.CameraBarcodeRecognitionChannel,
+                config.CameraChannels);
+            if (config.CameraBarcodeRecognitionChannel != normalizedBarcodeChannel)
             {
-                config.EnableSecondaryCamera = legacyEnableSecondary;
-                changed = true;
-            }
-
-            string normalizedSecondaryNetworkCameraUrl = config.SecondaryNetworkCameraUrl?.Trim() ?? "";
-            if (!string.Equals(
-                    config.SecondaryNetworkCameraUrl,
-                    normalizedSecondaryNetworkCameraUrl,
-                    StringComparison.Ordinal))
-            {
-                config.SecondaryNetworkCameraUrl = normalizedSecondaryNetworkCameraUrl;
-                changed = true;
-            }
-
-            string normalizedSecondaryNetworkCameraTransport =
-                NormalizeNetworkTransport(config.SecondaryNetworkCameraRtspTransport);
-            if (!string.Equals(
-                    config.SecondaryNetworkCameraRtspTransport,
-                    normalizedSecondaryNetworkCameraTransport,
-                    StringComparison.Ordinal))
-            {
-                config.SecondaryNetworkCameraRtspTransport = normalizedSecondaryNetworkCameraTransport;
-                changed = true;
-            }
-
-            double normalizedSecondaryOverlayRatio =
-                double.IsFinite(config.SecondaryCameraOverlayWidthRatio) && config.SecondaryCameraOverlayWidthRatio > 0
-                    ? Math.Clamp(
-                        config.SecondaryCameraOverlayWidthRatio,
-                        MinimumSecondaryOverlayWidthRatio,
-                        MaximumSecondaryOverlayWidthRatio)
-                    : DefaultSecondaryOverlayWidthRatio;
-            if (!double.IsFinite(config.SecondaryCameraOverlayWidthRatio)
-                || Math.Abs(config.SecondaryCameraOverlayWidthRatio - normalizedSecondaryOverlayRatio) > 0.001)
-            {
-                config.SecondaryCameraOverlayWidthRatio = normalizedSecondaryOverlayRatio;
-                changed = true;
-            }
-
-            int normalizedSecondaryOverlayMargin = config.SecondaryCameraOverlayMargin >= 0
-                ? Math.Min(config.SecondaryCameraOverlayMargin, MaximumSecondaryOverlayMargin)
-                : DefaultSecondaryOverlayMargin;
-            if (config.SecondaryCameraOverlayMargin != normalizedSecondaryOverlayMargin)
-            {
-                config.SecondaryCameraOverlayMargin = normalizedSecondaryOverlayMargin;
-                changed = true;
-            }
-
-            // 副画面位置：只有拖动过才是一个 0~1 的比例，其余（含 NaN、负数）都回到"自动右下角"。
-            double normalizedSecondaryOverlayLeft = NormalizeOverlayPosition(config.SecondaryCameraOverlayLeftRatio);
-            if (config.SecondaryCameraOverlayLeftRatio != normalizedSecondaryOverlayLeft)
-            {
-                config.SecondaryCameraOverlayLeftRatio = normalizedSecondaryOverlayLeft;
-                changed = true;
-            }
-
-            double normalizedSecondaryOverlayTop = NormalizeOverlayPosition(config.SecondaryCameraOverlayTopRatio);
-            if (config.SecondaryCameraOverlayTopRatio != normalizedSecondaryOverlayTop)
-            {
-                config.SecondaryCameraOverlayTopRatio = normalizedSecondaryOverlayTop;
-                changed = true;
-            }
-
-            string normalizedBarcodeSource = NormalizeCameraBarcodeSource(config.CameraBarcodeRecognitionSource);
-            if (!string.Equals(
-                    config.CameraBarcodeRecognitionSource,
-                    normalizedBarcodeSource,
-                    StringComparison.Ordinal))
-            {
-                config.CameraBarcodeRecognitionSource = normalizedBarcodeSource;
-                changed = true;
-            }
-
-            string normalizedSecondaryResolution = NormalizeSecondaryResolutionPreset(config.SecondaryResolutionPreset);
-            if (!string.Equals(
-                    config.SecondaryResolutionPreset,
-                    normalizedSecondaryResolution,
-                    StringComparison.Ordinal))
-            {
-                config.SecondaryResolutionPreset = normalizedSecondaryResolution;
-                changed = true;
-            }
-
-            int normalizedSecondaryFps = Math.Clamp(
-                config.SecondaryFrameFps > 0 ? config.SecondaryFrameFps : DefaultSecondaryFrameFps,
-                MinimumSecondaryFrameFps,
-                MaximumSecondaryFrameFps);
-            if (config.SecondaryFrameFps != normalizedSecondaryFps)
-            {
-                config.SecondaryFrameFps = normalizedSecondaryFps;
-                changed = true;
-            }
-
-            // 副摄实际采集宽高必须成对有效且在合理范围内；半个尺寸或越界一律清空回落到预设。
-            const int maximumFrameDimension = 7680;
-            if (config.SecondaryFrameWidth < 0
-                || config.SecondaryFrameHeight < 0
-                || config.SecondaryFrameWidth > maximumFrameDimension
-                || config.SecondaryFrameHeight > maximumFrameDimension
-                || (config.SecondaryFrameWidth > 0) != (config.SecondaryFrameHeight > 0))
-            {
-                config.SecondaryFrameWidth = 0;
-                config.SecondaryFrameHeight = 0;
-                changed = true;
-            }
-
-            double normalizedSecondaryGuideWidth = NormalizeSecondaryGuideRatio(
-                config.SecondaryBarcodeGuideWidthRatio);
-            if (!double.IsFinite(config.SecondaryBarcodeGuideWidthRatio)
-                || Math.Abs(config.SecondaryBarcodeGuideWidthRatio - normalizedSecondaryGuideWidth) > 0.001)
-            {
-                config.SecondaryBarcodeGuideWidthRatio = normalizedSecondaryGuideWidth;
-                changed = true;
-            }
-
-            double normalizedSecondaryGuideHeight = NormalizeSecondaryGuideRatio(
-                config.SecondaryBarcodeGuideHeightRatio);
-            if (!double.IsFinite(config.SecondaryBarcodeGuideHeightRatio)
-                || Math.Abs(config.SecondaryBarcodeGuideHeightRatio - normalizedSecondaryGuideHeight) > 0.001)
-            {
-                config.SecondaryBarcodeGuideHeightRatio = normalizedSecondaryGuideHeight;
-                changed = true;
-            }
-
-            double normalizedSecondaryGuideOffsetX = NormalizeGuideOffset(config.SecondaryBarcodeGuideOffsetX);
-            if (!double.IsFinite(config.SecondaryBarcodeGuideOffsetX)
-                || Math.Abs(config.SecondaryBarcodeGuideOffsetX - normalizedSecondaryGuideOffsetX) > 0.001)
-            {
-                config.SecondaryBarcodeGuideOffsetX = normalizedSecondaryGuideOffsetX;
-                changed = true;
-            }
-
-            double normalizedSecondaryGuideOffsetY = NormalizeGuideOffset(config.SecondaryBarcodeGuideOffsetY);
-            if (!double.IsFinite(config.SecondaryBarcodeGuideOffsetY)
-                || Math.Abs(config.SecondaryBarcodeGuideOffsetY - normalizedSecondaryGuideOffsetY) > 0.001)
-            {
-                config.SecondaryBarcodeGuideOffsetY = normalizedSecondaryGuideOffsetY;
+                config.CameraBarcodeRecognitionChannel = normalizedBarcodeChannel;
                 changed = true;
             }
 
@@ -1325,29 +1151,35 @@ namespace ExpressPackingMonitoring.Config
                 : UnsetOverlayPosition;
 
         /// <summary>
-        /// 面单识别来源归一：只认 secondary，其余（缺失、拼错、旧配置）一律回到主画面。
+        /// 识别来源通道号归一：0 = 主摄像头；超出当前路数或那一路上没接设备，一律回到主摄。
         /// 识别来源是"能不能扫到面单"的关键开关，写错不能变成两边都不识别。
         /// </summary>
-        internal static string NormalizeCameraBarcodeSource(string? source) =>
-            string.Equals(source, CameraBarcodeSourceSecondary, StringComparison.OrdinalIgnoreCase)
-                ? CameraBarcodeSourceSecondary
-                : CameraBarcodeSourcePrimary;
+        internal static int NormalizeBarcodeRecognitionChannel(
+            int channelNumber,
+            IReadOnlyList<CameraChannelConfig> channels)
+        {
+            if (channelNumber <= 0 || channels == null)
+                return 0;
+
+            int index = channelNumber - 1;
+            return index < channels.Count && channels[index].IsConfigured ? channelNumber : 0;
+        }
 
         /// <summary>
-        /// 副画面采集规格预设归一：只认白名单，写坏或旧配置一律回落到 720p。
+        /// 叠加画面采集规格预设归一：只认白名单，写坏或旧配置一律回落到 720p。
         /// 这里不做"猜一个相近值"，非法值静默变成默认规格比卡在非法尺寸上更容易解释。
         /// </summary>
-        internal static string NormalizeSecondaryResolutionPreset(string? preset) =>
+        internal static string NormalizeOverlayResolutionPreset(string? preset) =>
             preset?.Trim().ToLowerInvariant() switch
             {
                 "480p" => "480p",
                 "1080p" => "1080p",
-                _ => DefaultSecondaryResolutionPreset,
+                _ => DefaultOverlayResolutionPreset,
             };
 
-        /// <summary>把副画面规格预设解析成实际采集宽高。</summary>
-        internal static (int Width, int Height) ResolveSecondaryFrameSize(string? preset) =>
-            NormalizeSecondaryResolutionPreset(preset) switch
+        /// <summary>把叠加画面规格预设解析成实际采集宽高。</summary>
+        internal static (int Width, int Height) ResolveOverlayFrameSize(string? preset) =>
+            NormalizeOverlayResolutionPreset(preset) switch
             {
                 "480p" => (640, 480),
                 "1080p" => (1920, 1080),
@@ -1355,42 +1187,224 @@ namespace ExpressPackingMonitoring.Config
             };
 
         /// <summary>
-        /// 副摄实际采集宽高：优先用设置页从设备枚举出来的档位（与主摄同一套口径），
+        /// 叠加画面实际采集宽高：优先用设置页从设备枚举出来的档位（与主摄同一套口径），
         /// 没枚举过（0/0）才回落到预设。两个字段必须成对有效，避免半个尺寸。
         /// </summary>
-        internal static (int Width, int Height) ResolveSecondaryFrameSize(
+        internal static (int Width, int Height) ResolveOverlayFrameSize(
             string? preset,
             int explicitWidth,
             int explicitHeight) =>
             explicitWidth > 0 && explicitHeight > 0
                 ? (explicitWidth, explicitHeight)
-                : ResolveSecondaryFrameSize(preset);
+                : ResolveOverlayFrameSize(preset);
 
-        /// <summary>把实际采集尺寸回填成预设名（兼容旧口径/降级读配置）；非标准尺寸回落到默认预设。</summary>
+        /// <summary>把实际采集尺寸回填成预设名；非标准尺寸回落到默认预设。</summary>
         internal static string PresetForSize(int width, int height) =>
             (width, height) switch
             {
                 (640, 480) => "480p",
                 (1280, 720) => "720p",
                 (1920, 1080) => "1080p",
-                _ => DefaultSecondaryResolutionPreset,
+                _ => DefaultOverlayResolutionPreset,
             };
 
         /// <summary>
-        /// 副摄来源归一：除"无"以外，其它取值与主摄同口径（网络/本地）。
-        /// 写成无法识别的值时回到"无"，绝不因为一个坏值让副摄悄悄开始采集。
+        /// 叠加画面来源归一：只认"无/本机/网络"三种，其余取值按"有地址就当网络摄像头、
+        /// 否则这一路不接"处理。绝不因为一个写坏的值就猜成"随便开一台本机摄像头"——
+        /// 那会让画面凭空多出一路，还会和主摄抢设备。
         /// </summary>
-        internal static string NormalizeSecondaryCameraSourceKind(string? kind, string? networkCameraUrl) =>
-            string.Equals(kind?.Trim(), SecondaryCameraSourceNone, StringComparison.OrdinalIgnoreCase)
-                ? SecondaryCameraSourceNone
-                : NormalizeCameraSourceKind(kind, networkCameraUrl);
+        internal static string NormalizeOverlayChannelSourceKind(string? kind, string? networkCameraUrl)
+        {
+            string trimmed = kind?.Trim() ?? "";
+            if (string.Equals(trimmed, OverlayChannelSourceNone, StringComparison.OrdinalIgnoreCase))
+                return OverlayChannelSourceNone;
+            if (string.Equals(trimmed, "network", StringComparison.OrdinalIgnoreCase))
+                return "network";
+            if (string.Equals(trimmed, "usb", StringComparison.OrdinalIgnoreCase))
+                return "usb";
 
-        /// <summary>副摄识别框尺寸占比归一：与主摄同一套区间。</summary>
-        internal static double NormalizeSecondaryGuideRatio(double value) =>
+            return string.IsNullOrWhiteSpace(networkCameraUrl) ? OverlayChannelSourceNone : "network";
+        }
+
+        /// <summary>叠加画面识别框尺寸占比归一：与主摄同一套区间。</summary>
+        internal static double NormalizeOverlayGuideRatio(double value) =>
             double.IsFinite(value) && value > 0
-                ? Math.Clamp(value, MinimumSecondaryGuideRatio, MaximumSecondaryGuideRatio)
-                : DefaultSecondaryGuideRatio;
+                ? Math.Clamp(value, MinimumOverlayGuideRatio, MaximumOverlayGuideRatio)
+                : DefaultOverlayGuideRatio;
 
+        /// <summary>
+        /// 叠加画面归一：至少留一路（没接也算一路，设置页才有卡片可显示），最多 MaxOverlayChannels 路，
+        /// 末尾没用到的空路收起来。每一路都按与主摄同口径的规则归一。
+        /// 返回 true 表示有字段被改写。
+        /// </summary>
+        internal static bool NormalizeCameraChannels(AppConfig config)
+        {
+            bool changed = false;
+            config.CameraChannels ??= new List<CameraChannelConfig>();
+            while (config.CameraChannels.Count < 1)
+            {
+                config.CameraChannels.Add(new CameraChannelConfig());
+                changed = true;
+            }
+
+            if (config.CameraChannels.Count > MaxOverlayChannels)
+            {
+                config.CameraChannels.RemoveRange(
+                    MaxOverlayChannels,
+                    config.CameraChannels.Count - MaxOverlayChannels);
+                changed = true;
+            }
+
+            foreach (CameraChannelConfig channel in config.CameraChannels)
+                changed |= NormalizeCameraChannel(channel);
+
+            // 末尾没接设备的路只有设置页的"添加"入口会用到，配置里不留多余的空路；
+            // 第一路永远保留：设置页要显示"副画面 1"这张卡片。
+            while (config.CameraChannels.Count > 1 && !config.CameraChannels[^1].IsConfigured)
+            {
+                config.CameraChannels.RemoveAt(config.CameraChannels.Count - 1);
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        /// <summary>一路叠加画面的归一。返回 true 表示有字段被改写。</summary>
+        internal static bool NormalizeCameraChannel(CameraChannelConfig channel)
+        {
+            bool changed = false;
+
+            string sourceKind = NormalizeOverlayChannelSourceKind(channel.SourceKind, channel.NetworkCameraUrl);
+            if (!string.Equals(channel.SourceKind, sourceKind, StringComparison.Ordinal))
+            {
+                channel.SourceKind = sourceKind;
+                changed = true;
+            }
+
+            string url = channel.NetworkCameraUrl?.Trim() ?? "";
+            if (!string.Equals(channel.NetworkCameraUrl, url, StringComparison.Ordinal))
+            {
+                channel.NetworkCameraUrl = url;
+                changed = true;
+            }
+
+            string transport = NormalizeNetworkTransport(channel.NetworkCameraRtspTransport);
+            if (!string.Equals(channel.NetworkCameraRtspTransport, transport, StringComparison.Ordinal))
+            {
+                channel.NetworkCameraRtspTransport = transport;
+                changed = true;
+            }
+
+            int rotation = NormalizeRotationDegrees(channel.RotationDegrees);
+            if (channel.RotationDegrees != rotation)
+            {
+                channel.RotationDegrees = rotation;
+                changed = true;
+            }
+
+            string preset = NormalizeOverlayResolutionPreset(channel.ResolutionPreset);
+            if (!string.Equals(channel.ResolutionPreset, preset, StringComparison.Ordinal))
+            {
+                channel.ResolutionPreset = preset;
+                changed = true;
+            }
+
+            int fps = Math.Clamp(
+                channel.FrameFps > 0 ? channel.FrameFps : DefaultOverlayFrameFps,
+                MinimumOverlayFrameFps,
+                MaximumOverlayFrameFps);
+            if (channel.FrameFps != fps)
+            {
+                channel.FrameFps = fps;
+                changed = true;
+            }
+
+            // 实际采集宽高必须成对有效且在合理范围内；半个尺寸或越界一律清空回落到预设。
+            const int maximumFrameDimension = 7680;
+            if (channel.FrameWidth < 0
+                || channel.FrameHeight < 0
+                || channel.FrameWidth > maximumFrameDimension
+                || channel.FrameHeight > maximumFrameDimension
+                || (channel.FrameWidth > 0) != (channel.FrameHeight > 0))
+            {
+                channel.FrameWidth = 0;
+                channel.FrameHeight = 0;
+                changed = true;
+            }
+
+            if (!IsCloseEnough(channel.BarcodeGuideWidthRatio, NormalizeOverlayGuideRatio(channel.BarcodeGuideWidthRatio)))
+            {
+                channel.BarcodeGuideWidthRatio = NormalizeOverlayGuideRatio(channel.BarcodeGuideWidthRatio);
+                changed = true;
+            }
+
+            if (!IsCloseEnough(channel.BarcodeGuideHeightRatio, NormalizeOverlayGuideRatio(channel.BarcodeGuideHeightRatio)))
+            {
+                channel.BarcodeGuideHeightRatio = NormalizeOverlayGuideRatio(channel.BarcodeGuideHeightRatio);
+                changed = true;
+            }
+
+            double offsetX = NormalizeGuideOffset(channel.BarcodeGuideOffsetX);
+            if (!IsCloseEnough(channel.BarcodeGuideOffsetX, offsetX))
+            {
+                channel.BarcodeGuideOffsetX = offsetX;
+                changed = true;
+            }
+
+            double offsetY = NormalizeGuideOffset(channel.BarcodeGuideOffsetY);
+            if (!IsCloseEnough(channel.BarcodeGuideOffsetY, offsetY))
+            {
+                channel.BarcodeGuideOffsetY = offsetY;
+                changed = true;
+            }
+
+            double widthRatio = double.IsFinite(channel.OverlayWidthRatio) && channel.OverlayWidthRatio > 0
+                ? Math.Clamp(channel.OverlayWidthRatio, MinimumOverlayWidthRatio, MaximumOverlayWidthRatio)
+                : DefaultOverlayWidthRatio;
+            if (!IsCloseEnough(channel.OverlayWidthRatio, widthRatio))
+            {
+                channel.OverlayWidthRatio = widthRatio;
+                changed = true;
+            }
+
+            int margin = channel.OverlayMargin >= 0
+                ? Math.Min(channel.OverlayMargin, MaximumOverlayMargin)
+                : DefaultOverlayMargin;
+            if (channel.OverlayMargin != margin)
+            {
+                channel.OverlayMargin = margin;
+                changed = true;
+            }
+
+            double left = NormalizeOverlayPosition(channel.OverlayLeftRatio);
+            if (!IsCloseEnough(channel.OverlayLeftRatio, left))
+            {
+                channel.OverlayLeftRatio = left;
+                changed = true;
+            }
+
+            double top = NormalizeOverlayPosition(channel.OverlayTopRatio);
+            if (!IsCloseEnough(channel.OverlayTopRatio, top))
+            {
+                channel.OverlayTopRatio = top;
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        /// <summary>旋转角度归一：只认 0/90/180/270，其余（含手改坏的值）按不旋转处理。</summary>
+        internal static int NormalizeRotationDegrees(int degrees) => degrees switch
+        {
+            90 => 90,
+            180 => 180,
+            270 => 270,
+            _ => 0,
+        };
+
+        /// <summary>浮点归一比较：NaN 也要算"需要改写"，否则 NaN 会一直留在配置里。</summary>
+        private static bool IsCloseEnough(double value, double normalized) =>
+            double.IsFinite(value) && Math.Abs(value - normalized) <= 0.001;
         /// <summary>副摄识别框偏移归一：0 表示居中，±1 表示贴边。</summary>
         internal static double NormalizeGuideOffset(double value) =>
             double.IsFinite(value) ? Math.Clamp(value, -1.0, 1.0) : 0.0;
@@ -1457,20 +1471,14 @@ namespace ExpressPackingMonitoring.Config
             string currentTransport = NormalizeNetworkTransport(current.NetworkCameraRtspTransport);
             string nextTransport = NormalizeNetworkTransport(next.NetworkCameraRtspTransport);
 
-            string currentSecondaryKind =
-                NormalizeSecondaryCameraSourceKind(
-                    current.SecondaryCameraSourceKind,
-                    current.SecondaryNetworkCameraUrl);
-            string nextSecondaryKind =
-                NormalizeSecondaryCameraSourceKind(
-                    next.SecondaryCameraSourceKind,
-                    next.SecondaryNetworkCameraUrl);
-            string currentSecondaryUrl = current.SecondaryNetworkCameraUrl?.Trim() ?? "";
-            string nextSecondaryUrl = next.SecondaryNetworkCameraUrl?.Trim() ?? "";
-            string currentSecondaryTransport =
-                NormalizeNetworkTransport(current.SecondaryNetworkCameraRtspTransport);
-            string nextSecondaryTransport =
-                NormalizeNetworkTransport(next.SecondaryNetworkCameraRtspTransport);
+            if (current.CameraChannels.Count != next.CameraChannels.Count)
+                return true;
+
+            for (int i = 0; i < current.CameraChannels.Count; i++)
+            {
+                if (OverlayChannelRequiresRestart(current.CameraChannels[i], next.CameraChannels[i]))
+                    return true;
+            }
 
             return current.CameraIndex != next.CameraIndex
                 || !string.Equals(current.CameraMonikerString, next.CameraMonikerString, StringComparison.Ordinal)
@@ -1483,25 +1491,38 @@ namespace ExpressPackingMonitoring.Config
                 || !string.Equals(currentUrl, nextUrl, StringComparison.Ordinal)
                 || (currentKind == "network"
                     && nextKind == "network"
-                    && !string.Equals(currentTransport, nextTransport, StringComparison.Ordinal))
-                || current.SecondaryCameraIndex != next.SecondaryCameraIndex
+                    && !string.Equals(currentTransport, nextTransport, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// 某一路叠加画面的变化是否需要重开采集：来源、设备、地址、档位、旋转变了才算。
+        /// 画中画的位置和大小不影响采集，改它们不该把摄像头重启一遍。
+        /// </summary>
+        private static bool OverlayChannelRequiresRestart(CameraChannelConfig current, CameraChannelConfig next)
+        {
+            string currentKind = NormalizeOverlayChannelSourceKind(current.SourceKind, current.NetworkCameraUrl);
+            string nextKind = NormalizeOverlayChannelSourceKind(next.SourceKind, next.NetworkCameraUrl);
+            string currentUrl = current.NetworkCameraUrl?.Trim() ?? "";
+            string nextUrl = next.NetworkCameraUrl?.Trim() ?? "";
+
+            return current.Index != next.Index
+                || !string.Equals(current.MonikerString, next.MonikerString, StringComparison.Ordinal)
+                || current.RotationDegrees != next.RotationDegrees
                 || !string.Equals(
-                    current.SecondaryCameraMonikerString,
-                    next.SecondaryCameraMonikerString,
+                    NormalizeOverlayResolutionPreset(current.ResolutionPreset),
+                    NormalizeOverlayResolutionPreset(next.ResolutionPreset),
                     StringComparison.Ordinal)
-                || current.SecondaryCameraRotationDegrees != next.SecondaryCameraRotationDegrees
-                || !string.Equals(
-                    NormalizeSecondaryResolutionPreset(current.SecondaryResolutionPreset),
-                    NormalizeSecondaryResolutionPreset(next.SecondaryResolutionPreset),
-                    StringComparison.Ordinal)
-                || current.SecondaryFrameFps != next.SecondaryFrameFps
-                || current.SecondaryFrameWidth != next.SecondaryFrameWidth
-                || current.SecondaryFrameHeight != next.SecondaryFrameHeight
-                || !string.Equals(currentSecondaryKind, nextSecondaryKind, StringComparison.Ordinal)
-                || !string.Equals(currentSecondaryUrl, nextSecondaryUrl, StringComparison.Ordinal)
-                || (currentSecondaryKind == "network"
-                    && nextSecondaryKind == "network"
-                    && !string.Equals(currentSecondaryTransport, nextSecondaryTransport, StringComparison.Ordinal));
+                || current.FrameFps != next.FrameFps
+                || current.FrameWidth != next.FrameWidth
+                || current.FrameHeight != next.FrameHeight
+                || !string.Equals(currentKind, nextKind, StringComparison.Ordinal)
+                || !string.Equals(currentUrl, nextUrl, StringComparison.Ordinal)
+                || (currentKind == "network"
+                    && nextKind == "network"
+                    && !string.Equals(
+                        NormalizeNetworkTransport(current.NetworkCameraRtspTransport),
+                        NormalizeNetworkTransport(next.NetworkCameraRtspTransport),
+                        StringComparison.Ordinal));
         }
 
         /// <summary>

@@ -162,8 +162,8 @@
     <Compile Include="ViewModels\RecordingAudioStartPolicy.cs" />
     <Compile Include="ViewModels\RecordingTimelinePolicy.cs" />
     <Compile Include="ViewModels\PreviewDownscalePolicy.cs" />
-    <Compile Include="ViewModels\SecondaryCameraOverlayPolicy.cs" />
-    <Compile Include="ViewModels\SecondaryCameraFrameComposer.cs" />
+    <Compile Include="ViewModels\CameraOverlayLayout.cs" />
+    <Compile Include="ViewModels\CameraOverlayComposer.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.ArchiveBackup.cs" />
     <Compile Include="ViewModels\MainViewModel.Camera.cs" />
@@ -171,7 +171,7 @@
     <Compile Include="ViewModels\MainViewModel.CameraRotation.cs" />
     <Compile Include="ViewModels\MainViewModel.CameraGuide.cs" />
     <Compile Include="ViewModels\MainViewModel.FloatingPreview.cs" />
-    <Compile Include="ViewModels\MainViewModel.SecondaryCamera.cs" />
+    <Compile Include="ViewModels\MainViewModel.OverlayChannels.cs" />
     <Compile Include="ViewModels\MainViewModel.Scanner.cs" />
     <Compile Include="ViewModels\MainViewModel.Notifications.cs" />
     <Compile Include="ViewModels\MainViewModel.Settings.cs" />
@@ -220,7 +220,7 @@
     <Compile Include="UI\OrderNumberExportProgressDialog.xaml.cs" />
     <Compile Include="UI\VideoImportDialog.xaml.cs" />
     <Compile Include="UI\SettingsWindow.xaml.cs" />
-    <Compile Include="UI\SettingsWindow.SecondaryCamera.cs" />
+    <Compile Include="UI\SettingsWindow.CameraChannels.cs" />
     <Compile Include="UI\SettingsContext.cs" />
     <Compile Include="UI\StorageCapacityEditorPolicy.cs" />
     <Compile Include="UI\StorageReserveWarningPolicy.cs" />

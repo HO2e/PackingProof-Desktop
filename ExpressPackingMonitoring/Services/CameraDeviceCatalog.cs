@@ -26,7 +26,7 @@ internal static class CameraDeviceCatalog
     {
         var choices = new List<CameraDeviceChoice>
         {
-            new("无", AppConfig.SecondaryCameraSourceNone, "", -1)
+            new("无", AppConfig.OverlayChannelSourceNone, "", -1)
         };
 
         try
