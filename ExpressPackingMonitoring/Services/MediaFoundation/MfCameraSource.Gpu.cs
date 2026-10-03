@@ -72,13 +72,19 @@ public sealed partial class MfCameraSource
             return;
         }
 
-        // 目标尺寸等于源尺寸：对外仍交出全分辨率帧。
+        // 目标尺寸等于"旋转后"的源尺寸：对外仍交出全分辨率帧；
+        // 90/270 时渲染目标转置，UV 逆映射由顶点着色器负责。
+        (int outputWidth, int outputHeight) = CameraFrameOrientation.RotateDimensions(
+            format.Width,
+            format.Height,
+            _rotationDegrees);
         _gpuConverter = GpuFrameConverter.TryCreate(
             format.Width,
             format.Height,
-            format.Width,
-            format.Height,
-            isNv12);
+            outputWidth,
+            outputHeight,
+            isNv12,
+            rotationDegrees: _rotationDegrees);
 
         if (_gpuConverter == null)
         {
@@ -94,6 +100,7 @@ public sealed partial class MfCameraSource
         RuntimeLog.Info(
             "Camera",
             $"GPU 转换已启用：{format.SubtypeName} {format.Width}x{format.Height}"
+                + (_rotationDegrees == 0 ? "" : $"，GPU 旋转 {_rotationDegrees}°")
                 + $"，特性级别 {_gpuConverter.FeatureLevel}");
     }
 

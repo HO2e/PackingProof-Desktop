@@ -271,39 +271,78 @@ public sealed class DeploymentStartupTests
     /// 把刚起来的摄像头再关掉（现场：反复"正在重连"、十几秒连不上）。
     /// </summary>
     /// <summary>
-    /// 预录帧注入录像前必须补 180° 旋转：实时帧在 HandleCameraFrame 里先旋转再画水印，
-    /// 预录帧是旋转前缓存下来的克隆，漏了这一步就会出现"开启旋转后预录那几秒是倒的"（现场反馈）。
+    /// 旋转必须在写入预录缓冲之前完成（采集层）：预录帧与实时帧同源、角度一致，
+    /// 注入时不需要也不允许再补旋转。DirectShow 与网络路径在帧回调里先转再缓冲；
+    /// Media Foundation 在采集源内部完成旋转（GPU 着色器或它的 CPU 回退）。
     /// </summary>
     [Fact]
-    public void PreRecordFramesAreRotatedBeforeWatermarkWhenInjected()
+    public void RotationIsAppliedAtCaptureBeforePreRecordBuffering()
     {
-        string source = ReadRepositoryFile(
+        string frames = ReadRepositoryFile(
+            "ExpressPackingMonitoring",
+            "ViewModels",
+            "MainViewModel.CameraFrames.cs");
+
+        int aforgeStart = frames.IndexOf(
+            "private void VideoSource_NewFrame",
+            StringComparison.Ordinal);
+        Assert.True(aforgeStart > 0, "找不到 DirectShow 帧回调");
+        int aforgeRotate = frames.IndexOf(
+            "CameraFrameOrientation.Apply(frame, Config.CameraRotationDegrees)",
+            aforgeStart,
+            StringComparison.Ordinal);
+        int aforgeBuffer = frames.IndexOf(
+            "UpdatePreRecordBuffer(frame);",
+            aforgeStart,
+            StringComparison.Ordinal);
+        Assert.True(aforgeRotate > aforgeStart, "DirectShow 路径没有按配置角度旋转");
+        Assert.True(aforgeBuffer > aforgeRotate, "DirectShow 路径必须先旋转再进预录缓冲");
+
+        int networkStart = frames.IndexOf(
+            "private void NetworkCameraSource_FrameReady",
+            StringComparison.Ordinal);
+        Assert.True(networkStart > 0, "找不到网络摄像头帧回调");
+        int networkRotate = frames.IndexOf(
+            "CameraFrameOrientation.Apply(e.Frame, Config.CameraRotationDegrees)",
+            networkStart,
+            StringComparison.Ordinal);
+        int networkBuffer = frames.IndexOf(
+            "UpdatePreRecordBuffer(frame);",
+            networkStart,
+            StringComparison.Ordinal);
+        Assert.True(networkRotate > networkStart, "网络摄像头路径没有按配置角度旋转");
+        Assert.True(networkBuffer > networkRotate, "网络摄像头路径必须先旋转再进预录缓冲");
+
+        // Media Foundation 在采集源内部转，主循环只做尺寸兜底，不能再转一次。
+        string camera = ReadRepositoryFile(
+            "ExpressPackingMonitoring",
+            "ViewModels",
+            "MainViewModel.Camera.cs");
+        int handleStart = camera.IndexOf("private void HandleCameraFrame", StringComparison.Ordinal);
+        int handleEnd = camera.IndexOf("private Mat BitmapToMat", handleStart, StringComparison.Ordinal);
+        Assert.True(handleStart > 0 && handleEnd > handleStart, "找不到 HandleCameraFrame");
+        Assert.DoesNotContain(
+            "CameraFrameOrientation.Apply",
+            camera[handleStart..handleEnd],
+            StringComparison.Ordinal);
+
+        // 预录注入不再补旋转：补了就会把已经在采集层转好的画面转第二次。
+        string recording = ReadRepositoryFile(
             "ExpressPackingMonitoring",
             "ViewModels",
             "MainViewModel.Recording.cs");
-
-        int injectionStart = source.IndexOf(
+        int injectionStart = recording.IndexOf(
             "List<Mat>? preRecordFrames = _pendingPreRecordFrames;",
             StringComparison.Ordinal);
-        Assert.True(injectionStart >= 0, "找不到预录帧注入段");
-
-        int rotateIndex = source.IndexOf(
-            "CameraFrameOrientation.Apply(",
+        int enqueueIndex = recording.IndexOf(
+            "TryEnqueueFrameForRecording(preFrame",
             injectionStart,
             StringComparison.Ordinal);
-        int rotateDegreesIndex = source.IndexOf(
-            "Config.CameraRotationDegrees",
-            injectionStart,
+        Assert.True(injectionStart > 0 && enqueueIndex > injectionStart, "找不到预录帧注入段");
+        Assert.DoesNotContain(
+            "CameraFrameOrientation.Apply",
+            recording[injectionStart..enqueueIndex],
             StringComparison.Ordinal);
-        int watermarkIndex = source.IndexOf(
-            "ApplyWatermarkToFrame(preFrame,",
-            injectionStart,
-            StringComparison.Ordinal);
-
-        Assert.True(rotateIndex > 0, "注入预录帧时没有补旋转");
-        Assert.True(rotateDegreesIndex > rotateIndex, "预录帧旋转没有使用配置角度");
-        Assert.True(watermarkIndex > 0, "找不到预录帧水印调用");
-        Assert.True(rotateIndex < watermarkIndex, "预录帧必须先旋转再画水印");
     }
 
     [Fact]

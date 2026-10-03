@@ -164,6 +164,7 @@
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.ArchiveBackup.cs" />
     <Compile Include="ViewModels\MainViewModel.Camera.cs" />
+    <Compile Include="ViewModels\MainViewModel.CameraFrames.cs" />
     <Compile Include="ViewModels\MainViewModel.CameraRotation.cs" />
     <Compile Include="ViewModels\MainViewModel.CameraGuide.cs" />
     <Compile Include="ViewModels\MainViewModel.FloatingPreview.cs" />

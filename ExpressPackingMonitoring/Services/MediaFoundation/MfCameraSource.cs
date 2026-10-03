@@ -52,6 +52,7 @@ public sealed partial class MfCameraSource : IDisposable
     private readonly int _targetHeight;
     private readonly int _targetFps;
     private readonly string _colorMatrixMode;
+    private readonly int _rotationDegrees;
     private readonly object _sync = new();
 
     /// <summary>等读取线程退出的上限。超时后由读取线程退出时释放资源。</summary>
@@ -62,6 +63,12 @@ public sealed partial class MfCameraSource : IDisposable
     private IMFSourceReader? _reader;
     private Thread? _readThread;
     private Mat? _conversionBuffer;
+
+    /// <summary>
+    /// 需要旋转时，CPU 转换先落到这个原始尺寸的缓冲区，再转进 <see cref="_conversionBuffer"/>。
+    /// 不旋转时它是 null，整条路径与改造前完全一致。
+    /// </summary>
+    private Mat? _nativeBuffer;
     private Guid _activeSubtype;
     private bool _useBt709;
     private bool _stopping;
@@ -78,13 +85,15 @@ public sealed partial class MfCameraSource : IDisposable
         int targetWidth,
         int targetHeight,
         int targetFps,
-        string? colorMatrixMode = null)
+        string? colorMatrixMode = null,
+        int rotationDegrees = 0)
     {
         _symbolicLink = symbolicLink ?? throw new ArgumentNullException(nameof(symbolicLink));
         _targetWidth = targetWidth;
         _targetHeight = targetHeight;
         _targetFps = targetFps;
         _colorMatrixMode = colorMatrixMode ?? "auto";
+        _rotationDegrees = CameraFrameOrientation.NormalizeDegrees(rotationDegrees);
     }
 
     internal event EventHandler<MfFrameEventArgs>? FrameReady;
@@ -481,8 +490,12 @@ public sealed partial class MfCameraSource : IDisposable
 
     private void ApplyNegotiatedFormat(MfNativeFormat format, MfColorInfo colorInfo)
     {
-        ActualWidth = format.Width;
-        ActualHeight = format.Height;
+        // 对外交出的是旋转之后的画面，所以 Actual 尺寸必须是旋转后的宽高；
+        // 90/270 会交换宽高，录制参数直接读这两个值。
+        (ActualWidth, ActualHeight) = CameraFrameOrientation.RotateDimensions(
+            format.Width,
+            format.Height,
+            _rotationDegrees);
         ActualFps = format.FrameRate;
         ActualFormat = format.SubtypeName;
         _activeSubtype = format.Subtype;
@@ -493,13 +506,19 @@ public sealed partial class MfCameraSource : IDisposable
             ?? CameraColorSpacePolicy.InferBt709(_colorMatrixMode, format.Width);
 
         _conversionBuffer?.Dispose();
-        _conversionBuffer = new Mat(format.Height, format.Width, MatType.CV_8UC3);
+        _conversionBuffer = new Mat(ActualHeight, ActualWidth, MatType.CV_8UC3);
+
+        _nativeBuffer?.Dispose();
+        _nativeBuffer = _rotationDegrees == 0
+            ? null
+            : new Mat(format.Height, format.Width, MatType.CV_8UC3);
 
         SetUpGpuConversion(format);
 
         RuntimeLog.Info(
             "Camera",
             $"Media Foundation 采集：{format}，bt709={_useBt709}"
+                + (_rotationDegrees == 0 ? "" : $"，旋转 {_rotationDegrees}° -> {ActualWidth}x{ActualHeight}")
                 + $"（{(declared.HasValue ? "设备声明" : "按分辨率推断")}），色彩信息：{colorInfo}");
     }
 
@@ -618,6 +637,7 @@ public sealed partial class MfCameraSource : IDisposable
     private Mat? ConvertLockedBuffer(IntPtr scanline0, int pitch)
     {
         Mat buffer;
+        Mat? nativeBuffer;
         int width;
         int height;
         bool useBt709;
@@ -628,6 +648,7 @@ public sealed partial class MfCameraSource : IDisposable
                 return null;
 
             buffer = _conversionBuffer;
+            nativeBuffer = _nativeBuffer;
             width = ActualWidth;
             height = ActualHeight;
             useBt709 = _useBt709;
@@ -640,33 +661,49 @@ public sealed partial class MfCameraSource : IDisposable
         if (TryConvertOnGpu(scanline0, pitch, buffer, useBt709, subtype))
             return buffer;
 
+        // 需要旋转时，CPU 转换先落到原始尺寸的缓冲区，再统一转进输出缓冲区。
+        // 不旋转时它就是输出缓冲区本身，整条路径与改造前完全一致。
+        Mat cpuTarget = nativeBuffer ?? buffer;
+
         if (subtype == MfInterop.MFVideoFormat_YUY2)
         {
-            MfFrameConverter.ConvertYuy2(scanline0, pitch, width, height, buffer, useBt709);
+            MfFrameConverter.ConvertYuy2(scanline0, pitch, width, height, cpuTarget, useBt709);
         }
         else if (subtype == MfInterop.MFVideoFormat_NV12)
         {
-            MfFrameConverter.ConvertNv12(scanline0, pitch, width, height, buffer, useBt709);
+            MfFrameConverter.ConvertNv12(scanline0, pitch, width, height, cpuTarget, useBt709);
         }
         else if (subtype == MfInterop.MFVideoFormat_RGB24)
         {
             // 系统已经转好（按 BT.601），只补色度校正，与旧路径等价。
             using Mat wrapped = Mat.FromPixelData(height, width, MatType.CV_8UC3, scanline0, pitch);
-            wrapped.CopyTo(buffer);
+            wrapped.CopyTo(cpuTarget);
             if (useBt709)
-                CameraColorSpacePolicy.ApplyBt709Correction(buffer);
+                CameraColorSpacePolicy.ApplyBt709Correction(cpuTarget);
         }
         else if (subtype == MfInterop.MFVideoFormat_RGB32)
         {
             using Mat wrapped = Mat.FromPixelData(height, width, MatType.CV_8UC4, scanline0, pitch);
-            Cv2.CvtColor(wrapped, buffer, ColorConversionCodes.BGRA2BGR);
+            Cv2.CvtColor(wrapped, cpuTarget, ColorConversionCodes.BGRA2BGR);
             if (useBt709)
-                CameraColorSpacePolicy.ApplyBt709Correction(buffer);
+                CameraColorSpacePolicy.ApplyBt709Correction(cpuTarget);
         }
         else
         {
             return null;
         }
+
+        if (!ReferenceEquals(cpuTarget, buffer))
+        {
+            // 90/270 用转置、180 用翻折：都是整帧一次，不再额外分配 Mat。
+            if (_rotationDegrees == 180)
+                Cv2.Flip(cpuTarget, buffer, FlipMode.XY);
+            else if (_rotationDegrees == 90)
+                Cv2.Rotate(cpuTarget, buffer, RotateFlags.Rotate90Clockwise);
+            else
+                Cv2.Rotate(cpuTarget, buffer, RotateFlags.Rotate90Counterclockwise);
+        }
+
         return buffer;
     }
 
@@ -748,6 +785,8 @@ public sealed partial class MfCameraSource : IDisposable
 
         _gpuConverter?.Dispose();
         _gpuConverter = null;
+        _nativeBuffer?.Dispose();
+        _nativeBuffer = null;
         _conversionBuffer?.Dispose();
         _conversionBuffer = null;
         _platform?.Dispose();

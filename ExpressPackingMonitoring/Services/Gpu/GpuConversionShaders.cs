@@ -19,26 +19,94 @@ internal static class GpuConversionShaders
     ///
     /// 不用顶点缓冲，直接由顶点 ID 算出位置 —— 少一个资源要管，
     /// 也省掉每帧绑定顶点缓冲的开销。
+    ///
+    /// 画面旋转只改 UV 的取值：把每个输出像素映射回旋转前的源坐标，像素着色器
+    /// 依旧把 uv 当源坐标用，所以 YUY2/NV12 两个解码着色器一行都不用动。
+    /// 90/270 时调用方要把渲染目标换成转置后的宽高，否则画面会被拉扁。
     /// </summary>
-    internal static readonly string VertexShader = string.Join('\n',
-    [
-        "struct VsOut",
-        "{",
-        "    float4 position : SV_POSITION;",
-        "    float2 uv : TEXCOORD0;",
-        "};",
-        "",
-        "VsOut main(uint vertexId : SV_VertexID)",
-        "{",
-        "    // Two triangles covering the whole viewport: (0,0) (1,0) (0,1) (1,1)",
-        "    float2 corner = float2(vertexId & 1, (vertexId >> 1) & 1);",
-        "    VsOut output;",
-        "    // Clip space is [-1,1], UV is [0,1], Y axis inverted.",
-        "    output.position = float4(corner.x * 2.0 - 1.0, 1.0 - corner.y * 2.0, 0.0, 1.0);",
-        "    output.uv = corner;",
-        "    return output;",
-        "}",
-    ]);
+    internal static string VertexShaderFor(int degrees)
+    {
+        string uvExpression = BuildRotatedUvExpression(degrees);
+        return string.Join('\n',
+        [
+            "struct VsOut",
+            "{",
+            "    float4 position : SV_POSITION;",
+            "    float2 uv : TEXCOORD0;",
+            "};",
+            "",
+            "VsOut main(uint vertexId : SV_VertexID)",
+            "{",
+            "    // Two triangles covering the whole viewport: (0,0) (1,0) (0,1) (1,1)",
+            "    float2 corner = float2(vertexId & 1, (vertexId >> 1) & 1);",
+            "    VsOut output;",
+            "    // Clip space is [-1,1], UV is [0,1], Y axis inverted.",
+            "    output.position = float4(corner.x * 2.0 - 1.0, 1.0 - corner.y * 2.0, 0.0, 1.0);",
+            // 着色器源码必须保持 ASCII：D3DCompiler 按 ANSI 封送源码，中文注释会被截断成
+            // "unexpected end of file"。角度语义写在这里的 C# 注释里，不写进 HLSL。
+            $"    // Inverse map for {CameraFrameOrientation.NormalizeDegrees(degrees)}-degree clockwise rotation.",
+            $"    output.uv = {uvExpression};",
+            "    return output;",
+            "}",
+        ]);
+    }
+
+    /// <summary>不旋转的顶点着色器，保留给不需要旋转的调用方。</summary>
+    internal static readonly string VertexShader = VertexShaderFor(0);
+
+    /// <summary>
+    /// 逆映射系数：uv' = (a00 * corner.x + a01 * corner.y + b0, a10 * corner.x + a11 * corner.y + b1)。
+    ///
+    /// 推导（归一化连续坐标）：把源画面顺时针转 90 度会把源点 (su,sv) 送到 (1-sv, su)，
+    /// 反解就得到 uv' = (corner.y, 1 - corner.x)；180/270 同理。
+    /// HLSL 表达式由这组系数生成，测试也只核对这组系数，两边不可能各写一遍。
+    /// </summary>
+    internal static (double A00, double A01, double B0, double A10, double A11, double B1)
+        GetUvTransform(int degrees) =>
+        CameraFrameOrientation.NormalizeDegrees(degrees) switch
+        {
+            90 => (0.0, 1.0, 0.0, -1.0, 0.0, 1.0),
+            180 => (-1.0, 0.0, 1.0, 0.0, -1.0, 1.0),
+            270 => (0.0, -1.0, 1.0, 1.0, 0.0, 0.0),
+            _ => (1.0, 0.0, 0.0, 0.0, 1.0, 0.0),
+        };
+
+    /// <summary>把逆映射系数渲染成 HLSL 表达式。</summary>
+    internal static string BuildRotatedUvExpression(int degrees)
+    {
+        var (a00, a01, b0, a10, a11, b1) = GetUvTransform(degrees);
+        return $"float2({BuildAxis(a00, a01, b0)}, {BuildAxis(a10, a11, b1)})";
+    }
+
+    private static string BuildAxis(double xCoefficient, double yCoefficient, double offset)
+    {
+        var terms = new List<string>(3);
+        AddTerm(terms, xCoefficient, "corner.x");
+        AddTerm(terms, yCoefficient, "corner.y");
+        if (offset != 0)
+            terms.Add(FormatConstant(offset));
+        return terms.Count == 0 ? "0.0" : string.Join(" + ", terms);
+    }
+
+    private static void AddTerm(List<string> terms, double coefficient, string variable)
+    {
+        if (coefficient == 0)
+            return;
+        if (coefficient == 1)
+        {
+            terms.Add(variable);
+            return;
+        }
+        if (coefficient == -1)
+        {
+            terms.Add("-" + variable);
+            return;
+        }
+        terms.Add($"{FormatConstant(coefficient)} * {variable}");
+    }
+
+    private static string FormatConstant(double value) =>
+        value.ToString("0.0############################", System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>
     /// 共用的 YUV→RGB。

@@ -390,7 +390,13 @@ namespace ExpressPackingMonitoring.ViewModels
                     return false;
                 }
 
-                var source = new MfCameraSource(device.SymbolicLink, width, height, fps, config.CameraColorMatrix);
+                var source = new MfCameraSource(
+                    device.SymbolicLink,
+                    width,
+                    height,
+                    fps,
+                    config.CameraColorMatrix,
+                    config.SecondaryCameraRotationDegrees);
                 source.FrameReady += SecondaryMfCameraSource_FrameReady;
                 source.SourceError += SecondaryMfCameraSource_SourceError;
                 if (!source.Start())
@@ -435,8 +441,8 @@ namespace ExpressPackingMonitoring.ViewModels
                     return;
                 }
 
-                if (Config is { } config)
-                    frame = CameraFrameOrientation.Apply(frame, config.SecondaryCameraRotationDegrees);
+                // 副摄的旋转同样在采集层完成（MF 用 GPU 着色器，AForge 回退在帧回调里转），
+                // 这里不能再转一次。
                 TrySubmitCameraBarcodeFrame(frame, fromSecondaryCamera: true);
                 PublishSecondaryCameraFrame(frame);
             }

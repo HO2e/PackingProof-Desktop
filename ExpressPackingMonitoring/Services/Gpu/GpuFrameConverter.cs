@@ -70,6 +70,7 @@ internal sealed class GpuFrameConverter : IDisposable
         int targetHeight,
         bool isNv12,
         bool isBgr24,
+        int rotationDegrees,
         FeatureLevel featureLevel)
     {
         _device = device;
@@ -90,6 +91,7 @@ internal sealed class GpuFrameConverter : IDisposable
         TargetHeight = targetHeight;
         _isNv12 = isNv12;
         _isBgr24 = isBgr24;
+        RotationDegrees = rotationDegrees;
         FeatureLevel = featureLevel;
     }
 
@@ -98,6 +100,9 @@ internal sealed class GpuFrameConverter : IDisposable
     internal int TargetHeight { get; }
 
     internal FeatureLevel FeatureLevel { get; }
+
+    /// <summary>这一路在 GPU 上完成的顺时针旋转角度（0 表示不旋转）。</summary>
+    internal int RotationDegrees { get; }
 
     /// <summary>渲染结果纹理（BGRA）。预览与录像都从这里取，不回读到 CPU。</summary>
     internal ID3D11Texture2D RenderTarget => _renderTarget;
@@ -110,13 +115,18 @@ internal sealed class GpuFrameConverter : IDisposable
     /// 远程桌面、精简镜像、驱动崩溃后都可能走到这里，都不是异常情况。
     /// </summary>
     /// <param name="targetWidth">渲染目标宽度。小于源宽即为缩放，由采样器顺带完成。</param>
+    /// <param name="rotationDegrees">
+    /// 在 GPU 上顺带完成的顺时针旋转角度（0/90/180/270）。
+    /// 90/270 时调用方应把渲染目标换成转置后的宽高；BGR24 预览缩放不支持旋转，按 0 处理。
+    /// </param>
     internal static GpuFrameConverter? TryCreate(
         int sourceWidth,
         int sourceHeight,
         int targetWidth,
         int targetHeight,
         bool isNv12,
-        bool isBgr24 = false)
+        bool isBgr24 = false,
+        int rotationDegrees = 0)
     {
         LastCreateFailure = "";
         if (sourceWidth <= 0 || sourceHeight <= 0 || targetWidth <= 0 || targetHeight <= 0
@@ -125,6 +135,10 @@ internal sealed class GpuFrameConverter : IDisposable
             LastCreateFailure = "尺寸非法";
             return null;
         }
+
+        // BGR24 用的是预览缩放着色器，它按输出像素位置直接取源像素，不经过 uv，
+        // 所以这条路径不支持旋转；强行旋转只会得到错位的画面。
+        int effectiveRotation = isBgr24 ? 0 : CameraFrameOrientation.NormalizeDegrees(rotationDegrees);
 
         ID3D11Device? device = null;
         ID3D11DeviceContext? context = null;
@@ -164,13 +178,16 @@ internal sealed class GpuFrameConverter : IDisposable
                 targetWidth,
                 targetHeight,
                 isNv12,
-                isBgr24);
+                isBgr24,
+                effectiveRotation);
             if (converter != null)
             {
                 RuntimeLog.Info(
                     "Camera",
                     $"GPU 转换就绪：{sourceWidth}x{sourceHeight} -> {targetWidth}x{targetHeight}"
-                        + $"，{(isBgr24 ? "BGR24" : isNv12 ? "NV12" : "YUY2")}，功能级别 {featureLevel}");
+                        + $"，{(isBgr24 ? "BGR24" : isNv12 ? "NV12" : "YUY2")}"
+                        + (effectiveRotation == 0 ? "" : $"，GPU 旋转 {effectiveRotation}°")
+                        + $"，功能级别 {featureLevel}");
                 return converter;
             }
 
@@ -198,11 +215,15 @@ internal sealed class GpuFrameConverter : IDisposable
         int targetWidth,
         int targetHeight,
         bool isNv12,
-        bool isBgr24)
+        bool isBgr24,
+        int rotationDegrees)
     {
         // 着色器在运行时编译：很短、只在摄像头启动时编译一次，
         // 预编译要把 fxc 塞进构建流程并管理产物，不值得。
-        if (!TryCompile(GpuConversionShaders.VertexShader, "vs_4_0", out byte[]? vertexBytecode)
+        if (!TryCompile(
+                GpuConversionShaders.VertexShaderFor(rotationDegrees),
+                "vs_4_0",
+                out byte[]? vertexBytecode)
             || !TryCompile(
                 isBgr24 ? GpuPreviewResizeShader.PixelShader
                     : isNv12 ? GpuConversionShaders.Nv12PixelShader : GpuConversionShaders.Yuy2PixelShader,
@@ -300,6 +321,7 @@ internal sealed class GpuFrameConverter : IDisposable
                 targetHeight,
                 isNv12,
                 isBgr24,
+                rotationDegrees,
                 featureLevel);
             allocated.Clear(); // 所有权已交给转换器。
             return converter;

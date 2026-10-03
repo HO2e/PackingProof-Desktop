@@ -636,7 +636,8 @@ namespace ExpressPackingMonitoring.ViewModels
                     Config.FrameWidth,
                     Config.FrameHeight,
                     Config.Fps,
-                    Config.CameraColorMatrix);
+                    Config.CameraColorMatrix,
+                    Config.CameraRotationDegrees);
                 source.FrameReady += MfCameraSource_FrameReady;
                 source.SourceError += MfCameraSource_SourceError;
                 MarkCameraStarting();
@@ -652,7 +653,10 @@ namespace ExpressPackingMonitoring.ViewModels
                 }
 
                 _mfCameraSource = source;
-                SetActualCameraSize(source.ActualWidth, source.ActualHeight);
+                // MF 在采集层就完成了旋转（GPU 着色器或它的 CPU 回退），
+                // Actual* 已经是旋转后的尺寸，不能再按角度换算一次。
+                _actualCameraWidth = source.ActualWidth;
+                _actualCameraHeight = source.ActualHeight;
                 _actualCameraFps = source.ActualFps > 0
                     ? (int)Math.Round(source.ActualFps)
                     : (Config.Fps > 0 ? Config.Fps : 15);
@@ -669,29 +673,6 @@ namespace ExpressPackingMonitoring.ViewModels
             {
                 RuntimeLog.Warn("Camera", $"Media Foundation 后端启动异常，改用 DirectShow：{ex.Message}");
                 return false;
-            }
-        }
-
-        /// <summary>新后端的帧到达。与 AForge 路径共用同一套限流、预录与录像逻辑。</summary>
-        private void MfCameraSource_FrameReady(object sender, MfFrameEventArgs e)
-        {
-            _lastFrameTime = DateTime.Now;
-            MarkCameraStreamHealthy();
-            Interlocked.Exchange(ref _archiveFrameUtcTicks, DateTime.UtcNow.Ticks);
-            UpdateCameraSourceFpsEstimate();
-
-            try
-            {
-                // 帧已经是 BGR24，不需要 BitmapToMat 那次格式转换与克隆，
-                // 也不需要事后的色度校正（新后端在解码时就用了正确的矩阵）。
-                Mat frame = e.Frame;
-                if (ShouldCaptureEventRecordingBufferFrame())
-                    UpdatePreRecordBuffer(frame);
-                HandleCameraFrame(frame);
-            }
-            catch (Exception ex)
-            {
-                RuntimeLog.Error("Camera", "Media Foundation frame processing failed", ex);
             }
         }
 
@@ -915,38 +896,6 @@ namespace ExpressPackingMonitoring.ViewModels
             return true;
         }
 
-        private void VideoSource_NewFrame(object sender, NewFrameEventArgs eventArgs)
-        {
-            _lastFrameTime = DateTime.Now;
-            MarkCameraStreamHealthy();
-            Interlocked.Exchange(ref _archiveFrameUtcTicks, DateTime.UtcNow.Ticks);
-            UpdateCameraSourceFpsEstimate();
-
-            try
-            {
-                Mat frame = BitmapToMat(eventArgs.Frame);
-                if (ShouldCaptureEventRecordingBufferFrame())
-                    UpdatePreRecordBuffer(frame);
-                HandleCameraFrame(frame);
-            }
-            catch (Exception ex)
-            {
-                RuntimeLog.Error("Camera", "NewFrame conversion failed", ex);
-            }
-        }
-
-        private void NetworkCameraSource_FrameReady(object sender, NetworkCameraFrameEventArgs e)
-        {
-            _lastFrameTime = DateTime.Now;
-            MarkCameraStreamHealthy();
-            Interlocked.Exchange(ref _archiveFrameUtcTicks, DateTime.UtcNow.Ticks);
-            UpdateCameraSourceFpsEstimate();
-
-            if (ShouldCaptureEventRecordingBufferFrame())
-                UpdatePreRecordBuffer(e.Frame);
-            HandleCameraFrame(e.Frame);
-        }
-
         /// <summary>
         /// 打印一次摄像头可选模式。现场反馈"预览发糊/发灰"时，先看这里：
         /// 1080p60 只有 16bpp（YUY2）这类抽色度格式时，DirectShow 采到的画面本身就发软，
@@ -1013,8 +962,9 @@ namespace ExpressPackingMonitoring.ViewModels
             bool published = false;
             try
             {
-                // 90/270 会交换宽高：Apply 会返回新的 Mat，必须用返回值。
-                frame = CameraFrameOrientation.Apply(frame, Config.CameraRotationDegrees);
+                // 旋转已在采集层完成：Media Foundation 走 GPU 着色器（或它的 CPU 回退），
+                // DirectShow/网络路径在各自的帧回调里先转再进预录缓冲。
+                // 这里只做尺寸兜底校正，绝不能再转一次。
                 SyncActualCameraSizeToFrame(frame);
                 lock (_frameLock)
                 {
