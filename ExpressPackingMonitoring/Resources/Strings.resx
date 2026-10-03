@@ -562,7 +562,8 @@
   <data name="主摄像头" xml:space="preserve"><value>Main camera</value></data>
   <data name="帧率" xml:space="preserve"><value>Frame rate</value></data>
   <data name="画面方向" xml:space="preserve"><value>Orientation</value></data>
-  <data name="选择拍面单的摄像头" xml:space="preserve"><value>Camera that captures the shipping label</value></data>
+  <data name="叠加在主画面上的另一路摄像头" xml:space="preserve"><value>Another camera overlaid on the main picture</value></data>
+  <data name="横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转" xml:space="preserve"><value>Adjust in 90° steps when the camera is mounted sideways or upside down; preview, recognition, and recording rotate together</value></data>
   <data name="副画面分辨率" xml:space="preserve"><value>Secondary resolution</value></data>
   <data name="越高响应越快，普通电脑保持默认即可" xml:space="preserve"><value>Higher is more responsive; keep the default on ordinary PCs</value></data>
   <data name="拖动框调整副摄取景，点完成或按 Esc 退出" xml:space="preserve"><value>Drag the box to set the secondary framing, then click Finish or press Esc to exit</value></data>

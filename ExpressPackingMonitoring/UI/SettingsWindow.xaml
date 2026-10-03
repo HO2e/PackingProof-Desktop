@@ -1062,6 +1062,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
                                             <TextBlock Text="主摄像头" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="选择拍摄打包过程的摄像头" Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <ComboBox x:Name="CameraComboBox"
                                                   Grid.Column="2"
@@ -1081,6 +1082,8 @@
                                         </Grid.RowDefinitions>
                                         <StackPanel Grid.Row="0" Margin="0,0,0,10">
                                             <TextBlock Text="网络摄像头地址" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="支持 RTSP、RTMP、HTTP 视频流，需手动填写地址"
+                                                       Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <Grid Grid.Row="1">
                                             <TextBox x:Name="NetworkCameraUrlTextBox"
@@ -1119,6 +1122,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
                                             <TextBlock Text="分辨率" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="越高越清晰，文件也越大" Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <ComboBox x:Name="ResComboBox"
                                                   Grid.Column="2"
@@ -1135,6 +1139,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
                                             <TextBlock Text="帧率" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="越高越流畅，也更占空间" Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <ComboBox x:Name="FpsComboBox" Grid.Column="2"
                                                   Height="32"
@@ -1151,6 +1156,8 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
                                             <TextBlock Text="画面方向" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="横装、竖装或倒装时按 90° 一档调整，预览、识别和录像会同步旋转"
+                                                       Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <ComboBox x:Name="CameraRotationComboBox"
                                                   Grid.Column="2"
@@ -1178,7 +1185,8 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
                                             <TextBlock Text="副摄像头" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBlock Text="选择拍面单的摄像头" Style="{StaticResource FieldHintStyle}"/>
+                                            <TextBlock Text="叠加在主画面上的另一路摄像头"
+                                                       Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <ComboBox x:Name="SecondaryCameraDeviceComboBox"
                                                   Grid.Column="2"
@@ -1214,6 +1222,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
                                             <TextBlock Text="副画面分辨率" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="越高越清晰，文件也越大" Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <ComboBox x:Name="SecondaryResolutionComboBox"
                                                   Grid.Column="2"
@@ -1231,6 +1240,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,16,0">
                                             <TextBlock Text="副画面帧率" Style="{StaticResource FieldLabelStyle}"/>
+                                            <TextBlock Text="越高越流畅，也更占空间" Style="{StaticResource FieldHintStyle}"/>
                                         </StackPanel>
                                         <ComboBox x:Name="SecondaryFpsComboBox"
                                                   Grid.Column="2"
