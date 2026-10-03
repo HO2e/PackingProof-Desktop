@@ -85,16 +85,14 @@ namespace ExpressPackingMonitoring.ViewModels
 
         private void UpdatePreviewDisplayWidths(ref int slot, double width)
         {
-            int pixels = PreviewDisplayWidthPolicy.NormalizeWidth(width);
+            int pixels = double.IsFinite(width) && width > 0 ? (int)Math.Round(width) : 0;
             if (Interlocked.Exchange(ref slot, pixels) == pixels)
                 return;
 
             // 取两个可见预览里较大的那个：主界面在看就按主界面发，只剩小窗就按小窗发。
             Volatile.Write(
                 ref _previewDisplayWidth,
-                PreviewDisplayWidthPolicy.ResolvePublishWidth(
-                    Volatile.Read(ref _previewDisplayWidthMain),
-                    Volatile.Read(ref _previewDisplayWidthFloating)));
+                Math.Max(Volatile.Read(ref _previewDisplayWidthMain), Volatile.Read(ref _previewDisplayWidthFloating)));
         }
 
         protected override void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -187,73 +185,6 @@ namespace ExpressPackingMonitoring.ViewModels
             else
             {
                 RuntimeLog.Warn("FloatingPreview", $"小窗停靠角落保存失败：{error}");
-            }
-        }
-
-        /// <summary>小窗上次调整的宽度（逻辑像素），打开时按它贴回；缺失或非法时用默认宽度。</summary>
-        internal double FloatingPreviewWidth =>
-            _config?.FloatingPreviewWidth is > 0
-                ? _config.FloatingPreviewWidth
-                : AppConfig.DefaultFloatingPreviewWidth;
-
-        /// <summary>小窗不透明度，1 表示完全不透明。</summary>
-        internal double FloatingPreviewOpacity =>
-            _config?.FloatingPreviewOpacity is > 0
-                ? _config.FloatingPreviewOpacity
-                : AppConfig.DefaultFloatingPreviewOpacity;
-
-        /// <summary>
-        /// 记住小窗被拖动后的宽度。只存宽度，高度由画面比例自动算，
-        /// 换一台分辨率不同的显示器也不会把小窗拉成奇怪的比例。
-        /// </summary>
-        internal void SaveFloatingPreviewWidth(double width)
-        {
-            if (!double.IsFinite(width) || width <= 0)
-                return;
-
-            double clamped = Math.Clamp(
-                width,
-                AppConfig.MinimumFloatingPreviewWidth,
-                AppConfig.MaximumFloatingPreviewWidth);
-            if (Math.Abs((_config?.FloatingPreviewWidth ?? 0) - clamped) < 0.5)
-                return;
-
-            if (WorkstationConfigStore.TryUpdate(
-                    saved => saved.FloatingPreviewWidth = clamped,
-                    out AppConfig savedConfig,
-                    out string error))
-            {
-                Config.FloatingPreviewWidth = savedConfig.FloatingPreviewWidth;
-            }
-            else
-            {
-                RuntimeLog.Warn("FloatingPreview", $"小窗宽度保存失败：{error}");
-            }
-        }
-
-        /// <summary>记住小窗的不透明度，下次打开仍然保持。</summary>
-        internal void SaveFloatingPreviewOpacity(double opacity)
-        {
-            if (!double.IsFinite(opacity))
-                return;
-
-            double clamped = Math.Clamp(
-                opacity,
-                AppConfig.MinimumFloatingPreviewOpacity,
-                AppConfig.MaximumFloatingPreviewOpacity);
-            if (Math.Abs((_config?.FloatingPreviewOpacity ?? 0) - clamped) < 0.01)
-                return;
-
-            if (WorkstationConfigStore.TryUpdate(
-                    saved => saved.FloatingPreviewOpacity = clamped,
-                    out AppConfig savedConfig,
-                    out string error))
-            {
-                Config.FloatingPreviewOpacity = savedConfig.FloatingPreviewOpacity;
-            }
-            else
-            {
-                RuntimeLog.Warn("FloatingPreview", $"小窗不透明度保存失败：{error}");
             }
         }
 

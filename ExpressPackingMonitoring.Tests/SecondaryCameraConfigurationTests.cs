@@ -96,7 +96,7 @@ public sealed class SecondaryCameraConfigurationTests
             new AppConfig { SecondaryCameraOverlayWidthRatio = 0.4 }));
         Assert.False(AppConfig.RequiresCameraRestart(
             current,
-            new AppConfig { FloatingPreviewOpacity = 0.8 }));
+            new AppConfig { CameraBarcodeRecognitionSource = AppConfig.CameraBarcodeSourceSecondary }));
     }
 
     /// <summary>

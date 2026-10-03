@@ -9,10 +9,7 @@ namespace ExpressPackingMonitoring.Tests;
 /// </summary>
 public sealed class FloatingPreviewUiGuardTests
 {
-    /// <summary>
-    /// 主界面底部按钮行是固定的：小窗只允许"最小化自动弹出"和"预览区右键菜单手动常驻"两种进入方式，
-    /// 不允许新增常驻入口按钮。
-    /// </summary>
+    /// <summary>主界面底部按钮行是固定的，小窗只能由最小化进入，不允许新增入口按钮。</summary>
     [Fact]
     public void MainWindow_DoesNotAddFloatingPreviewButton()
     {

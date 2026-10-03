@@ -159,7 +159,6 @@
     <Compile Include="ViewModels\RecordingAudioStartPolicy.cs" />
     <Compile Include="ViewModels\RecordingTimelinePolicy.cs" />
     <Compile Include="ViewModels\PreviewDownscalePolicy.cs" />
-    <Compile Include="ViewModels\PreviewDisplayWidthPolicy.cs" />
     <Compile Include="ViewModels\SecondaryCameraOverlayPolicy.cs" />
     <Compile Include="ViewModels\SecondaryCameraFrameComposer.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />

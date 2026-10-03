@@ -1450,9 +1450,6 @@
   <data name="FFmpeg 要求 NVIDIA 驱动版本不低于 {config.EncoderDriverMinimumVersion}" xml:space="preserve"><value>FFmpeg requires NVIDIA driver version {0} or later</value></data>
   <data name="H.264 (兼容性好)" xml:space="preserve"><value>H.264 (best compatibility)</value></data>
   <data name="H.265 / HEVC (体积更小)" xml:space="preserve"><value>H.265 / HEVC (smaller files)</value></data>
-  <data name="悬浮预览" xml:space="preserve"><value>Floating preview</value></data>
-  <data name="悬浮窗不透明度" xml:space="preserve"><value>Floating window opacity</value></data>
-  <data name="不透明" xml:space="preserve"><value>Opaque</value></data>
   <data name="副画面（第二路摄像头）" xml:space="preserve"><value>Secondary view (second camera)</value></data>
   <data name="再选一台摄像头叠在主画面右下角，预览和录像里都有" xml:space="preserve"><value>Pick another camera to overlay in the bottom-right corner; it shows in both preview and recording</value></data>
   <data name="副画面来源" xml:space="preserve"><value>Secondary view source</value></data>

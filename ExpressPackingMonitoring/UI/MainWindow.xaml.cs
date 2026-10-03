@@ -14,7 +14,6 @@ using ExpressPackingMonitoring.Localization;
 using ExpressPackingMonitoring.ViewModels;
 using ExpressPackingMonitoring.Services;
 using System.IO;
-using System.Globalization;
 using System.Windows.Media.Imaging;
 
 namespace ExpressPackingMonitoring.UI
@@ -224,7 +223,7 @@ namespace ExpressPackingMonitoring.UI
             IsVisibleChanged += (s, e) =>
                 (DataContext as MainViewModel)?.ReportMainPreviewVisibility(
                     IsVisible && WindowState != WindowState.Minimized);
-            // 小窗由最小化自动弹出，也能从预览区右键菜单手动常驻；控制器必须在这里提前挂好。
+            // 小窗只由最小化触发，主界面不新增按钮，所以控制器必须在这里提前挂好。
             if (DataContext is MainViewModel floatingPreviewViewModel)
                 _floatingPreviewController = new FloatingPreviewController(this, floatingPreviewViewModel);
             // 全局鼠标/键盘活跃检测，用于摄像头空闲休眠唤醒
@@ -314,47 +313,6 @@ namespace ExpressPackingMonitoring.UI
             double dpiScale = VisualTreeHelper.GetDpi(this).DpiScaleX;
             vm.ReportMainPreviewDisplayWidth(VideoImage.ActualWidth * dpiScale);
             vm.ReportMainPreviewVisibility(true);
-        }
-
-        /// <summary>
-        /// 预览区右键菜单：主界面不新增小窗入口按钮（架构守卫钉住），
-        /// 手动开小窗与悬浮窗不透明度统一收在这里。
-        /// 菜单在每次弹出时刷新勾选状态，不额外维护一份状态。
-        /// </summary>
-        private void PreviewContextMenu_Opened(object sender, RoutedEventArgs e)
-        {
-            if (DataContext is not MainViewModel vm)
-                return;
-
-            MiFloatingPreview.IsChecked = _floatingPreviewController?.IsFloatingWindowOpen == true;
-
-            double opacity = vm.FloatingPreviewOpacity;
-            MiFloatingOpacity100.IsChecked = opacity > 0.95;
-            MiFloatingOpacity90.IsChecked = Math.Abs(opacity - 0.9) < 0.01;
-            MiFloatingOpacity80.IsChecked = Math.Abs(opacity - 0.8) < 0.01;
-            MiFloatingOpacity70.IsChecked = Math.Abs(opacity - 0.7) < 0.01;
-        }
-
-        /// <summary>手动开关悬浮小窗：主窗口不最小化也能一直看着画面。</summary>
-        private void MiFloatingPreview_Click(object sender, RoutedEventArgs e) =>
-            _floatingPreviewController?.ToggleFromUser();
-
-        private void MiFloatingOpacity_Click(object sender, RoutedEventArgs e)
-        {
-            if (DataContext is not MainViewModel vm || sender is not MenuItem item)
-                return;
-
-            if (!double.TryParse(
-                    item.Tag?.ToString(),
-                    NumberStyles.Float,
-                    CultureInfo.InvariantCulture,
-                    out double opacity))
-            {
-                return;
-            }
-
-            vm.SaveFloatingPreviewOpacity(opacity);
-            _floatingPreviewController?.ApplyFloatingPreviewOpacity();
         }
 
         private void UpdateCameraOverlays(MainViewModel vm)
