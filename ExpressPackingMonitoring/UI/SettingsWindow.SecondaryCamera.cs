@@ -26,6 +26,92 @@ namespace ExpressPackingMonitoring.UI
         public IReadOnlyList<CameraDeviceChoice> SecondaryCameraChoices =>
             BuildChoicesFromMainCameraList();
 
+        private bool _syncingCameraChoices;
+        private List<CameraInfo>? _allCameraInfos;
+
+        /// <summary>
+        /// 摄像头完整清单（含主摄的"网络摄像头（手动地址）"伪项）。首次从主摄下拉抓取，
+        /// 之后沿用；主摄下拉重建时会重新抓。
+        /// </summary>
+        private List<CameraInfo> AllCameraInfos =>
+            _allCameraInfos ??= (CameraComboBox?.ItemsSource as System.Collections.IEnumerable)?
+                .OfType<CameraInfo>().ToList() ?? new List<CameraInfo>();
+
+        /// <summary>
+        /// 主摄/副摄两个下拉互相排除：不管哪一边换了设备，两个列表都重算一次
+        /// （各自减去对方占用的那台），当前已选项保证仍在列表里。
+        /// </summary>
+        internal void RefreshMutualExclusiveCameraChoices()
+        {
+            if (_syncingCameraChoices || Config is not { } config || CameraComboBox == null)
+                return;
+            if (AllCameraInfos.Count == 0)
+                return;
+
+            _syncingCameraChoices = true;
+            try
+            {
+                string secondaryMoniker = string.Equals(
+                    config.SecondaryCameraSourceKind, "usb", StringComparison.Ordinal)
+                    ? config.SecondaryCameraMonikerString
+                    : "";
+                string mainMoniker = string.Equals(config.CameraSourceKind, "usb", StringComparison.Ordinal)
+                    ? config.CameraMonikerString
+                    : "";
+
+                // 主摄列表：减去副摄占用的那台；当前已选项无论如何保留，否则选中项会被清空。
+                List<CameraInfo> mainList = AllCameraInfos
+                    .Where(c => string.IsNullOrEmpty(secondaryMoniker)
+                        || string.Equals(c.Moniker, "network:", StringComparison.Ordinal)
+                        || !string.Equals(c.Moniker, secondaryMoniker, StringComparison.Ordinal))
+                    .ToList();
+                if (!string.IsNullOrEmpty(mainMoniker)
+                    && mainList.All(c => !string.Equals(c.Moniker, mainMoniker, StringComparison.Ordinal)))
+                {
+                    CameraInfo? currentMain = AllCameraInfos.FirstOrDefault(
+                        c => string.Equals(c.Moniker, mainMoniker, StringComparison.Ordinal));
+                    if (currentMain != null)
+                        mainList.Insert(0, currentMain);
+                }
+
+                CameraComboBox.ItemsSource = mainList;
+                CameraComboBox.SelectedValue = config.CameraIndex;
+                if (CameraComboBox.SelectedItem == null)
+                    CameraComboBox.SelectedItem = mainList.FirstOrDefault();
+
+                // 副摄列表与选中项跟着重算（副摄的设备若被主摄占用，会自动回到"无"）。
+                Raise(nameof(SecondaryCameraChoices));
+                Raise(nameof(SelectedSecondaryCameraChoice));
+                EnsureSecondaryChoiceStaysValid(config);
+            }
+            finally
+            {
+                _syncingCameraChoices = false;
+            }
+        }
+
+        /// <summary>副摄选的那台设备如果已经被主摄占用（或已不存在），副摄回到"无"。</summary>
+        private void EnsureSecondaryChoiceStaysValid(AppConfig config)
+        {
+            if (!string.Equals(config.SecondaryCameraSourceKind, "usb", StringComparison.Ordinal)
+                || string.IsNullOrEmpty(config.SecondaryCameraMonikerString))
+            {
+                return;
+            }
+
+            bool occupiedByMain = string.Equals(
+                config.SecondaryCameraMonikerString,
+                config.CameraMonikerString,
+                StringComparison.Ordinal);
+            bool stillAvailable = AllCameraInfos.Any(
+                c => string.Equals(c.Moniker, config.SecondaryCameraMonikerString, StringComparison.Ordinal));
+            if (!occupiedByMain && stillAvailable)
+                return;
+
+            SelectedSecondaryCameraChoice = SecondaryCameraChoices
+                .FirstOrDefault(choice => choice.Kind == AppConfig.SecondaryCameraSourceNone);
+        }
+
         private List<CameraDeviceChoice> BuildChoicesFromMainCameraList()
         {
             var choices = new List<CameraDeviceChoice>
@@ -85,6 +171,8 @@ namespace ExpressPackingMonitoring.UI
                 Raise(nameof(SelectedSecondaryCameraChoice));
                 Raise(nameof(IsSecondaryCameraConfigured));
                 Raise(nameof(IsSecondaryNetworkCameraSelected));
+                // 副摄换了设备：主摄列表也要把副摄占用的那台去掉（两个下拉互相排除）
+                RefreshMutualExclusiveCameraChoices();
                 // 换了设备就重新枚举它支持的采集档位（枚举走和主摄同一个 CameraFormatCatalog）
                 LoadSecondaryCameraFormats();
             }
@@ -113,21 +201,8 @@ namespace ExpressPackingMonitoring.UI
             object sender,
             System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            // 主摄占用了副摄当前选的那台设备：副摄自动回到"无"，不允许两路选同一台
-            if (Config is { } config
-                && string.Equals(config.SecondaryCameraSourceKind, "usb", StringComparison.Ordinal)
-                && !string.IsNullOrEmpty(config.SecondaryCameraMonikerString)
-                && string.Equals(
-                    config.SecondaryCameraMonikerString,
-                    config.CameraMonikerString,
-                    StringComparison.Ordinal))
-            {
-                SelectedSecondaryCameraChoice = SecondaryCameraChoices
-                    .FirstOrDefault(choice => choice.Kind == AppConfig.SecondaryCameraSourceNone);
-            }
-
-            Raise(nameof(SecondaryCameraChoices));
-            Raise(nameof(SelectedSecondaryCameraChoice));
+            // 主摄换了设备：两个列表互相排除都要重算（副摄若被主摄占用会自动回到"无"）
+            RefreshMutualExclusiveCameraChoices();
             LoadSecondaryCameraFormats();
         }
 
